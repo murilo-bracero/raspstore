@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-A cloud-like storage app for raspberry pi clusters, with automatic installation, low-maintenance and low-config, with user management, private folders and files, encryption at rest, light and resilient.
+A cloud-like storage app for raspberry pi cluster, with automatic installation, low-maintenance and low-config, with user management, private folders and files, encryption at rest, light and resilient.
 
 ## Goals
 
@@ -32,30 +32,48 @@ A cloud-like storage app for raspberry pi clusters, with automatic installation,
     - File integrity report
     - Environment security
 
-## Architecture
+- v0.6:
+    - Native Web Application
+
+- v0.7:
+    - Native Mobile App
+
+- v0.8:
+    - Architecture plugins
+
+-v0.9:
+    - Plugins
+    - Auto infrastructure deployment using scripts and terraform
+
+## Software Architecture
 
 - Programming Languages: 
-    - Go
-    - JS
-    - Dart
+    - Go (Backend)
+    - JS (Web Frontend)
+    - Dart (Mobile)
 
-- Frameworks:
-    - Go:
-        - MUX (Rest API)
-
-    - JS:
-        - ReactJS
-
-    - Dart:
-        - Flutter
+## Recommended Architecture
 
 - Databases:
     - MongoDB (User Data Storage)
     - Firebase (User Credentials Storage)
-    - Cassandra (History and file metadata fast recovery)
+    - Stackdriver (History and Logging)
+    - Cassandra (Metadata fast recovery)
 
 - Infrastructure:
     - Application is hosted in Raspberry Pi infrastructure
-    - MongoDB is hosted in Atlas
-    - Firebase is a Clud Service, hosted at Google Cloud
-    - Cassandra is a cloud agnostic database, hosted in whatever it suited better, including in your own raspberry pi infrastructure
+    - MongoDB hosted at Atlas
+    - Firebase is a Cloud Service, hosted at Google Cloud
+    - Stackdriver is a managed logging system hosted at Google Cloud
+    - Cassandra self-hosted or hosted at some Cloud environment
+
+Disclaimer: I highly recommend that you use cloud environments if you are looking for low-config and low-management, but there is no problem to host all these thing in your own infrastructure if you have a well-suited raspberry pi cluster
+
+## Plugins
+
+- Datastore (everything)
+- DynamoDB (everything)
+- Firestore (everything)
+- Cloud Pub/Sub (History and Logging)
+- Kafka (History and Logging)
+- RabbitMQ (History and Logging)
