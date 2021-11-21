@@ -63,6 +63,10 @@ func (r *usersDatastoreRespository) FindByEmailOrUsername(email string, username
 		return nil, err
 	}
 
+	if len(users) == 0 {
+		return nil, nil
+	}
+
 	return users[len(users)-1], nil
 }
 
