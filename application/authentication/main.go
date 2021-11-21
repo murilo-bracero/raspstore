@@ -22,15 +22,23 @@ func main() {
 	}
 
 	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
-	usersRepository := repository.NewUsersRepository(context.Background(), conn)
-	authService := service.NewAuthService(usersRepository)
 
-	if err != nil {
-		log.Panicln(err)
+	var usersRepo repository.UsersRepository
+
+	if cfg.UserDataStorage() == "mongodb" {
+		conn, err := db.NewMongoConnection(context.Background(), cfg)
+		usersRepo = repository.NewMongoUsersRepository(context.Background(), conn)
+
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		defer conn.Close(context.Background())
+	} else if cfg.UserDataStorage() == "datastore" {
+
 	}
 
-	defer conn.Close(context.Background())
+	authService := service.NewAuthService(usersRepo)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {

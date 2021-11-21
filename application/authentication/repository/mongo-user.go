@@ -15,25 +15,16 @@ import (
 
 const UsersCollectionName = "users"
 
-type UsersRepository interface {
-	Save(user *model.User) error
-	FindById(id string) (user *model.User, err error)
-	FindByEmailOrUsername(email string, username string) (user *model.User, err error)
-	DeleteUser(id string) error
-	UpdateUser(user *model.User) error
-	FindAll() (users []*model.User, err error)
-}
-
-type usersRespository struct {
+type mongoUsersRespository struct {
 	ctx  context.Context
 	coll *mongo.Collection
 }
 
-func NewUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
-	return &usersRespository{coll: conn.DB().Collection(UsersCollectionName), ctx: ctx}
+func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
+	return &mongoUsersRespository{coll: conn.DB().Collection(UsersCollectionName), ctx: ctx}
 }
 
-func (r *usersRespository) Save(user *model.User) error {
+func (r *mongoUsersRespository) Save(user *model.User) error {
 	user.Id = primitive.NewObjectID()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
@@ -48,7 +39,7 @@ func (r *usersRespository) Save(user *model.User) error {
 	return nil
 }
 
-func (r *usersRespository) FindById(id string) (user *model.User, err error) {
+func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
@@ -61,14 +52,14 @@ func (r *usersRespository) FindById(id string) (user *model.User, err error) {
 	return user, err
 }
 
-func (r *usersRespository) FindByEmailOrUsername(email string, username string) (user *model.User, err error) {
+func (r *mongoUsersRespository) FindByEmailOrUsername(email string, username string) (user *model.User, err error) {
 
 	res := r.coll.FindOne(r.ctx, bson.M{"$or": [2]bson.M{{"email": email}, {"username": username}}})
 	err = res.Decode(&user)
 	return user, err
 }
 
-func (r *usersRespository) DeleteUser(id string) error {
+func (r *mongoUsersRespository) DeleteUser(id string) error {
 
 	objectId, err := primitive.ObjectIDFromHex(id)
 
@@ -80,7 +71,7 @@ func (r *usersRespository) DeleteUser(id string) error {
 	return err
 }
 
-func (r *usersRespository) UpdateUser(user *model.User) error {
+func (r *mongoUsersRespository) UpdateUser(user *model.User) error {
 
 	user.UpdatedAt = time.Now()
 
@@ -98,7 +89,7 @@ func (r *usersRespository) UpdateUser(user *model.User) error {
 	return err
 }
 
-func (r *usersRespository) FindAll() (users []*model.User, err error) {
+func (r *mongoUsersRespository) FindAll() (users []*model.User, err error) {
 	var cursor *mongo.Cursor
 
 	cursor, err = r.coll.Find(r.ctx, bson.M{})
