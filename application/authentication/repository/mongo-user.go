@@ -48,6 +48,11 @@ func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error
 	}
 
 	res := r.coll.FindOne(r.ctx, bson.M{"_id": objectId})
+
+	if res.Err() == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+
 	err = res.Decode(&user)
 	return user, err
 }
@@ -55,6 +60,11 @@ func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error
 func (r *mongoUsersRespository) FindByEmailOrUsername(email string, username string) (user *model.User, err error) {
 
 	res := r.coll.FindOne(r.ctx, bson.M{"$or": [2]bson.M{{"email": email}, {"username": username}}})
+
+	if res.Err() == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+
 	err = res.Decode(&user)
 	return user, err
 }

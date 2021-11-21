@@ -41,6 +41,9 @@ func (r *usersDatastoreRespository) FindById(id string) (user *model.User, err e
 	key := datastore.NameKey(UsersKindName, id, nil)
 
 	if err := r.client.Get(r.ctx, key, found); err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -76,6 +79,10 @@ func (r *usersDatastoreRespository) UpdateUser(user *model.User) error {
 
 	if err != nil {
 		return err
+	}
+
+	if found == nil {
+		return datastore.ErrNoSuchEntity
 	}
 
 	found.UpdatedAt = time.Now()

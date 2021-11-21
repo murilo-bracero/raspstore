@@ -18,14 +18,21 @@ type User struct {
 }
 
 func (u *User) ToProtoBuffer() *pb.User {
-	return &pb.User{
-		Id:          u.Id.Hex(),
+	proto := &pb.User{
 		Username:    u.Username,
 		Email:       u.Email,
 		PhoneNumber: u.PhoneNumber,
 		CreatedAt:   u.CreatedAt.Unix(),
 		UpdatedAt:   u.UpdatedAt.Unix(),
 	}
+
+	if u.Id == primitive.NilObjectID {
+		proto.Id = u.UserId
+	} else {
+		proto.Id = u.Id.Hex()
+	}
+
+	return proto
 }
 
 func (u *User) FromProtoBuffer(user *pb.CreateUserRequest) {
@@ -36,13 +43,19 @@ func (u *User) FromProtoBuffer(user *pb.CreateUserRequest) {
 }
 
 func (u *User) FromUpdateProto(user *pb.UpdateUserRequest) error {
-	oid, err := primitive.ObjectIDFromHex(user.Id)
 
-	if err != nil {
-		return err
+	if len(user.Id) > 24 {
+		u.UserId = user.Id
+	} else {
+		oid, err := primitive.ObjectIDFromHex(user.Id)
+
+		if err != nil {
+			return err
+		}
+
+		u.Id = oid
 	}
 
-	u.Id = oid
 	u.Username = user.Username
 	u.Email = user.Email
 	u.PhoneNumber = user.PhoneNumber

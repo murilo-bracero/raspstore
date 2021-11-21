@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
@@ -36,7 +35,11 @@ func (a *authService) SignUp(ctx context.Context, req *pb.CreateUserRequest) (*p
 
 	found, err := a.userRepository.FindByEmailOrUsername(req.Email, req.Username)
 
-	if err == mongo.ErrNoDocuments {
+	if err != nil {
+		return nil, err
+	}
+
+	if found == nil {
 		user := new(model.User)
 		user.FromProtoBuffer(req)
 		err := a.userRepository.Save(user)
@@ -46,10 +49,6 @@ func (a *authService) SignUp(ctx context.Context, req *pb.CreateUserRequest) (*p
 		}
 
 		return user.ToProtoBuffer(), nil
-	}
-
-	if found == nil {
-		return nil, err
 	}
 
 	return nil, validators.ErrEmailOrUsernameInUse
