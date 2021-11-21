@@ -8,12 +8,13 @@ import (
 )
 
 type User struct {
-	Id          primitive.ObjectID `bson:"_id"`
-	Username    string             `bson:"username"`
-	Email       string             `bson:"email"`
-	PhoneNumber string             `bson:"phone_number"`
-	CreatedAt   time.Time          `bson:"created_at"`
-	UpdatedAt   time.Time          `bson:"updated_at"`
+	Id          primitive.ObjectID `bson:"_id" datastore:"-"`
+	UserId      string             `bson:"-" datastore:"user_id"`
+	Username    string             `bson:"username" datastore:"username"`
+	Email       string             `bson:"email" datastore:"email"`
+	PhoneNumber string             `bson:"phone_number" datastore:"phone_number"`
+	CreatedAt   time.Time          `bson:"created_at" datastore:"created_at"`
+	UpdatedAt   time.Time          `bson:"updated_at" datastore:"updated_at"`
 }
 
 func (u *User) ToProtoBuffer() *pb.User {

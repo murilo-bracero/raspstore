@@ -14,11 +14,8 @@ import (
 	"raspstore.github.io/authentication/model"
 )
 
-var id primitive.ObjectID
-
 func init() {
 	err := godotenv.Load("../.env")
-	id = primitive.NewObjectID()
 
 	if err != nil {
 		log.Panicln(err.Error())
@@ -30,7 +27,9 @@ func TestUsersRepositorySave(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
+	repo := NewMongoUsersRepository(context.Background(), conn)
+
+	id := primitive.NewObjectID()
 
 	user := &model.User{
 		Id:          id,
@@ -51,20 +50,19 @@ func TestUsersRepositoryFindById(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
-
-	id = primitive.NewObjectID()
+	repo := NewMongoUsersRepository(context.Background(), conn)
 
 	user := &model.User{
-		Id:          id,
-		Email:       fmt.Sprintf("%s@email.com", id.Hex()),
+		Email:       "random@email.com",
 		Username:    "testing_test",
 		PhoneNumber: "1196726372912",
 	}
 
-	repo.Save(user)
+	err = repo.Save(user)
 
-	found, err1 := repo.FindById(id.Hex())
+	assert.NoError(t, err)
+
+	found, err1 := repo.FindById(user.Id.Hex())
 	assert.NoError(t, err1)
 	assert.NotNil(t, found)
 }
@@ -74,9 +72,9 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
+	repo := NewMongoUsersRepository(context.Background(), conn)
 
-	id = primitive.NewObjectID()
+	id := primitive.NewObjectID()
 
 	email := fmt.Sprintf("%s@email.com", id.Hex())
 	username := "testing_test"
@@ -100,23 +98,20 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
-
-	id = primitive.NewObjectID()
+	repo := NewMongoUsersRepository(context.Background(), conn)
 
 	user := &model.User{
-		Id:          id,
-		Email:       fmt.Sprintf("%s@email.com", id.Hex()),
+		Email:       "test@email.com",
 		Username:    "testing_test",
 		PhoneNumber: "1196726372912",
 	}
 
 	repo.Save(user)
 
-	updated_email := fmt.Sprintf("updated_%s@email.com", id.Hex())
+	updated_email := fmt.Sprintf("updated_%s@email.com", user.Id.Hex())
 
 	updated := &model.User{
-		Id:          id,
+		Id:          user.Id,
 		Email:       updated_email,
 		Username:    "testing_test",
 		PhoneNumber: "1196726372912",
@@ -126,7 +121,7 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 
 	assert.NoError(t, error1)
 
-	found, error2 := repo.FindById(id.Hex())
+	found, error2 := repo.FindById(user.Id.Hex())
 
 	assert.NoError(t, error2)
 
@@ -138,7 +133,7 @@ func TestUsersRepositoryFindAll(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
+	repo := NewMongoUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 	assert.NoError(t, error1)
@@ -150,7 +145,7 @@ func TestUsersRepositoryDeleteUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewUsersRepository(context.Background(), conn)
+	repo := NewMongoUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 
