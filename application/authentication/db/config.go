@@ -13,18 +13,20 @@ type Config interface {
 	GrpcPort() int
 	GcpProjectId() string
 	UserDataStorage() string
+	CredentialsStorage() string
 }
 
 type config struct {
-	grpcPort        int
-	gcpProjectId    string
-	userDataStorage string
-	mongoUser       string
-	mongoPass       string
-	mongoHost       string
-	mongoPort       int
-	mongoDatabase   string
-	mongoUri        string
+	grpcPort           int
+	gcpProjectId       string
+	userDataStorage    string
+	credentialsStorage string
+	mongoUser          string
+	mongoPass          string
+	mongoHost          string
+	mongoPort          int
+	mongoDatabase      string
+	mongoUri           string
 }
 
 func NewConfig() Config {
@@ -33,6 +35,7 @@ func NewConfig() Config {
 	var err error
 
 	cfg.userDataStorage = os.Getenv("USER_DATA_STORAGE")
+	cfg.userDataStorage = os.Getenv("CREDENTIALS_STORAGE")
 	cfg.gcpProjectId = os.Getenv("GCLOUD_PROJECT_ID")
 	cfg.grpcPort, err = strconv.Atoi(os.Getenv("GRPC_PORT"))
 
@@ -81,4 +84,8 @@ func (c *config) GcpProjectId() string {
 
 func (c *config) UserDataStorage() string {
 	return c.userDataStorage
+}
+
+func (c *config) CredentialsStorage() string {
+	return c.credentialsStorage
 }

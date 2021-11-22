@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
 )
@@ -29,11 +29,11 @@ func TestUsersRepositorySave(t *testing.T) {
 	defer conn.Close(context.Background())
 	repo := NewMongoUsersRepository(context.Background(), conn)
 
-	id := primitive.NewObjectID()
+	id := uuid.NewString()
 
 	user := &model.User{
-		Id:          id,
-		Email:       fmt.Sprintf("%s@email.com", id.Hex()),
+		UserId:      id,
+		Email:       fmt.Sprintf("%s@email.com", id),
 		Username:    "testing_test",
 		PhoneNumber: "1196726372912",
 	}
@@ -42,7 +42,7 @@ func TestUsersRepositorySave(t *testing.T) {
 
 	assert.Equal(t, time.Now().Hour(), user.CreatedAt.Hour())
 	assert.Equal(t, time.Now().Hour(), user.UpdatedAt.Hour())
-	assert.NotNil(t, user.Id)
+	assert.NotNil(t, user.UserId)
 }
 
 func TestUsersRepositoryFindById(t *testing.T) {
@@ -62,7 +62,7 @@ func TestUsersRepositoryFindById(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	found, err1 := repo.FindById(user.Id.Hex())
+	found, err1 := repo.FindById(user.UserId)
 	assert.NoError(t, err1)
 	assert.NotNil(t, found)
 }
@@ -74,13 +74,13 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 	defer conn.Close(context.Background())
 	repo := NewMongoUsersRepository(context.Background(), conn)
 
-	id := primitive.NewObjectID()
+	id := uuid.NewString()
 
-	email := fmt.Sprintf("%s@email.com", id.Hex())
+	email := fmt.Sprintf("%s@email.com", id)
 	username := "testing_test"
 
 	user := &model.User{
-		Id:          id,
+		UserId:      id,
 		Email:       email,
 		Username:    username,
 		PhoneNumber: "1196726372912",
@@ -108,10 +108,10 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 
 	repo.Save(user)
 
-	updated_email := fmt.Sprintf("updated_%s@email.com", user.Id.Hex())
+	updated_email := fmt.Sprintf("updated_%s@email.com", user.UserId)
 
 	updated := &model.User{
-		Id:          user.Id,
+		UserId:      user.UserId,
 		Email:       updated_email,
 		Username:    "testing_test",
 		PhoneNumber: "1196726372912",
@@ -121,7 +121,7 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 
 	assert.NoError(t, error1)
 
-	found, error2 := repo.FindById(user.Id.Hex())
+	found, error2 := repo.FindById(user.UserId)
 
 	assert.NoError(t, error2)
 
@@ -153,6 +153,7 @@ func TestUsersRepositoryDeleteUser(t *testing.T) {
 	assert.True(t, len(users) > 0)
 
 	for _, user := range users {
-		repo.DeleteUser(user.Id.Hex())
+		repo.DeleteUser(user.UserId)
+		break
 	}
 }

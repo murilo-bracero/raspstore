@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
@@ -25,7 +25,7 @@ func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) Users
 }
 
 func (r *mongoUsersRespository) Save(user *model.User) error {
-	user.Id = primitive.NewObjectID()
+	user.UserId = uuid.NewString()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
@@ -40,14 +40,8 @@ func (r *mongoUsersRespository) Save(user *model.User) error {
 }
 
 func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error) {
-	objectId, err := primitive.ObjectIDFromHex(id)
 
-	if err != nil {
-		fmt.Println("Could not convert provided ID: ", id, " to a valid ObjectId: ", err.Error())
-		return nil, err
-	}
-
-	res := r.coll.FindOne(r.ctx, bson.M{"_id": objectId})
+	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
 
 	if res.Err() == mongo.ErrNoDocuments {
 		return nil, nil
@@ -71,13 +65,7 @@ func (r *mongoUsersRespository) FindByEmailOrUsername(email string, username str
 
 func (r *mongoUsersRespository) DeleteUser(id string) error {
 
-	objectId, err := primitive.ObjectIDFromHex(id)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = r.coll.DeleteOne(r.ctx, bson.M{"_id": objectId})
+	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
 	return err
 }
 
@@ -85,7 +73,7 @@ func (r *mongoUsersRespository) UpdateUser(user *model.User) error {
 
 	user.UpdatedAt = time.Now()
 
-	res, err := r.coll.UpdateOne(r.ctx, bson.M{"_id": user.Id}, bson.M{
+	res, err := r.coll.UpdateOne(r.ctx, bson.M{"user_id": user.UserId}, bson.M{
 		"$set": bson.M{
 			"username":     user.Username,
 			"email":        user.Email,

@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/authentication/db"
@@ -26,16 +28,19 @@ func init() {
 func TestMongoSignUp(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
+	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
 	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	service := NewAuthService(repo)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	req := &pb.CreateUserRequest{
-		Username:    "test",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
 		Password:    "testpass",
-		Email:       "test@email.com",
-		PhoneNumber: "2783918273",
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361318",
 	}
 
 	user, err := service.SignUp(context.Background(), req)
@@ -51,23 +56,25 @@ func TestMongoSignUp(t *testing.T) {
 func TestMongoGetUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
+	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
 	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	user := &model.User{
-		Username:    "testinghehe",
-		Email:       "testing@test.com.test",
-		PhoneNumber: "39820129021",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361319",
 	}
 
 	err = repo.Save(user)
 
 	assert.NoError(t, err)
 
-	service := NewAuthService(repo)
-
-	req := &pb.GetUserRequest{Id: user.Id.Hex()}
+	req := &pb.GetUserRequest{Id: user.UserId}
 
 	found, err1 := service.GetUser(context.Background(), req)
 
@@ -80,27 +87,29 @@ func TestMongoGetUser(t *testing.T) {
 func TestMongoUpdateUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
+	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
 	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	user := &model.User{
-		Username:    "testinghehe",
-		Email:       "testing@test.com.test",
-		PhoneNumber: "39820129021",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361320",
 	}
 
 	err = repo.Save(user)
 
 	assert.NoError(t, err)
 
-	service := NewAuthService(repo)
-
 	req := &pb.UpdateUserRequest{
-		Id:          user.Id.Hex(),
-		Username:    "updated_spookyscary",
-		Email:       "updated_spookyscary@email.com",
-		PhoneNumber: "39820129021",
+		Id:          user.UserId,
+		Username:    fmt.Sprintf("updated_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("updated_%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361321",
 	}
 
 	found, err1 := service.UpdateUser(context.Background(), req)
@@ -114,18 +123,20 @@ func TestMongoUpdateUser(t *testing.T) {
 func TestMongoDeleteUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
+	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
 	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	users, err1 := repo.FindAll()
 
 	assert.NoError(t, err1)
 
-	service := NewAuthService(repo)
-
 	for _, user := range users {
-		req := &pb.GetUserRequest{Id: user.Id.Hex()}
+		req := &pb.GetUserRequest{Id: user.UserId}
 		service.DeleteUser(context.Background(), req)
 	}
 }
@@ -134,17 +145,20 @@ func TestMongoDeleteUser(t *testing.T) {
 
 func TestDsSignUp(t *testing.T) {
 	cfg := db.NewConfig()
-	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
-	defer conn.Close()
-	repo := repository.NewDatastoreUsersRepository(context.Background(), conn)
-	service := NewAuthService(repo)
+	assert.NoError(t, errFire)
+	defer conn.Close(context.Background())
+	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	req := &pb.CreateUserRequest{
-		Username:    "test",
 		Password:    "testpass",
-		Email:       "test@email.com",
-		PhoneNumber: "2783918273",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361322",
 	}
 
 	user, err := service.SignUp(context.Background(), req)
@@ -159,22 +173,24 @@ func TestDsSignUp(t *testing.T) {
 
 func TestDsGetUser(t *testing.T) {
 	cfg := db.NewConfig()
-	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
-	defer conn.Close()
-	repo := repository.NewDatastoreUsersRepository(context.Background(), conn)
+	assert.NoError(t, errFire)
+	defer conn.Close(context.Background())
+	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	user := &model.User{
-		Username:    "testinghehe",
-		Email:       "testing@test.com.test",
-		PhoneNumber: "39820129021",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361323",
 	}
 
 	err = repo.Save(user)
 
 	assert.NoError(t, err)
-
-	service := NewAuthService(repo)
 
 	req := &pb.GetUserRequest{Id: user.UserId}
 
@@ -188,28 +204,30 @@ func TestDsGetUser(t *testing.T) {
 
 func TestDsUpdateUser(t *testing.T) {
 	cfg := db.NewConfig()
-	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
-	defer conn.Close()
-	repo := repository.NewDatastoreUsersRepository(context.Background(), conn)
+	assert.NoError(t, errFire)
+	defer conn.Close(context.Background())
+	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	user := &model.User{
-		Username:    "testinghehe",
-		Email:       "testing@test.com.test",
-		PhoneNumber: "39820129021",
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361324",
 	}
 
 	err = repo.Save(user)
 
 	assert.NoError(t, err)
 
-	service := NewAuthService(repo)
-
 	req := &pb.UpdateUserRequest{
 		Id:          user.UserId,
-		Username:    "updated_spookyscary",
-		Email:       "updated_spookyscary@email.com",
-		PhoneNumber: "39820129021",
+		Username:    fmt.Sprintf("updated_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("updated_%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361325",
 	}
 
 	found, err1 := service.UpdateUser(context.Background(), req)
@@ -222,16 +240,18 @@ func TestDsUpdateUser(t *testing.T) {
 
 func TestDsDeleteUser(t *testing.T) {
 	cfg := db.NewConfig()
-	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	fire, errFire := db.NewFirebaseConnection(context.Background())
 	assert.NoError(t, err)
-	defer conn.Close()
-	repo := repository.NewDatastoreUsersRepository(context.Background(), conn)
+	assert.NoError(t, errFire)
+	defer conn.Close(context.Background())
+	repo := repository.NewMongoUsersRepository(context.Background(), conn)
+	cred := repository.NewFireCredentials(context.Background(), fire)
+	service := NewAuthService(repo, cred)
 
 	users, err1 := repo.FindAll()
 
 	assert.NoError(t, err1)
-
-	service := NewAuthService(repo)
 
 	for _, user := range users {
 		req := &pb.GetUserRequest{Id: user.UserId}

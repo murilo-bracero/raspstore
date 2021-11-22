@@ -24,6 +24,7 @@ func main() {
 	cfg := db.NewConfig()
 
 	var usersRepo repository.UsersRepository
+	var credRepo repository.CredentialsRepository
 
 	if cfg.UserDataStorage() == "mongodb" {
 		conn, err := db.NewMongoConnection(context.Background(), cfg)
@@ -35,10 +36,27 @@ func main() {
 
 		defer conn.Close(context.Background())
 	} else if cfg.UserDataStorage() == "datastore" {
+		conn, err := db.NewDatastoreConnection(context.Background(), cfg)
+		usersRepo = repository.NewDatastoreUsersRepository(context.Background(), conn)
 
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		defer conn.Close()
+	} else {
+		log.Panicln("invalid user data storage option")
 	}
 
-	authService := service.NewAuthService(usersRepo)
+	if cfg.CredentialsStorage() == "firebase" {
+		conn, err := db.NewFirebaseConnection(context.Background())
+		if err != nil {
+			log.Panicln(err)
+		}
+		credRepo = repository.NewFireCredentials(context.Background(), conn)
+	}
+
+	authService := service.NewAuthService(usersRepo, credRepo)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {

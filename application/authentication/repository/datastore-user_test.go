@@ -64,7 +64,7 @@ func TestDsUsersRepositoryFindById(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	found, err1 := repo.FindById("94c3ff00595079ff990bfacc99a21a83")
+	found, err1 := repo.FindById(user.UserId)
 	assert.NoError(t, err1)
 	assert.NotNil(t, found)
 }
@@ -157,6 +157,6 @@ func TestDsUsersRepositoryDeleteUser(t *testing.T) {
 	assert.True(t, len(users) > 0)
 
 	for _, user := range users {
-		repo.DeleteUser(user.Id.Hex())
+		repo.DeleteUser(user.UserId)
 	}
 }

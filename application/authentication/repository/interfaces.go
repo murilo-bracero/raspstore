@@ -10,3 +10,10 @@ type UsersRepository interface {
 	UpdateUser(user *model.User) error
 	FindAll() (users []*model.User, err error)
 }
+
+type CredentialsRepository interface {
+	Save(user *model.User, password string) error
+	Update(user *model.User) error
+	Delete(id string) error
+	Authenticate(token string) (username string, err error)
+}
