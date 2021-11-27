@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
+	mg "raspstore.github.io/authentication/repository/mongo"
 )
 
 func init() {
@@ -27,7 +28,7 @@ func TestUsersRepositorySave(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	id := uuid.NewString()
 
@@ -50,7 +51,7 @@ func TestUsersRepositoryFindById(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	user := &model.User{
 		Email:       "random@email.com",
@@ -72,7 +73,7 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	id := uuid.NewString()
 
@@ -88,7 +89,7 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 
 	repo.Save(user)
 
-	found, err1 := repo.FindByEmailOrUsername(email, username)
+	found, err1 := repo.FindByEmail(email)
 	assert.NoError(t, err1)
 	assert.NotNil(t, found)
 }
@@ -98,7 +99,7 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	user := &model.User{
 		Email:       "test@email.com",
@@ -133,7 +134,7 @@ func TestUsersRepositoryFindAll(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 	assert.NoError(t, error1)
@@ -145,7 +146,7 @@ func TestUsersRepositoryDeleteUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 

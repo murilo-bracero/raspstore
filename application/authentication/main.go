@@ -10,7 +10,10 @@ import (
 	"google.golang.org/grpc"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/pb"
-	"raspstore.github.io/authentication/repository"
+	rp "raspstore.github.io/authentication/repository"
+	ds "raspstore.github.io/authentication/repository/datastore"
+	fb "raspstore.github.io/authentication/repository/firebase"
+	mg "raspstore.github.io/authentication/repository/mongo"
 	"raspstore.github.io/authentication/service"
 )
 
@@ -23,12 +26,12 @@ func main() {
 
 	cfg := db.NewConfig()
 
-	var usersRepo repository.UsersRepository
-	var credRepo repository.CredentialsRepository
+	var usersRepo rp.UsersRepository
+	var credRepo rp.CredentialsRepository
 
 	if cfg.UserDataStorage() == "mongodb" {
 		conn, err := db.NewMongoConnection(context.Background(), cfg)
-		usersRepo = repository.NewMongoUsersRepository(context.Background(), conn)
+		usersRepo = mg.NewMongoUsersRepository(context.Background(), conn)
 
 		if err != nil {
 			log.Panicln(err)
@@ -37,7 +40,7 @@ func main() {
 		defer conn.Close(context.Background())
 	} else if cfg.UserDataStorage() == "datastore" {
 		conn, err := db.NewDatastoreConnection(context.Background(), cfg)
-		usersRepo = repository.NewDatastoreUsersRepository(context.Background(), conn)
+		usersRepo = ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 		if err != nil {
 			log.Panicln(err)
@@ -53,7 +56,9 @@ func main() {
 		if err != nil {
 			log.Panicln(err)
 		}
-		credRepo = repository.NewFireCredentials(context.Background(), conn)
+		credRepo = fb.NewFireCredentials(context.Background(), conn)
+	} else {
+		log.Panicln("invalid credential storage option")
 	}
 
 	authService := service.NewAuthService(usersRepo, credRepo)

@@ -12,7 +12,9 @@ import (
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/pb"
-	"raspstore.github.io/authentication/repository"
+	fb "raspstore.github.io/authentication/repository/firebase"
+	mg "raspstore.github.io/authentication/repository/mongo"
+	sv "raspstore.github.io/authentication/service"
 )
 
 func init() {
@@ -32,9 +34,9 @@ func TestMongoSignUp(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	req := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -60,9 +62,9 @@ func TestMongoGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -91,9 +93,9 @@ func TestMongoUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -127,9 +129,9 @@ func TestMongoDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	users, err1 := repo.FindAll()
 
@@ -150,9 +152,9 @@ func TestDsSignUp(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	req := &pb.CreateUserRequest{
 		Password:    "testpass",
@@ -178,9 +180,9 @@ func TestDsGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -209,9 +211,9 @@ func TestDsUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -245,9 +247,9 @@ func TestDsDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, errFire)
 	defer conn.Close(context.Background())
-	repo := repository.NewMongoUsersRepository(context.Background(), conn)
-	cred := repository.NewFireCredentials(context.Background(), fire)
-	service := NewAuthService(repo, cred)
+	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	cred := fb.NewFireCredentials(context.Background(), fire)
+	service := sv.NewAuthService(repo, cred)
 
 	users, err1 := repo.FindAll()
 

@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
+	ds "raspstore.github.io/authentication/repository/datastore"
 )
 
 func init() {
@@ -27,7 +28,7 @@ func TestDsUsersRepositorySave(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	id := primitive.NewObjectID()
 
@@ -50,7 +51,7 @@ func TestDsUsersRepositoryFindById(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	id := primitive.NewObjectID()
 
@@ -74,7 +75,7 @@ func TestDsUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	email := "TestDsUsersRepositoryFindByEmailOrUsername@email.com"
 	username := "testing_test"
@@ -88,7 +89,7 @@ func TestDsUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 
 	repo.Save(user)
 
-	found, err1 := repo.FindByEmailOrUsername(email, username)
+	found, err1 := repo.FindByEmail(email)
 	assert.NoError(t, err1)
 	assert.NotNil(t, found)
 }
@@ -98,7 +99,7 @@ func TestDsUsersRepositoryUpdateUser(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	id := primitive.NewObjectID()
 
@@ -137,7 +138,7 @@ func TestDsUsersRepositoryFindAll(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 	assert.NoError(t, error1)
@@ -149,7 +150,7 @@ func TestDsUsersRepositoryDeleteUser(t *testing.T) {
 	conn, err := db.NewDatastoreConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close()
-	repo := NewDatastoreUsersRepository(context.Background(), conn)
+	repo := ds.NewDatastoreUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 

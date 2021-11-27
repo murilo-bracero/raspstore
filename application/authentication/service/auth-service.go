@@ -35,7 +35,7 @@ func (a *authService) SignUp(ctx context.Context, req *pb.CreateUserRequest) (*p
 		return nil, err
 	}
 
-	found, err := a.userRepository.FindByEmailOrUsername(req.Email, req.Username)
+	found, err := a.userRepository.FindByEmail(req.Email)
 
 	if err != nil {
 		return nil, err

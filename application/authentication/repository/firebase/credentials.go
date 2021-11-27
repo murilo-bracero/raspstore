@@ -6,6 +6,7 @@ import (
 	"firebase.google.com/go/v4/auth"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
+	rp "raspstore.github.io/authentication/repository"
 )
 
 type fireCredentialsRepository struct {
@@ -13,7 +14,7 @@ type fireCredentialsRepository struct {
 	client *auth.Client
 }
 
-func NewFireCredentials(ctx context.Context, conn db.FirebaseConnection) CredentialsRepository {
+func NewFireCredentials(ctx context.Context, conn db.FirebaseConnection) rp.CredentialsRepository {
 	return &fireCredentialsRepository{ctx: ctx, client: conn.Client()}
 }
 

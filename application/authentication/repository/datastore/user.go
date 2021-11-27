@@ -1,4 +1,4 @@
-package repository
+package datastore
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
+	rp "raspstore.github.io/authentication/repository"
 )
 
 const UsersKindName = "users"
@@ -17,7 +18,7 @@ type usersDatastoreRespository struct {
 	client *datastore.Client
 }
 
-func NewDatastoreUsersRepository(ctx context.Context, conn db.DatastoreConnection) UsersRepository {
+func NewDatastoreUsersRepository(ctx context.Context, conn db.DatastoreConnection) rp.UsersRepository {
 	return &usersDatastoreRespository{client: conn.Client(), ctx: ctx}
 }
 
@@ -50,11 +51,11 @@ func (r *usersDatastoreRespository) FindById(id string) (user *model.User, err e
 	return found, nil
 }
 
-func (r *usersDatastoreRespository) FindByEmailOrUsername(email string, username string) (*model.User, error) {
+func (r *usersDatastoreRespository) FindByEmail(email string) (*model.User, error) {
 
 	var users []*model.User
 
-	query := datastore.NewQuery(UsersKindName).Filter("email =", email).Filter("username =", username)
+	query := datastore.NewQuery(UsersKindName).Filter("email =", email)
 
 	if _, err := r.client.GetAll(r.ctx, query, &users); err != nil {
 		if err == datastore.ErrNoSuchEntity {

@@ -11,17 +11,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
+	rp "raspstore.github.io/authentication/repository"
 )
 
-const UsersCollectionName = "users"
+const usersCollectionName = "users"
 
 type mongoUsersRespository struct {
 	ctx  context.Context
 	coll *mongo.Collection
 }
 
-func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
-	return &mongoUsersRespository{coll: conn.DB().Collection(UsersCollectionName), ctx: ctx}
+func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) rp.UsersRepository {
+	return &mongoUsersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
 }
 
 func (r *mongoUsersRespository) Save(user *model.User) error {
@@ -51,9 +52,9 @@ func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error
 	return user, err
 }
 
-func (r *mongoUsersRespository) FindByEmailOrUsername(email string, username string) (user *model.User, err error) {
+func (r *mongoUsersRespository) FindByEmail(email string) (user *model.User, err error) {
 
-	res := r.coll.FindOne(r.ctx, bson.M{"$or": [2]bson.M{{"email": email}, {"username": username}}})
+	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
 
 	if res.Err() == mongo.ErrNoDocuments {
 		return nil, nil
