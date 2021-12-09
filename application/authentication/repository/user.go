@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
-	rp "raspstore.github.io/authentication/repository"
 )
 
 const usersCollectionName = "users"
@@ -21,7 +20,7 @@ type mongoUsersRespository struct {
 	coll *mongo.Collection
 }
 
-func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) rp.UsersRepository {
+func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
 	return &mongoUsersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
 }
 

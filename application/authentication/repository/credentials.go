@@ -13,7 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
-	rp "raspstore.github.io/authentication/repository"
 )
 
 const credentialsCollectionName = "credentials"
@@ -23,7 +22,7 @@ type mongoCredentialsRespository struct {
 	coll *mongo.Collection
 }
 
-func NewMongoCredentialsRepository(ctx context.Context, conn db.MongoConnection) rp.CredentialsRepository {
+func NewMongoCredentialsRepository(ctx context.Context, conn db.MongoConnection) CredentialsRepository {
 	return &mongoCredentialsRespository{coll: conn.DB().Collection(credentialsCollectionName), ctx: ctx}
 }
 
