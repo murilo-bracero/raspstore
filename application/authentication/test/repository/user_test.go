@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
-	mg "raspstore.github.io/authentication/repository/mongo"
+	mg "raspstore.github.io/authentication/repository"
 )
 
 func init() {
