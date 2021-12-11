@@ -22,6 +22,7 @@ type AuthServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
 	DeleteUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	ListUser(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (AuthService_ListUserClient, error)
 }
 
@@ -69,6 +70,15 @@ func (c *authServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReques
 	return out, nil
 }
 
+func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, "/pb.AuthService/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) ListUser(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (AuthService_ListUserClient, error) {
 	stream, err := c.cc.NewStream(ctx, &AuthService_ServiceDesc.Streams[0], "/pb.AuthService/ListUser", opts...)
 	if err != nil {
@@ -109,6 +119,7 @@ type AuthServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*User, error)
 	DeleteUser(context.Context, *GetUserRequest) (*DeleteUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	ListUser(*ListUsersRequest, AuthService_ListUserServer) error
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -128,6 +139,9 @@ func (UnimplementedAuthServiceServer) DeleteUser(context.Context, *GetUserReques
 }
 func (UnimplementedAuthServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedAuthServiceServer) ListUser(*ListUsersRequest, AuthService_ListUserServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListUser not implemented")
@@ -217,6 +231,24 @@ func _AuthService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.AuthService/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_ListUser_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListUsersRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -260,6 +292,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _AuthService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _AuthService_Login_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
-	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
@@ -17,16 +14,16 @@ import (
 
 const credentialsCollectionName = "credentials"
 
-type mongoCredentialsRespository struct {
+type credentialsRespository struct {
 	ctx  context.Context
 	coll *mongo.Collection
 }
 
-func NewMongoCredentialsRepository(ctx context.Context, conn db.MongoConnection) CredentialsRepository {
-	return &mongoCredentialsRespository{coll: conn.DB().Collection(credentialsCollectionName), ctx: ctx}
+func NewCredentialsRepository(ctx context.Context, conn db.MongoConnection) CredentialsRepository {
+	return &credentialsRespository{coll: conn.DB().Collection(credentialsCollectionName), ctx: ctx}
 }
 
-func (r *mongoCredentialsRespository) Save(user *model.User, password string) error {
+func (r *credentialsRespository) Save(user *model.User, password string) error {
 
 	hash, err := hash(password)
 
@@ -34,14 +31,13 @@ func (r *mongoCredentialsRespository) Save(user *model.User, password string) er
 		return err
 	}
 
-	document := bson.M{
-		"_id":      primitive.NewObjectID(),
-		"user_id":  user.UserId,
-		"email":    user.Email,
-		"password": hash,
+	credential := model.Credential{
+		Id:    user.UserId,
+		Email: user.Email,
+		Hash:  hash,
 	}
 
-	_, err = r.coll.InsertOne(r.ctx, document)
+	_, err = r.coll.InsertOne(r.ctx, credential)
 
 	if err != nil {
 		fmt.Println("Coud not create credentials ", user, " in MongoDB: ", err.Error())
@@ -51,13 +47,13 @@ func (r *mongoCredentialsRespository) Save(user *model.User, password string) er
 	return nil
 }
 
-func (r *mongoCredentialsRespository) Delete(id string) error {
+func (r *credentialsRespository) Delete(id string) error {
 
 	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
 	return err
 }
 
-func (r *mongoCredentialsRespository) Update(user *model.User) error {
+func (r *credentialsRespository) Update(user *model.User) error {
 
 	res, err := r.coll.UpdateOne(r.ctx, bson.M{"user_id": user.UserId}, bson.M{
 		"$set": bson.M{
@@ -70,22 +66,20 @@ func (r *mongoCredentialsRespository) Update(user *model.User) error {
 	return err
 }
 
-func (r *mongoCredentialsRespository) Authenticate(token string) (uid string, err error) {
+func (r *credentialsRespository) IsCredentialsCorrect(email string, password string) bool {
+	var credential model.Credential
 
-	secret := os.Getenv("JWT_SECRET")
+	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
 
-	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("error reading jwt: wrong signing method: %v", t.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-
-	if err != nil {
-		return "", err
+	if res.Err() != nil {
+		return false
 	}
 
-	return parsedToken.Claims.(jwt.MapClaims)["uid"].(string), nil
+	if err := res.Decode(&credential); err != nil {
+		return false
+	}
+
+	return bcrypt.CompareHashAndPassword([]byte(credential.Hash), []byte(password)) == nil
 }
 
 func hash(text string) (hash string, err error) {

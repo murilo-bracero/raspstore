@@ -7,6 +7,7 @@ import (
 	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
+	"raspstore.github.io/authentication/token"
 	"raspstore.github.io/authentication/validators"
 )
 
@@ -16,16 +17,18 @@ type AuthService interface {
 	DeleteUser(ctx context.Context, req *pb.GetUserRequest) (*pb.DeleteUserResponse, error)
 	UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.User, error)
 	ListUser(req *pb.ListUsersRequest, stream pb.AuthService_ListUserServer) error
+	Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error)
 }
 
 type authService struct {
 	userRepository repository.UsersRepository
 	credRepository repository.CredentialsRepository
+	tokenManager   token.TokenManager
 	pb.UnimplementedAuthServiceServer
 }
 
-func NewAuthService(usersRepository repository.UsersRepository, credRepository repository.CredentialsRepository) pb.AuthServiceServer {
-	return &authService{userRepository: usersRepository, credRepository: credRepository}
+func NewAuthService(usersRepository repository.UsersRepository, credRepository repository.CredentialsRepository, tokenManager token.TokenManager) pb.AuthServiceServer {
+	return &authService{userRepository: usersRepository, credRepository: credRepository, tokenManager: tokenManager}
 }
 
 func (a *authService) SignUp(ctx context.Context, req *pb.CreateUserRequest) (*pb.User, error) {
@@ -64,6 +67,11 @@ func (a *authService) SignUp(ctx context.Context, req *pb.CreateUserRequest) (*p
 
 func (a *authService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
 	usr, err := a.userRepository.FindById(req.Id)
+
+	if usr == nil {
+		return nil, validators.ErrUserNotFound
+	}
+
 	return usr.ToProtoBuffer(), err
 }
 
@@ -104,6 +112,33 @@ func (a *authService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 	} else {
 		return found.ToProtoBuffer(), nil
 	}
+}
+
+func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	if err := validators.ValidateLogin(req); err != nil {
+		return nil, err
+	}
+
+	if a.credRepository.IsCredentialsCorrect(req.Email, req.Password) {
+		user, err := a.userRepository.FindByEmail(req.Email)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user == nil {
+			return nil, validators.ErrUserNotFound
+		}
+
+		if token, err := a.tokenManager.Generate(user.UserId); err != nil {
+			return nil, err
+		} else {
+			return &pb.LoginResponse{Token: token}, nil
+		}
+	} else {
+		return nil, validators.ErrIncorrectCredentials
+	}
+
 }
 
 func (a *authService) ListUser(req *pb.ListUsersRequest, stream pb.AuthService_ListUserServer) error {

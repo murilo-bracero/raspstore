@@ -14,6 +14,8 @@ type Config interface {
 	GcpProjectId() string
 	UserDataStorage() string
 	CredentialsStorage() string
+	TokenSecret() string
+	TokenDuration() int
 }
 
 type config struct {
@@ -27,6 +29,8 @@ type config struct {
 	mongoPort          int
 	mongoDatabase      string
 	mongoUri           string
+	tokenSecret        string
+	tokenDuration      int
 }
 
 func NewConfig() Config {
@@ -37,7 +41,20 @@ func NewConfig() Config {
 	cfg.userDataStorage = os.Getenv("USER_DATA_STORAGE")
 	cfg.userDataStorage = os.Getenv("CREDENTIALS_STORAGE")
 	cfg.gcpProjectId = os.Getenv("GCLOUD_PROJECT_ID")
-	cfg.grpcPort, err = strconv.Atoi(os.Getenv("GRPC_PORT"))
+
+	if value, err := strconv.Atoi(os.Getenv("GRPC_PORT")); err != nil {
+		log.Fatalln("error parsing gRPC port env var GRPC_PORT: ", err.Error())
+	} else {
+		cfg.grpcPort = value
+	}
+
+	if value, err := strconv.Atoi(os.Getenv("TOKEN_DURATION")); err != nil {
+		log.Fatalln("error parsing token duration env var TOKEN_DURATION: ", err.Error())
+	} else {
+		cfg.tokenDuration = value
+	}
+
+	cfg.tokenSecret = os.Getenv("JWT_SECRET")
 
 	if err != nil {
 		log.Fatalln("Error parsing gRPC port env var \"GRPC_PORT\": ", err.Error())
@@ -88,4 +105,12 @@ func (c *config) UserDataStorage() string {
 
 func (c *config) CredentialsStorage() string {
 	return c.credentialsStorage
+}
+
+func (c *config) TokenSecret() string {
+	return c.tokenSecret
+}
+
+func (c *config) TokenDuration() int {
+	return c.tokenDuration
 }

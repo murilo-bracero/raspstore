@@ -13,6 +13,15 @@ message User {
     int64 updatedAt = 6;
 }
 
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string token = 1;
+}
+
 message UpdateUserRequest {
     string id = 1;
     string username = 2;
@@ -42,5 +51,6 @@ service AuthService {
     rpc GetUser(GetUserRequest) returns (User);
     rpc DeleteUser(GetUserRequest) returns (DeleteUserResponse);
     rpc UpdateUser(UpdateUserRequest) returns (User);
+    rpc Login(LoginRequest) returns (LoginResponse);
     rpc ListUser(ListUsersRequest) returns (stream User);
 }

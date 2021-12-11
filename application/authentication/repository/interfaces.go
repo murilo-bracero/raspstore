@@ -15,5 +15,5 @@ type CredentialsRepository interface {
 	Save(user *model.User, password string) error
 	Update(user *model.User) error
 	Delete(id string) error
-	Authenticate(token string) (uid string, err error)
+	IsCredentialsCorrect(email string, password string) bool
 }

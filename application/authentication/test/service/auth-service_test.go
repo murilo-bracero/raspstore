@@ -14,17 +14,16 @@ import (
 	"raspstore.github.io/authentication/pb"
 	mg "raspstore.github.io/authentication/repository"
 	sv "raspstore.github.io/authentication/service"
+	"raspstore.github.io/authentication/token"
 )
 
 func init() {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 
 	if err != nil {
 		log.Panicln(err.Error())
 	}
 }
-
-// MONGO TESTS
 
 func TestMongoSignUp(t *testing.T) {
 	cfg := db.NewConfig()
@@ -32,8 +31,9 @@ func TestMongoSignUp(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
-	credRepo := mg.NewMongoCredentialsRepository(context.Background(), conn)
-	service := sv.NewAuthService(userRepo, credRepo)
+	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
 
 	req := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -58,8 +58,9 @@ func TestMongoGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
-	credRepo := mg.NewMongoCredentialsRepository(context.Background(), conn)
-	service := sv.NewAuthService(userRepo, credRepo)
+	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -87,21 +88,23 @@ func TestMongoUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
-	credRepo := mg.NewMongoCredentialsRepository(context.Background(), conn)
-	service := sv.NewAuthService(userRepo, credRepo)
+	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
 
-	user := &model.User{
+	createUserRequest := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361320",
+		Password:    "penispintorola212",
 	}
 
-	err = userRepo.Save(user)
+	user, errService := service.SignUp(context.Background(), createUserRequest)
 
-	assert.NoError(t, err)
+	assert.NoError(t, errService)
 
 	req := &pb.UpdateUserRequest{
-		Id:          user.UserId,
+		Id:          user.Id,
 		Username:    fmt.Sprintf("updated_%s", uuid.NewString()),
 		Email:       fmt.Sprintf("updated_%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361321",
@@ -112,7 +115,7 @@ func TestMongoUpdateUser(t *testing.T) {
 	assert.NoError(t, err1)
 	assert.NotEqual(t, user.Username, found.Username)
 	assert.NotEqual(t, user.Email, found.Email)
-	assert.Equal(t, user.PhoneNumber, found.PhoneNumber)
+	assert.NotEqual(t, user.PhoneNumber, found.PhoneNumber)
 }
 
 func TestMongoDeleteUser(t *testing.T) {
@@ -121,8 +124,9 @@ func TestMongoDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
-	credRepo := mg.NewMongoCredentialsRepository(context.Background(), conn)
-	service := sv.NewAuthService(userRepo, credRepo)
+	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
 
 	users, err1 := userRepo.FindAll()
 

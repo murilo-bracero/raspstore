@@ -9,12 +9,11 @@ import (
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"raspstore.github.io/authentication/db"
+	"raspstore.github.io/authentication/middleware"
 	"raspstore.github.io/authentication/pb"
 	rp "raspstore.github.io/authentication/repository"
-	ds "raspstore.github.io/authentication/repository/datastore"
-	fb "raspstore.github.io/authentication/repository/firebase"
-	mg "raspstore.github.io/authentication/repository/mongo"
 	"raspstore.github.io/authentication/service"
+	"raspstore.github.io/authentication/token"
 )
 
 func main() {
@@ -26,49 +25,28 @@ func main() {
 
 	cfg := db.NewConfig()
 
-	var usersRepo rp.UsersRepository
-	var credRepo rp.CredentialsRepository
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
 
-	if cfg.UserDataStorage() == "mongodb" {
-		conn, err := db.NewMongoConnection(context.Background(), cfg)
-		usersRepo = mg.NewMongoUsersRepository(context.Background(), conn)
-
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		defer conn.Close(context.Background())
-	} else if cfg.UserDataStorage() == "datastore" {
-		conn, err := db.NewDatastoreConnection(context.Background(), cfg)
-		usersRepo = ds.NewDatastoreUsersRepository(context.Background(), conn)
-
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		defer conn.Close()
-	} else {
-		log.Panicln("invalid user data storage option")
+	if err != nil {
+		log.Panicln(err)
 	}
 
-	if cfg.CredentialsStorage() == "firebase" {
-		conn, err := db.NewFirebaseConnection(context.Background())
-		if err != nil {
-			log.Panicln(err)
-		}
-		credRepo = fb.NewFireCredentials(context.Background(), conn)
-	} else {
-		log.Panicln("invalid credential storage option")
-	}
+	defer conn.Close(context.Background())
 
-	authService := service.NewAuthService(usersRepo, credRepo)
+	credRepo := rp.NewCredentialsRepository(context.Background(), conn)
+	usersRepo := rp.NewMongoUsersRepository(context.Background(), conn)
+	tokenManager := token.NewTokenManager(cfg)
+
+	authService := service.NewAuthService(usersRepo, credRepo, tokenManager)
+
+	authInterceptor := middleware.NewAuthInterceptor(usersRepo, tokenManager)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithAuthentication))
 	pb.RegisterAuthServiceServer(grpcServer, authService)
 
 	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
