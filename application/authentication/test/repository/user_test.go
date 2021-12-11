@@ -27,7 +27,7 @@ func TestUsersRepositorySave(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	id := uuid.NewString()
 
@@ -50,7 +50,7 @@ func TestUsersRepositoryFindById(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	user := &model.User{
 		Email:       "random@email.com",
@@ -72,7 +72,7 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	id := uuid.NewString()
 
@@ -99,7 +99,7 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	user := &model.User{
 		Email:       "test@email.com",
@@ -134,7 +134,7 @@ func TestUsersRepositoryFindAll(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 	assert.NoError(t, error1)
@@ -146,7 +146,7 @@ func TestUsersRepositoryDeleteUser(t *testing.T) {
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	repo := mg.NewMongoUsersRepository(context.Background(), conn)
+	repo := mg.NewUsersRepository(context.Background(), conn)
 
 	users, error1 := repo.FindAll()
 

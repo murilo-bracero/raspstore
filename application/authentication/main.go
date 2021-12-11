@@ -34,7 +34,7 @@ func main() {
 	defer conn.Close(context.Background())
 
 	credRepo := rp.NewCredentialsRepository(context.Background(), conn)
-	usersRepo := rp.NewMongoUsersRepository(context.Background(), conn)
+	usersRepo := rp.NewUsersRepository(context.Background(), conn)
 	tokenManager := token.NewTokenManager(cfg)
 
 	authService := service.NewAuthService(usersRepo, credRepo, tokenManager)
