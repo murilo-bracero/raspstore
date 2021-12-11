@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -11,6 +12,8 @@ import (
 	"raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/token"
 )
+
+var whitelistRoutes = "/pb.AuthService/Login,/pb.AuthService/SignUp,/pb.AuthService/Authenticate"
 
 type AuthInterceptor interface {
 	WithAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error)
@@ -27,7 +30,7 @@ func NewAuthInterceptor(repo repository.UsersRepository, tokenManager token.Toke
 
 func (a *authInterceptor) WithAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 
-	if info.FullMethod == "/pb.AuthService/Login" || info.FullMethod == "/pb.AuthService/SignUp" {
+	if isRouteWhitelisted(info.FullMethod) {
 		return handler(ctx, req)
 	}
 
@@ -60,4 +63,14 @@ func (a *authInterceptor) WithAuthentication(ctx context.Context, req interface{
 	}
 
 	return handler(ctx, req)
+}
+
+func isRouteWhitelisted(route string) bool {
+	for _, value := range strings.Split(whitelistRoutes, ",") {
+		if value == route {
+			return true
+		}
+	}
+
+	return false
 }
