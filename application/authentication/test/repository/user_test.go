@@ -1,4 +1,4 @@
-package repository
+package repository_test
 
 import (
 	"context"
@@ -22,7 +22,6 @@ func init() {
 		log.Panicln(err.Error())
 	}
 }
-
 func TestUsersRepositorySave(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
@@ -96,6 +95,7 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 
 func TestUsersRepositoryUpdateUser(t *testing.T) {
 	cfg := db.NewConfig()
+
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
