@@ -25,12 +25,12 @@ func init() {
 	}
 }
 
-func TestMongoSignUp(t *testing.T) {
+func TestSignUp(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
+	userRepo := mg.NewUsersRepository(context.Background(), conn)
 	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
 	tokenManager := token.NewTokenManager(cfg)
 	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
@@ -52,12 +52,12 @@ func TestMongoSignUp(t *testing.T) {
 	assert.NotNil(t, user.UpdatedAt)
 }
 
-func TestMongoGetUser(t *testing.T) {
+func TestGetUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
+	userRepo := mg.NewUsersRepository(context.Background(), conn)
 	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
 	tokenManager := token.NewTokenManager(cfg)
 	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
@@ -82,12 +82,12 @@ func TestMongoGetUser(t *testing.T) {
 	assert.Equal(t, user.PhoneNumber, found.PhoneNumber)
 }
 
-func TestMongoUpdateUser(t *testing.T) {
+func TestUpdateUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
+	userRepo := mg.NewUsersRepository(context.Background(), conn)
 	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
 	tokenManager := token.NewTokenManager(cfg)
 	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
@@ -118,12 +118,88 @@ func TestMongoUpdateUser(t *testing.T) {
 	assert.NotEqual(t, user.PhoneNumber, found.PhoneNumber)
 }
 
-func TestMongoDeleteUser(t *testing.T) {
+func TestLogin(t *testing.T) {
+	ctx := context.Background()
+	cfg := db.NewConfig()
+	conn, err := db.NewMongoConnection(ctx, cfg)
+	assert.NoError(t, err)
+	defer conn.Close(ctx)
+	userRepo := mg.NewUsersRepository(ctx, conn)
+	credRepo := mg.NewCredentialsRepository(ctx, conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
+
+	createUserRequest := &pb.CreateUserRequest{
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361320",
+		Password:    "penispintorola212",
+	}
+
+	_, errService := service.SignUp(ctx, createUserRequest)
+
+	assert.NoError(t, errService)
+
+	loginRequest := &pb.LoginRequest{
+		Email:    createUserRequest.Email,
+		Password: createUserRequest.Password,
+	}
+
+	res, err := service.Login(ctx, loginRequest)
+
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, res.Token)
+}
+
+func TestAuthenticate(t *testing.T) {
+	ctx := context.Background()
+	cfg := db.NewConfig()
+	conn, err := db.NewMongoConnection(ctx, cfg)
+	assert.NoError(t, err)
+	defer conn.Close(ctx)
+	userRepo := mg.NewUsersRepository(ctx, conn)
+	credRepo := mg.NewCredentialsRepository(ctx, conn)
+	tokenManager := token.NewTokenManager(cfg)
+	service := sv.NewAuthService(userRepo, credRepo, tokenManager)
+
+	createUserRequest := &pb.CreateUserRequest{
+		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
+		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
+		PhoneNumber: "+552738361320",
+		Password:    "penispintorola212",
+	}
+
+	_, errService := service.SignUp(ctx, createUserRequest)
+
+	assert.NoError(t, errService)
+
+	loginRequest := &pb.LoginRequest{
+		Email:    createUserRequest.Email,
+		Password: createUserRequest.Password,
+	}
+
+	res, err := service.Login(ctx, loginRequest)
+
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, res.Token)
+
+	tokenReq := &pb.AuthenticateRequest{Token: res.Token}
+
+	tokenRes, err := service.Authenticate(ctx, tokenReq)
+
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, tokenRes.Uid)
+}
+
+func TestDeleteUser(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
-	userRepo := mg.NewMongoUsersRepository(context.Background(), conn)
+	userRepo := mg.NewUsersRepository(context.Background(), conn)
 	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
 	tokenManager := token.NewTokenManager(cfg)
 	service := sv.NewAuthService(userRepo, credRepo, tokenManager)

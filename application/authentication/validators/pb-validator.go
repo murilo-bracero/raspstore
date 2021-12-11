@@ -15,6 +15,7 @@ var (
 	ErrEmailOrUsernameInUse = errors.New("provided email or username has already in use by another user")
 	ErrUserNotFound         = errors.New("user with provided info does not exists")
 	ErrIncorrectCredentials = errors.New("provided email or password does not match")
+	ErrEmptyToken           = errors.New("token must not be empty")
 )
 
 func ValidateLogin(req *pb.LoginRequest) error {
@@ -26,6 +27,13 @@ func ValidateLogin(req *pb.LoginRequest) error {
 		return ErrEmptyPassword
 	}
 
+	return nil
+}
+
+func ValidateAuthenticate(req *pb.AuthenticateRequest) error {
+	if req.Token == "" {
+		return ErrEmptyToken
+	}
 	return nil
 }
 

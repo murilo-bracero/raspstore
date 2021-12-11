@@ -15,16 +15,16 @@ import (
 
 const usersCollectionName = "users"
 
-type mongoUsersRespository struct {
+type usersRespository struct {
 	ctx  context.Context
 	coll *mongo.Collection
 }
 
-func NewMongoUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
-	return &mongoUsersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
+func NewUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
+	return &usersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
 }
 
-func (r *mongoUsersRespository) Save(user *model.User) error {
+func (r *usersRespository) Save(user *model.User) error {
 	user.UserId = uuid.NewString()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
@@ -39,7 +39,7 @@ func (r *mongoUsersRespository) Save(user *model.User) error {
 	return nil
 }
 
-func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error) {
+func (r *usersRespository) FindById(id string) (user *model.User, err error) {
 
 	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
 
@@ -51,7 +51,7 @@ func (r *mongoUsersRespository) FindById(id string) (user *model.User, err error
 	return user, err
 }
 
-func (r *mongoUsersRespository) FindByEmail(email string) (user *model.User, err error) {
+func (r *usersRespository) FindByEmail(email string) (user *model.User, err error) {
 
 	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
 
@@ -63,13 +63,13 @@ func (r *mongoUsersRespository) FindByEmail(email string) (user *model.User, err
 	return user, err
 }
 
-func (r *mongoUsersRespository) DeleteUser(id string) error {
+func (r *usersRespository) DeleteUser(id string) error {
 
 	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
 	return err
 }
 
-func (r *mongoUsersRespository) UpdateUser(user *model.User) error {
+func (r *usersRespository) UpdateUser(user *model.User) error {
 
 	user.UpdatedAt = time.Now()
 
@@ -87,7 +87,7 @@ func (r *mongoUsersRespository) UpdateUser(user *model.User) error {
 	return err
 }
 
-func (r *mongoUsersRespository) FindAll() (users []*model.User, err error) {
+func (r *usersRespository) FindAll() (users []*model.User, err error) {
 	var cursor *mongo.Cursor
 
 	cursor, err = r.coll.Find(r.ctx, bson.M{})

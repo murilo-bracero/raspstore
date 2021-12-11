@@ -17,6 +17,7 @@ type AuthService interface {
 	DeleteUser(ctx context.Context, req *pb.GetUserRequest) (*pb.DeleteUserResponse, error)
 	UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.User, error)
 	ListUser(req *pb.ListUsersRequest, stream pb.AuthService_ListUserServer) error
+	Authenticate(ctx context.Context, req *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error)
 	Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error)
 }
 
@@ -139,6 +140,18 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 		return nil, validators.ErrIncorrectCredentials
 	}
 
+}
+
+func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
+	if err := validators.ValidateAuthenticate(req); err != nil {
+		return nil, err
+	}
+
+	if uid, err := a.tokenManager.Verify(req.Token); err != nil {
+		return nil, err
+	} else {
+		return &pb.AuthenticateResponse{Uid: uid}, nil
+	}
 }
 
 func (a *authService) ListUser(req *pb.ListUsersRequest, stream pb.AuthService_ListUserServer) error {
