@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+package pb;
+
+message File {
+    bytes chunk = 1;
+    string id = 2;  
+	string uri = 3;       
+	string updatedAt = 4; 
+	string createdBy = 5; 
+	string updatedBy = 6; 
+}
+
+message FileRef {
+    string id = 1;  
+	string uri = 2;       
+	string updatedAt = 3; 
+	string createdBy = 4; 
+	string updatedBy = 5; 
+}
+
+message GetFileRequest {
+    string id = 1;
+}
+
+message DeleteFileResponse {
+    string id = 1;
+}
+
+message CreateFileRequest {
+    bytes chunk = 1;   
+}
+
+message FindAllRequest {}
+
+service FileManagerService {
+    rpc Upload(stream CreateFileRequest) returns (FileRef);
+    rpc Download(GetFileRequest) returns (stream File);
+    rpc Delete(GetFileRequest) returns (DeleteFileResponse);
+    rpc Update(stream CreateFileRequest) returns (FileRef);
+}
