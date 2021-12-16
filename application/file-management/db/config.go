@@ -34,6 +34,15 @@ func NewConfig() Config {
 		cfg.grpcPort = value
 	}
 
+	cfg.rootFolder = os.Getenv("ROOT_FOLDER")
+
+	value, exists := os.LookupEnv("MONGO_URI")
+	if exists {
+		cfg.mongoUri = value
+		cfg.mongoDatabase = os.Getenv("MONGO_DATABASE_NAME")
+		return &cfg
+	}
+
 	cfg.mongoUser = os.Getenv("MONGO_USERNAME")
 	cfg.mongoPass = os.Getenv("MONGO_PASSWORD")
 	cfg.mongoHost = os.Getenv("MONGO_HOST")
@@ -46,8 +55,6 @@ func NewConfig() Config {
 	}
 
 	cfg.mongoUri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", cfg.mongoUser, cfg.mongoPass, cfg.mongoHost, cfg.mongoPort, cfg.mongoDatabase)
-
-	cfg.rootFolder = os.Getenv("ROOT_FOLDER")
 
 	return &cfg
 }

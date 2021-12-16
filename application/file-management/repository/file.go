@@ -78,6 +78,7 @@ func (f *filesRepository) Delete(id string) error {
 
 func (f *filesRepository) Update(uid string, file *model.File) error {
 	update := bson.M{"$set": bson.M{
+		"size":       file.Size,
 		"updated_at": time.Now(),
 		"updated_by": uid}}
 
