@@ -11,6 +11,7 @@ import (
 
 type DiskStore interface {
 	Save(file *model.File, data bytes.Buffer) error
+	Delete(uri string) error
 }
 
 type diskStore struct {
@@ -45,4 +46,8 @@ func (d *diskStore) Save(file *model.File, data bytes.Buffer) error {
 	file.Uri = path
 
 	return nil
+}
+
+func (d *diskStore) Delete(uri string) error {
+	return os.Remove(uri)
 }

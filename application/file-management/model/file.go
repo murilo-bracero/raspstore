@@ -1,6 +1,7 @@
 package model
 
 import (
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -28,10 +29,21 @@ func (f *File) ToProtoBuffer() *pb.FileRef {
 	}
 }
 
-func (f *File) FromProtoBuffer(user *pb.CreateFileRequestData) {
+func (f *File) FromCreateProto(file *pb.CreateFileRequestData) {
 	f.Id = primitive.NewObjectID()
 	f.UpdatedAt = time.Now()
-	f.CreatedBy = user.CreatedBy
-	f.UpdatedBy = user.CreatedBy
-	f.Filename = user.Filename
+	f.CreatedBy = file.CreatedBy
+	f.UpdatedBy = file.CreatedBy
+	f.Filename = file.Filename
+}
+
+func (f *File) FromUpdateProto(file *pb.UpdateFileRequestData) {
+	f.UpdatedAt = time.Now()
+	f.UpdatedBy = file.UpdatedBy
+	if id, err := primitive.ObjectIDFromHex(file.Id); err != nil {
+		log.Println("error converting ", file.Id, " to ObjectId")
+	} else {
+		f.Id = id
+	}
+
 }

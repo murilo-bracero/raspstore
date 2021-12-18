@@ -19,7 +19,7 @@ type FilesRepository interface {
 	Save(file *model.File) error
 	FindById(id string) (*model.File, error)
 	Delete(id string) error
-	Update(uid string, file *model.File) error
+	Update(file *model.File) error
 	FindAll() (files []*model.File, err error)
 }
 
@@ -35,6 +35,7 @@ func NewFilesRepository(ctx context.Context, conn db.MongoConnection) FilesRepos
 func (f *filesRepository) Save(file *model.File) error {
 	if _, err := f.coll.InsertOne(f.ctx, file); err != nil {
 		fmt.Println("could not create file metadata in database ", file, ", with error: ", err.Error())
+		return err
 	}
 
 	return nil
@@ -76,11 +77,11 @@ func (f *filesRepository) Delete(id string) error {
 	return err
 }
 
-func (f *filesRepository) Update(uid string, file *model.File) error {
+func (f *filesRepository) Update(file *model.File) error {
 	update := bson.M{"$set": bson.M{
 		"size":       file.Size,
 		"updated_at": time.Now(),
-		"updated_by": uid}}
+		"updated_by": file.UpdatedBy}}
 
 	f.coll.UpdateByID(f.ctx, file.Id, update)
 
