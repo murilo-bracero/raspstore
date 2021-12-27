@@ -14,6 +14,14 @@ var (
 	ErrWrongID          = errors.New("provided id is invalid")
 )
 
+func ValidateDownload(req *pb.GetFileRequest) error {
+	if len(req.Id) != 24 {
+		return ErrWrongID
+	}
+
+	return nil
+}
+
 func ValidateUpload(req *pb.CreateFileRequest) error {
 
 	if req.GetFiledata().CreatedBy == "" {

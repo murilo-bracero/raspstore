@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"raspstore.github.io/file-manager/db"
+	"raspstore.github.io/file-manager/interceptor"
 	"raspstore.github.io/file-manager/pb"
 	"raspstore.github.io/file-manager/repository"
 	"raspstore.github.io/file-manager/service"
@@ -37,12 +38,14 @@ func main() {
 
 	fileManagerService := service.NewFileManagerService(diskStore, fileRepo)
 
+	authInterceptor := interceptor.NewAuthInterceptor(cfg)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithUnaryAuthentication), grpc.StreamInterceptor(authInterceptor.WithStreamingAuthentication))
 	pb.RegisterFileManagerServiceServer(grpcServer, fileManagerService)
 
 	log.Printf("File Manager service running on [::]:%d\n", cfg.GrpcPort())

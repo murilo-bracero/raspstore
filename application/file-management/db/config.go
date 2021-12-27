@@ -12,17 +12,19 @@ type Config interface {
 	RootFolder() string
 	MongoUri() string
 	MongoDatabaseName() string
+	AuthServiceUrl() string
 }
 
 type config struct {
-	grpcPort      int
-	rootFolder    string
-	mongoUser     string
-	mongoHost     string
-	mongoDatabase string
-	mongoPass     string
-	mongoPort     int
-	mongoUri      string
+	grpcPort       int
+	rootFolder     string
+	mongoUser      string
+	mongoHost      string
+	mongoDatabase  string
+	mongoPass      string
+	mongoPort      int
+	mongoUri       string
+	authServiceUrl string
 }
 
 func NewConfig() Config {
@@ -35,6 +37,7 @@ func NewConfig() Config {
 	}
 
 	cfg.rootFolder = os.Getenv("ROOT_FOLDER")
+	cfg.authServiceUrl = os.Getenv("AUTH_SERVICE_URL")
 
 	value, exists := os.LookupEnv("MONGO_URI")
 	if exists {
@@ -73,4 +76,8 @@ func (c *config) MongoUri() string {
 
 func (c *config) MongoDatabaseName() string {
 	return c.mongoDatabase
+}
+
+func (c *config) AuthServiceUrl() string {
+	return c.authServiceUrl
 }

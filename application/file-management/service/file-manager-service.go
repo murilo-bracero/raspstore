@@ -86,6 +86,10 @@ func (f *fileManagerService) Upload(stream pb.FileManagerService_UploadServer) e
 }
 
 func (f *fileManagerService) Download(req *pb.GetFileRequest, stream pb.FileManagerService_DownloadServer) error {
+	if err := validators.ValidateDownload(req); err != nil {
+		return nil
+	}
+
 	file, err := f.fileRepository.FindById(req.Id)
 
 	if err != nil {
@@ -136,6 +140,10 @@ func (f *fileManagerService) Download(req *pb.GetFileRequest, stream pb.FileMana
 }
 
 func (f *fileManagerService) Delete(ctx context.Context, req *pb.GetFileRequest) (*pb.DeleteFileResponse, error) {
+	if err := validators.ValidateDownload(req); err != nil {
+		return nil, err
+	}
+
 	file, err := f.fileRepository.FindById(req.Id)
 
 	if err != nil {
