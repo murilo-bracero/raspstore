@@ -26,74 +26,74 @@ func NewAuthInterceptor(cfg db.Config) AuthInterceptor {
 }
 
 func (a *authInterceptor) WithStreamingAuthentication(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	md, exists := metadata.FromIncomingContext(ss.Context())
-
-	if !exists {
-		return status.Errorf(codes.Unauthenticated, "metadata not provided")
-	}
-
-	values := md["authorization"]
-
-	if len(values) == 0 {
-		return status.Errorf(codes.Unauthenticated, "authorization metadata not provided")
-	}
-
-	accessToken := values[0]
-
-	conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithInsecure())
+	accessToken, err := getTokenFromContext(ss.Context())
 
 	if err != nil {
-		log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())
-	}
-
-	client := pb.NewAuthServiceClient(conn)
-
-	in := &pb.AuthenticateRequest{Token: accessToken}
-
-	if res, err := client.Authenticate(context.Background(), in); err != nil {
 		return err
-	} else {
-		log.Println("user ", res.Uid, " accessed resource ", info.FullMethod)
 	}
 
-	defer conn.Close()
+	uid, err := a.validateToken(accessToken)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("user ", uid, " streammed resource ", info.FullMethod)
 
 	return handler(srv, ss)
 }
 
 func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 
-	md, exists := metadata.FromIncomingContext(ctx)
+	accessToken, err := getTokenFromContext(ctx)
 
-	if !exists {
-		return nil, status.Errorf(codes.Unauthenticated, "metadata not provided")
+	if err != nil {
+		return nil, err
 	}
 
-	values := md["authorization"]
+	uid, err := a.validateToken(accessToken)
 
-	if len(values) == 0 {
-		return nil, status.Errorf(codes.Unauthenticated, "authorization metadata not provided")
+	if err != nil {
+		return nil, err
 	}
 
-	accessToken := values[0]
+	log.Println("user ", uid, " accessed resource ", info.FullMethod)
 
+	return handler(ctx, req)
+}
+
+func (a *authInterceptor) validateToken(token string) (uid string, err error) {
 	conn, err := grpc.Dial(a.cfg.AuthServiceUrl())
 
 	if err != nil {
 		log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())
 	}
 
-	client := pb.NewAuthServiceClient(conn)
-
-	in := &pb.AuthenticateRequest{Token: accessToken}
-
-	if res, err := client.Authenticate(context.Background(), in); err != nil {
-		return nil, err
-	} else {
-		log.Println("user ", res.Uid, " accessed resource ", info.FullMethod)
-	}
-
 	defer conn.Close()
 
-	return handler(ctx, req)
+	client := pb.NewAuthServiceClient(conn)
+
+	in := &pb.AuthenticateRequest{Token: token}
+
+	if res, err := client.Authenticate(context.Background(), in); err != nil {
+		return "", err
+	} else {
+		return res.Uid, nil
+	}
+}
+
+func getTokenFromContext(ctx context.Context) (string, error) {
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return "", status.Errorf(codes.Unauthenticated, "metadata not provided")
+	}
+
+	values := md["authorization"]
+
+	if len(values) == 0 {
+		return "", status.Errorf(codes.Unauthenticated, "authorization metadata not provided")
+	}
+
+	return values[0], nil
 }
