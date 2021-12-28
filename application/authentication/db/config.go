@@ -11,6 +11,7 @@ type Config interface {
 	MongoUri() string
 	MongoDatabaseName() string
 	GrpcPort() int
+	RestPort() int
 	GcpProjectId() string
 	UserDataStorage() string
 	CredentialsStorage() string
@@ -20,6 +21,7 @@ type Config interface {
 
 type config struct {
 	grpcPort           int
+	restPort           int
 	gcpProjectId       string
 	userDataStorage    string
 	credentialsStorage string
@@ -46,6 +48,12 @@ func NewConfig() Config {
 		log.Fatalln("error parsing gRPC port env var GRPC_PORT: ", err.Error())
 	} else {
 		cfg.grpcPort = value
+	}
+
+	if value, err := strconv.Atoi(os.Getenv("REST_PORT")); err != nil {
+		log.Fatalln("error parsing gRPC port env var REST_PORT: ", err.Error())
+	} else {
+		cfg.restPort = value
 	}
 
 	if value, err := strconv.Atoi(os.Getenv("TOKEN_DURATION")); err != nil {
@@ -93,6 +101,10 @@ func (c *config) MongoDatabaseName() string {
 
 func (c *config) GrpcPort() int {
 	return c.grpcPort
+}
+
+func (c *config) RestPort() int {
+	return c.restPort
 }
 
 func (c *config) GcpProjectId() string {

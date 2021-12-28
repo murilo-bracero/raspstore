@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	api "raspstore.github.io/authentication/api"
+	"raspstore.github.io/authentication/api/controller"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/middleware"
 	"raspstore.github.io/authentication/pb"
@@ -41,15 +44,23 @@ func main() {
 
 	authInterceptor := middleware.NewAuthInterceptor(usersRepo, tokenManager)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
+	go func() {
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithAuthentication))
-	pb.RegisterAuthServiceServer(grpcServer, authService)
+		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithAuthentication))
+		pb.RegisterAuthServiceServer(grpcServer, authService)
 
-	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
+		log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
 
-	grpcServer.Serve(lis)
+		grpcServer.Serve(lis)
+	}()
+
+	uc := controller.NewUserController(usersRepo)
+	router := api.NewRoutes(uc).MountRoutes()
+	http.Handle("/", router)
+	log.Printf("Authentication API runing on port %d", cfg.RestPort())
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), router)
 }
