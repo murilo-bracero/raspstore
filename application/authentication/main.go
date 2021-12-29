@@ -68,7 +68,7 @@ func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInte
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithAuthentication))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithUnaryAuthentication), grpc.StreamInterceptor(itc.WithStreamingAuthentication))
 	pb.RegisterAuthServiceServer(grpcServer, svc)
 
 	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())

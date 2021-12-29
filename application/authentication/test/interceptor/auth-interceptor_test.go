@@ -55,7 +55,7 @@ func TestInterceptorWhenRouteIsNotWhitelisted(t *testing.T) {
 
 	info := &grpc.UnaryServerInfo{FullMethod: "/pb.AuthService/SignUp"}
 
-	mdwr.WithAuthentication(ctx, "req", info, mockHandler)
+	mdwr.WithUnaryAuthentication(ctx, "req", info, mockHandler)
 }
 
 func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
@@ -77,5 +77,5 @@ func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
 
 	info := &grpc.UnaryServerInfo{FullMethod: "/pb.AuthService/Login"}
 
-	mdwr.WithAuthentication(ctx, "req", info, mockHandler)
+	mdwr.WithUnaryAuthentication(ctx, "req", info, mockHandler)
 }
