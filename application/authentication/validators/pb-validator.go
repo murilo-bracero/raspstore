@@ -18,6 +18,18 @@ var (
 	ErrEmptyToken           = errors.New("token must not be empty")
 )
 
+func GetErrorsList() []error {
+	return []error{ErrInvalidId,
+		ErrEmptyUsername,
+		ErrEmptyEmail,
+		ErrEmptyPassword,
+		ErrComplexityPassword,
+		ErrEmailOrUsernameInUse,
+		ErrUserNotFound,
+		ErrIncorrectCredentials,
+		ErrEmptyToken}
+}
+
 func ValidateLogin(req *pb.LoginRequest) error {
 	if req.Email == "" {
 		return ErrEmptyEmail

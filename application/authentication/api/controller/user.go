@@ -1,14 +1,18 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	api "raspstore.github.io/authentication/api/dto"
 	"raspstore.github.io/authentication/model"
+	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
+	"raspstore.github.io/authentication/service"
 )
 
 type UserController interface {
@@ -20,27 +24,48 @@ type UserController interface {
 }
 
 type controller struct {
-	userRepository repository.UsersRepository
+	repo    repository.UsersRepository
+	service service.AuthService
 }
 
-func NewUserController(userRepository repository.UsersRepository) UserController {
-	return &controller{userRepository: userRepository}
+func NewUserController(repo repository.UsersRepository, service service.AuthService) UserController {
+	return &controller{repo: repo, service: service}
 }
 
 func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
+
 	var cUserReq api.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&cUserReq); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	user := new(model.User)
-	user.FromCreateRequest(cUserReq)
+	req := &pb.CreateUserRequest{
+		Username:    cUserReq.Username,
+		Password:    cUserReq.Password,
+		Email:       cUserReq.Email,
+		PhoneNumber: cUserReq.PhoneNumber,
+	}
 
-	c.userRepository.Save(user)
+	if res, err := c.service.SignUp(context.Background(), req); err != nil {
+		w.WriteHeader(reqStatusCode(err))
+		er := new(api.ErrorResponse)
+		er.Message = "could not create user"
+		er.Reason = err.Error()
+		er.Code = "RU01"
+		send(w, er)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		send(w, model.User{
+			UserId:      res.Id,
+			Username:    res.Username,
+			Email:       res.Email,
+			PhoneNumber: res.PhoneNumber,
+			CreatedAt:   time.Unix(res.CreatedAt, 0),
+			UpdatedAt:   time.Unix(res.UpdatedAt, 0),
+		})
+	}
 
-	w.WriteHeader(http.StatusOK)
-	send(w, user)
 }
 
 func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +73,7 @@ func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	id := params["id"]
 
-	user, err := c.userRepository.FindById(id)
+	user, err := c.repo.FindById(id)
 
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -59,7 +84,7 @@ func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(reqStatusCode(err))
 		er := new(api.ErrorResponse)
 		er.Message = "could not retrieve user with id " + id
 		er.Reason = err.Error()
@@ -76,8 +101,8 @@ func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	id := params["id"]
 
-	if err := c.userRepository.DeleteUser(id); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	if err := c.repo.DeleteUser(id); err != nil {
+		w.WriteHeader(reqStatusCode(err))
 		er := new(api.ErrorResponse)
 		er.Message = "could not delete user with id " + id
 		er.Reason = err.Error()
@@ -100,29 +125,39 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	id := params["id"]
 
-	user := new(model.User)
-	user.FromUpdateRequest(cUserReq, id)
+	req := &pb.UpdateUserRequest{
+		Id:          id,
+		Username:    cUserReq.Username,
+		Email:       cUserReq.Email,
+		PhoneNumber: cUserReq.PhoneNumber,
+	}
 
-	if err := c.userRepository.UpdateUser(user); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	if res, err := c.service.UpdateUser(context.Background(), req); err != nil {
+		w.WriteHeader(reqStatusCode(err))
 		er := new(api.ErrorResponse)
 		er.Message = "could not update user with id " + id
 		er.Reason = err.Error()
 		er.Code = "UU01"
 		send(w, er)
-		return
+	} else {
+		w.WriteHeader(reqStatusCode(err))
+		send(w, model.User{
+			UserId:      res.Id,
+			Username:    res.Username,
+			Email:       res.Email,
+			PhoneNumber: res.PhoneNumber,
+			CreatedAt:   time.Unix(res.CreatedAt, 0),
+			UpdatedAt:   time.Unix(res.UpdatedAt, 0),
+		})
 	}
-
-	send(w, user)
-
 }
 
 func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 
-	users, err := c.userRepository.FindAll()
+	users, err := c.repo.FindAll()
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(reqStatusCode(err))
 		er := new(api.ErrorResponse)
 		er.Message = "could not retrieve users list"
 		er.Reason = err.Error()
@@ -132,13 +167,4 @@ func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	send(w, users)
-}
-
-func send(w http.ResponseWriter, obj interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(obj)
-	if err != nil {
-		return
-	}
-	w.Write(jsonResponse)
 }
