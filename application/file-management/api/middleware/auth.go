@@ -31,10 +31,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 		if token == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			er := new(dto.ErrorResponse)
-			er.Message = "authorization header is missing"
-			er.Code = "AM01"
-			send(w, er)
+			send(w, dto.ErrorResponse{Message: "authorization header is missing", Code: "AM01"})
 			return
 		}
 
@@ -52,11 +49,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 		if res, err := client.Authenticate(context.Background(), in); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			er := new(dto.ErrorResponse)
-			er.Message = "authorization header is missing"
-			er.Reason = err.Error()
-			er.Code = "AM01"
-			send(w, er)
+			send(w, dto.ErrorResponse{Message: "authorization header is missing", Reason: err.Error(), Code: "AM02"})
 			return
 		} else {
 			r.Header.Add("UID", res.Uid)
