@@ -51,6 +51,7 @@ func (f *File) FromCreateProto(file *pb.CreateFileRequestData) {
 func (f *File) FromUpdateProto(file *pb.UpdateFileRequestData) {
 	f.UpdatedAt = time.Now()
 	f.UpdatedBy = file.UpdatedBy
+	f.Filename = file.Filename
 	if id, err := primitive.ObjectIDFromHex(file.Id); err != nil {
 		log.Println("error converting ", file.Id, " to ObjectId")
 	} else {

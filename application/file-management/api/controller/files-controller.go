@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,6 +13,7 @@ import (
 	"raspstore.github.io/file-manager/model"
 	"raspstore.github.io/file-manager/repository"
 	"raspstore.github.io/file-manager/system"
+	"raspstore.github.io/file-manager/validators"
 )
 
 type FilesController interface {
@@ -160,6 +160,16 @@ func (f *filesController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	id := params["id"]
 
+	if err := validators.ValidateId(id); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		er := new(dto.ErrorResponse)
+		er.Message = "Wrong Id"
+		er.Reason = err.Error()
+		er.Code = "UP01"
+		send(w, er)
+		return
+	}
+
 	file, err := f.repo.FindById(id)
 
 	if err == mongo.ErrNoDocuments {
@@ -220,7 +230,7 @@ func (f *filesController) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
-	if !validateBody(r.Header.Get("Content-Type"), "multipart/form-data") {
+	if !validators.ValidateBody(r.Header.Get("Content-Type"), "multipart/form-data") {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		er := new(dto.ErrorResponse)
 		er.Message = "Request body must be a multipart/form-data"
@@ -233,6 +243,16 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
 	id := params["id"]
 
+	if err := validators.ValidateId(id); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		er := new(dto.ErrorResponse)
+		er.Message = "Wrong Id"
+		er.Reason = err.Error()
+		er.Code = "UP01"
+		send(w, er)
+		return
+	}
+
 	fileRef, err := f.repo.FindById(id)
 
 	if err == mongo.ErrNoDocuments {
@@ -240,7 +260,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "File with id " + id + " not found."
 		er.Reason = err.Error()
-		er.Code = "UP01"
+		er.Code = "UP02"
 		send(w, er)
 		return
 	}
@@ -250,7 +270,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "Could not retrieve file information. Try again later."
 		er.Reason = err.Error()
-		er.Code = "UP02"
+		er.Code = "UP03"
 		send(w, er)
 		return
 	}
@@ -265,7 +285,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		er := new(dto.ErrorResponse)
 		er.Message = "multipart form headers have wrong length"
-		er.Code = "UP03"
+		er.Code = "UP04"
 		send(w, er)
 		return
 	}
@@ -278,7 +298,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		er := new(dto.ErrorResponse)
 		er.Message = "could not open file: uploaded file is corrupted or network connectivity is bad, try again later"
-		er.Code = "UP04"
+		er.Code = "UP05"
 		send(w, er)
 		return
 	}
@@ -290,7 +310,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "could not read file: uploaded file is corrupted or network connectivity is bad, try again later"
 		er.Reason = err.Error()
-		er.Code = "UP05"
+		er.Code = "UP06"
 		send(w, er)
 		return
 	}
@@ -302,7 +322,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "could not write file to server, try again later"
 		er.Reason = err.Error()
-		er.Code = "UP06"
+		er.Code = "UP07"
 		send(w, er)
 		return
 	}
@@ -314,7 +334,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "could not write file to server, try again later"
 		er.Reason = err.Error()
-		er.Code = "UP07"
+		er.Code = "UP08"
 		send(w, er)
 		return
 	}
@@ -326,7 +346,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		er := new(dto.ErrorResponse)
 		er.Message = "could not save file in database. Try again later."
 		er.Reason = err.Error()
-		er.Code = "UP08"
+		er.Code = "UP09"
 
 		// delete file locally
 		if delErr := f.ds.Delete(fileRef.Uri); delErr != nil {
@@ -355,12 +375,6 @@ func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	send(w, files)
-}
-
-func validateBody(received string, desired string) bool {
-	clean := strings.Split(received, ";")
-
-	return clean[0] == desired
 }
 
 func send(w http.ResponseWriter, obj interface{}) {
