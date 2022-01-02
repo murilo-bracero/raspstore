@@ -75,3 +75,19 @@ func TestUpdate(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestDelete(t *testing.T) {
+	cfg := db.NewConfig()
+	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	assert.NoError(t, err)
+
+	fr := repository.NewFilesRepository(context.Background(), conn)
+
+	files, err := fr.FindAll()
+
+	assert.NoError(t, err)
+
+	for _, file := range files {
+		fr.Delete(file.Id.Hex())
+	}
+}

@@ -9,13 +9,24 @@ import (
 )
 
 type File struct {
-	Id        primitive.ObjectID `bson:"_id"`
-	Filename  string             `bson:"filename"`
-	Uri       string             `bson:"uri"`
-	Size      uint32             `bson:"size"`
-	UpdatedAt time.Time          `bson:"updated_at"`
-	CreatedBy string             `bson:"created_by"`
-	UpdatedBy string             `bson:"updated_by"`
+	Id        primitive.ObjectID `json:"id,omitempty" bson:"_id"`
+	Filename  string             `json:"filename,omitempty" bson:"filename"`
+	Uri       string             `json:"-" bson:"uri"`
+	Size      uint32             `json:"size,omitempty" bson:"size"`
+	UpdatedAt time.Time          `json:"updated_at,omitempty" bson:"updated_at"`
+	CreatedBy string             `json:"created_by,omitempty" bson:"created_by"`
+	UpdatedBy string             `json:"updated_by,omitempty" bson:"updated_by"`
+}
+
+func NewFile(filename string, createdBy string, size uint32) *File {
+	return &File{
+		Id:        primitive.NewObjectID(),
+		Filename:  filename,
+		CreatedBy: createdBy,
+		UpdatedBy: createdBy,
+		Size:      size,
+		UpdatedAt: time.Now(),
+	}
 }
 
 func (f *File) ToProtoBuffer() *pb.FileRef {

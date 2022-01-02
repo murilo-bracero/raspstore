@@ -25,7 +25,7 @@ func NewDiskStore(rootFolder string) DiskStore {
 
 func (d *diskStore) Save(file *model.File, data bytes.Buffer) error {
 
-	path := fmt.Sprintf("%s/%s", d.rootFolder, file.Filename)
+	path := fmt.Sprintf("%s/%s", d.rootFolder, file.Id.Hex())
 
 	touch, err := os.Create(path)
 

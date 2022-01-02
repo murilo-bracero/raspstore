@@ -38,7 +38,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 			return
 		}
 
-		conn, err := grpc.Dial(a.cfg.AuthServiceUrl())
+		conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithInsecure())
 
 		if err != nil {
 			log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())
@@ -59,6 +59,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 			send(w, er)
 			return
 		} else {
+			r.Header.Add("UID", res.Uid)
 			log.Printf("user %s is accessing resource %s", res.Uid, r.RequestURI)
 		}
 
