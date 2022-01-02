@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -24,8 +25,10 @@ import (
 func main() {
 	ctx := context.Background()
 
-	if err := godotenv.Load(); err != nil {
-		log.Panicln("Could not load local variables")
+	if os.Getenv("ENVIRONMENT") != "PRODUCTION" {
+		if err := godotenv.Load(); err != nil {
+			log.Panicln("Could not load local variables")
+		}
 	}
 
 	cfg := db.NewConfig()

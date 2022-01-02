@@ -1,5 +1,6 @@
 pb/
 .env
 tmp/
-*.sh
 .air.conf
+*.sh
+test/
