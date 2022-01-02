@@ -1,4 +1,4 @@
-package api
+package dto
 
 import "raspstore.github.io/authentication/model"
 

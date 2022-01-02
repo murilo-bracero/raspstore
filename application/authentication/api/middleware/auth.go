@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	api "raspstore.github.io/authentication/api/dto"
+	"raspstore.github.io/authentication/api/dto"
 	"raspstore.github.io/authentication/token"
 )
 
@@ -31,10 +31,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 			if token == "" {
 				w.WriteHeader(http.StatusUnauthorized)
-				er := new(api.ErrorResponse)
-				er.Message = "authorization header is missing"
-				er.Code = "AM01"
-				send(w, er)
+				send(w, dto.ErrorResponse{Message: "authorization header is missing", Code: "AM01"})
 				return
 			}
 
@@ -43,10 +40,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 			if err != nil {
 				log.Println("token error : ", err.Error())
 				w.WriteHeader(http.StatusUnauthorized)
-				er := new(api.ErrorResponse)
-				er.Message = "authorization token is denied"
-				er.Code = "AM02"
-				send(w, er)
+				send(w, dto.ErrorResponse{Message: "authorization token is denied", Code: "AM02"})
 				return
 			}
 

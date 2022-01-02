@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	api "raspstore.github.io/authentication/api/dto"
+	"raspstore.github.io/authentication/api/dto"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/service"
@@ -25,7 +25,7 @@ func NewCredentialsController(repo repository.UsersRepository, service service.A
 }
 
 func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
-	var lr api.LoginRequest
+	var lr dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -37,29 +37,21 @@ func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := c.service.Login(context.Background(), req)
-	w.WriteHeader(reqStatusCode(err))
 
 	if err != nil {
-		er := new(api.ErrorResponse)
-		er.Message = "could not make login with given credentials"
-		er.Reason = err.Error()
-		er.Code = "LG01"
-		send(w, er)
+		w.WriteHeader(reqStatusCode(err))
+		send(w, dto.ErrorResponse{Message: "could not make login with given credentials", Reason: err.Error(), Code: "LG01"})
 		return
 	}
 
 	usr, err := c.repo.FindByEmail(req.Email)
-	w.WriteHeader(reqStatusCode(err))
 	if err != nil {
-		er := new(api.ErrorResponse)
-		er.Message = "could not retrieve logged in user"
-		er.Reason = err.Error()
-		er.Code = "LG02"
-		send(w, er)
+		w.WriteHeader(reqStatusCode(err))
+		send(w, dto.ErrorResponse{Message: "could not retrieve logged in user", Reason: err.Error(), Code: "LG02"})
 		return
 	}
 
-	send(w, api.LoginResponse{
+	send(w, dto.LoginResponse{
 		Token: res.Token,
 		User:  *usr,
 	})

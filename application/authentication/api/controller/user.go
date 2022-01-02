@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	api "raspstore.github.io/authentication/api/dto"
+	"raspstore.github.io/authentication/api/dto"
 	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
@@ -34,7 +34,7 @@ func NewUserController(repo repository.UsersRepository, service service.AuthServ
 
 func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 
-	var cUserReq api.CreateUserRequest
+	var cUserReq dto.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&cUserReq); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -49,11 +49,7 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	if res, err := c.service.SignUp(context.Background(), req); err != nil {
 		w.WriteHeader(reqStatusCode(err))
-		er := new(api.ErrorResponse)
-		er.Message = "could not create user"
-		er.Reason = err.Error()
-		er.Code = "RU01"
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: "could not create user", Reason: err.Error(), Code: "RU01"})
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		send(w, model.User{
@@ -77,19 +73,13 @@ func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
-		er := new(api.ErrorResponse)
-		er.Message = fmt.Sprintf("user with id %s does not exists", id)
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: fmt.Sprintf("user with id %s does not exists", id), Code: "GU01"})
 		return
 	}
 
 	if err != nil {
 		w.WriteHeader(reqStatusCode(err))
-		er := new(api.ErrorResponse)
-		er.Message = "could not retrieve user with id " + id
-		er.Reason = err.Error()
-		er.Code = "GU01"
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not retrieve user with id %s", id), Reason: err.Error(), Code: "GU02"})
 		return
 	}
 
@@ -103,11 +93,7 @@ func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := c.repo.DeleteUser(id); err != nil {
 		w.WriteHeader(reqStatusCode(err))
-		er := new(api.ErrorResponse)
-		er.Message = "could not delete user with id " + id
-		er.Reason = err.Error()
-		er.Code = "DU01"
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not delete user with id %s", id), Reason: err.Error(), Code: "DU01"})
 		return
 	}
 
@@ -115,7 +101,7 @@ func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var cUserReq api.UpdateUserRequest
+	var cUserReq dto.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&cUserReq); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -134,11 +120,7 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if res, err := c.service.UpdateUser(context.Background(), req); err != nil {
 		w.WriteHeader(reqStatusCode(err))
-		er := new(api.ErrorResponse)
-		er.Message = "could not update user with id " + id
-		er.Reason = err.Error()
-		er.Code = "UU01"
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not update user with id %s", id), Reason: err.Error(), Code: "UU01"})
 	} else {
 		w.WriteHeader(reqStatusCode(err))
 		send(w, model.User{
@@ -158,11 +140,7 @@ func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(reqStatusCode(err))
-		er := new(api.ErrorResponse)
-		er.Message = "could not retrieve users list"
-		er.Reason = err.Error()
-		er.Code = "LU01"
-		send(w, er)
+		send(w, dto.ErrorResponse{Message: "could not retrieve users list", Reason: err.Error(), Code: "LU01"})
 		return
 	}
 
