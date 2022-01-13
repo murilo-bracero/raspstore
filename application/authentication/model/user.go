@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	UserId      string    `bson:"user_id" datastore:"user_id"`
-	Username    string    `bson:"username" datastore:"username"`
-	Email       string    `bson:"email" datastore:"email"`
-	PhoneNumber string    `bson:"phone_number" datastore:"phone_number"`
-	CreatedAt   time.Time `bson:"created_at" datastore:"created_at"`
-	UpdatedAt   time.Time `bson:"updated_at" datastore:"updated_at"`
+	UserId      string    `bson:"user_id" json:"userId"`
+	Username    string    `bson:"username" json:"username"`
+	Email       string    `bson:"email" json:"email"`
+	PhoneNumber string    `bson:"phone_number" json:"phoneNumber"`
+	CreatedAt   time.Time `bson:"created_at" json:"createdAt"`
+	UpdatedAt   time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 func (u *User) ToProtoBuffer() *pb.User {

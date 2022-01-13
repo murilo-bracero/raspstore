@@ -1,0 +1,27 @@
+FROM golang:1.17-alpine
+
+RUN apk add --no-cache protoc
+
+WORKDIR /app
+
+RUN GO111MODULE=on \
+        go get google.golang.org/protobuf/cmd/protoc-gen-go \
+        google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+COPY go.mod ./
+
+COPY go.sum ./
+
+RUN go mod download
+
+COPY . ./
+
+RUN protoc --go_out=. --go-grpc_out=. ./messages/users-service.proto
+RUN protoc --go_out=. --go-grpc_out=. ./messages/authentication.proto
+
+RUN go mod tidy
+
+RUN go build -o /users-service-app
+
+CMD ["/users-service-app"]
+

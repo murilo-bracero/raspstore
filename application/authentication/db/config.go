@@ -11,26 +11,22 @@ type Config interface {
 	MongoUri() string
 	MongoDatabaseName() string
 	GrpcPort() int
-	GcpProjectId() string
-	UserDataStorage() string
-	CredentialsStorage() string
+	RestPort() int
 	TokenSecret() string
 	TokenDuration() int
 }
 
 type config struct {
-	grpcPort           int
-	gcpProjectId       string
-	userDataStorage    string
-	credentialsStorage string
-	mongoUser          string
-	mongoPass          string
-	mongoHost          string
-	mongoPort          int
-	mongoDatabase      string
-	mongoUri           string
-	tokenSecret        string
-	tokenDuration      int
+	grpcPort      int
+	restPort      int
+	mongoUser     string
+	mongoPass     string
+	mongoHost     string
+	mongoPort     int
+	mongoDatabase string
+	mongoUri      string
+	tokenSecret   string
+	tokenDuration int
 }
 
 func NewConfig() Config {
@@ -38,14 +34,16 @@ func NewConfig() Config {
 
 	var err error
 
-	cfg.userDataStorage = os.Getenv("USER_DATA_STORAGE")
-	cfg.userDataStorage = os.Getenv("CREDENTIALS_STORAGE")
-	cfg.gcpProjectId = os.Getenv("GCLOUD_PROJECT_ID")
-
 	if value, err := strconv.Atoi(os.Getenv("GRPC_PORT")); err != nil {
 		log.Fatalln("error parsing gRPC port env var GRPC_PORT: ", err.Error())
 	} else {
 		cfg.grpcPort = value
+	}
+
+	if value, err := strconv.Atoi(os.Getenv("REST_PORT")); err != nil {
+		log.Fatalln("error parsing gRPC port env var REST_PORT: ", err.Error())
+	} else {
+		cfg.restPort = value
 	}
 
 	if value, err := strconv.Atoi(os.Getenv("TOKEN_DURATION")); err != nil {
@@ -95,16 +93,8 @@ func (c *config) GrpcPort() int {
 	return c.grpcPort
 }
 
-func (c *config) GcpProjectId() string {
-	return c.gcpProjectId
-}
-
-func (c *config) UserDataStorage() string {
-	return c.userDataStorage
-}
-
-func (c *config) CredentialsStorage() string {
-	return c.credentialsStorage
+func (c *config) RestPort() int {
+	return c.restPort
 }
 
 func (c *config) TokenSecret() string {

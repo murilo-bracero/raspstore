@@ -1,24 +1,19 @@
 package validators
 
 import (
-	"errors"
-
 	"raspstore.github.io/authentication/pb"
 )
 
-var (
-	ErrInvalidId            = errors.New("field Id must not be null or empty")
-	ErrEmptyUsername        = errors.New("field username could not be null or empty")
-	ErrEmptyEmail           = errors.New("field email could not be null or empty")
-	ErrEmptyPassword        = errors.New("field password could not be null or empty")
-	ErrComplexityPassword   = errors.New("field password must have at least 8 characters")
-	ErrEmailOrUsernameInUse = errors.New("provided email or username has already in use by another user")
-	ErrUserNotFound         = errors.New("user with provided info does not exists")
-	ErrIncorrectCredentials = errors.New("provided email or password does not match")
-	ErrEmptyToken           = errors.New("token must not be empty")
-)
+func Validate2FARequest(req *pb.Verify2FARequest) error {
+	if len(req.Token) != 6 {
+		return ErrInvalidTotpToken
+	}
+
+	return nil
+}
 
 func ValidateLogin(req *pb.LoginRequest) error {
+
 	if req.Email == "" {
 		return ErrEmptyEmail
 	}

@@ -40,8 +40,9 @@ message CreateFileRequestData {
 
 
 message UpdateFileRequestData {
-    string Id = 1;
+    string id = 1;
     string updated_by = 2;
+    string filename = 3;
 }
 
 message CreateFileRequest {

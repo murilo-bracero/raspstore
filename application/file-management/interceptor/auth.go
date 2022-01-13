@@ -63,7 +63,7 @@ func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req inter
 }
 
 func (a *authInterceptor) validateToken(token string) (uid string, err error) {
-	conn, err := grpc.Dial(a.cfg.AuthServiceUrl())
+	conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithInsecure())
 
 	if err != nil {
 		log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())

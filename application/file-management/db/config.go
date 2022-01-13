@@ -13,6 +13,7 @@ type Config interface {
 	MongoUri() string
 	MongoDatabaseName() string
 	AuthServiceUrl() string
+	RestPort() int
 }
 
 type config struct {
@@ -25,6 +26,7 @@ type config struct {
 	mongoPort      int
 	mongoUri       string
 	authServiceUrl string
+	restPort       int
 }
 
 func NewConfig() Config {
@@ -34,6 +36,12 @@ func NewConfig() Config {
 		log.Fatalln("error parsing gRPC port env var GRPC_PORT: ", err.Error())
 	} else {
 		cfg.grpcPort = value
+	}
+
+	if value, err := strconv.Atoi(os.Getenv("REST_PORT")); err != nil {
+		log.Fatalln("error parsing rest api port env var REST_PORT: ", err.Error())
+	} else {
+		cfg.restPort = value
 	}
 
 	cfg.rootFolder = os.Getenv("ROOT_FOLDER")
@@ -80,4 +88,8 @@ func (c *config) MongoDatabaseName() string {
 
 func (c *config) AuthServiceUrl() string {
 	return c.authServiceUrl
+}
+
+func (c *config) RestPort() int {
+	return c.restPort
 }

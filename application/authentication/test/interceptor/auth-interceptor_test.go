@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"raspstore.github.io/authentication/db"
-	"raspstore.github.io/authentication/middleware"
+	interceptor "raspstore.github.io/authentication/interceptors"
 	"raspstore.github.io/authentication/repository"
 )
 
@@ -44,7 +44,7 @@ func TestInterceptorWhenRouteIsNotWhitelisted(t *testing.T) {
 	userRepo := repository.NewUsersRepository(context.Background(), conn)
 	tokenManager := new(mockTokenManager)
 
-	mdwr := middleware.NewAuthInterceptor(userRepo, tokenManager)
+	mdwr := interceptor.NewAuthInterceptor(userRepo, tokenManager)
 
 	m := make(map[string]string)
 	m["authorization"] = "tokenmock"
@@ -55,7 +55,7 @@ func TestInterceptorWhenRouteIsNotWhitelisted(t *testing.T) {
 
 	info := &grpc.UnaryServerInfo{FullMethod: "/pb.AuthService/SignUp"}
 
-	mdwr.WithAuthentication(ctx, "req", info, mockHandler)
+	mdwr.WithUnaryAuthentication(ctx, "req", info, mockHandler)
 }
 
 func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
@@ -66,7 +66,7 @@ func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
 	userRepo := repository.NewUsersRepository(context.Background(), conn)
 	tokenManager := new(mockTokenManager)
 
-	mdwr := middleware.NewAuthInterceptor(userRepo, tokenManager)
+	mdwr := interceptor.NewAuthInterceptor(userRepo, tokenManager)
 
 	m := make(map[string]string)
 	m["authorization"] = "tokenmock"
@@ -77,5 +77,5 @@ func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
 
 	info := &grpc.UnaryServerInfo{FullMethod: "/pb.AuthService/Login"}
 
-	mdwr.WithAuthentication(ctx, "req", info, mockHandler)
+	mdwr.WithUnaryAuthentication(ctx, "req", info, mockHandler)
 }

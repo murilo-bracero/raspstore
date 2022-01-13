@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/pquerna/otp/totp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -13,6 +14,16 @@ import (
 )
 
 const credentialsCollectionName = "credentials"
+
+type CredentialsRepository interface {
+	Save(cred *model.Credential) error
+	Update(cred *model.Credential) error
+	Delete(id string) error
+	IsCredentialsCorrect(email string, password string, token string) bool
+	Has2FAEnabledByEmail(email string) bool
+	Has2FAEnabledByUID(uid string) bool
+	FindById(id string) (cred *model.Credential, err error)
+}
 
 type credentialsRespository struct {
 	ctx  context.Context
@@ -23,24 +34,10 @@ func NewCredentialsRepository(ctx context.Context, conn db.MongoConnection) Cred
 	return &credentialsRespository{coll: conn.DB().Collection(credentialsCollectionName), ctx: ctx}
 }
 
-func (r *credentialsRespository) Save(user *model.User, password string) error {
+func (r *credentialsRespository) Save(cred *model.Credential) error {
 
-	hash, err := hash(password)
-
-	if err != nil {
-		return err
-	}
-
-	credential := model.Credential{
-		Id:    user.UserId,
-		Email: user.Email,
-		Hash:  hash,
-	}
-
-	_, err = r.coll.InsertOne(r.ctx, credential)
-
-	if err != nil {
-		fmt.Println("Coud not create credentials ", user, " in MongoDB: ", err.Error())
+	if _, err := r.coll.InsertOne(r.ctx, cred); err != nil {
+		fmt.Println("Coud not create credentials ", cred, " in MongoDB: ", err.Error())
 		return err
 	}
 
@@ -53,11 +50,27 @@ func (r *credentialsRespository) Delete(id string) error {
 	return err
 }
 
-func (r *credentialsRespository) Update(user *model.User) error {
+func (r *credentialsRespository) FindById(id string) (cred *model.Credential, err error) {
+	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
 
-	res, err := r.coll.UpdateOne(r.ctx, bson.M{"user_id": user.UserId}, bson.M{
-		"$set": bson.M{
-			"email": user.Email}})
+	err = res.Decode(&cred)
+	return cred, err
+}
+
+func (r *credentialsRespository) Update(cred *model.Credential) error {
+
+	filter := bson.D{{Key: "user_id", Value: cred.Id}}
+
+	update := bson.D{{Key: "$set",
+		Value: bson.D{
+			{Key: "email", Value: cred.Email},
+			{Key: "has_2FA_enabled", Value: cred.Has2FAEnabled},
+			{Key: "password", Value: cred.Hash},
+			{Key: "secret", Value: cred.Secret},
+		},
+	}}
+
+	res, err := r.coll.UpdateOne(r.ctx, filter, update)
 
 	if err == nil && (res.MatchedCount == 0 || res.ModifiedCount == 0) {
 		return errors.New("credential could not be updated")
@@ -66,7 +79,7 @@ func (r *credentialsRespository) Update(user *model.User) error {
 	return err
 }
 
-func (r *credentialsRespository) IsCredentialsCorrect(email string, password string) bool {
+func (r *credentialsRespository) Has2FAEnabledByEmail(email string) bool {
 	var credential model.Credential
 
 	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
@@ -79,12 +92,45 @@ func (r *credentialsRespository) IsCredentialsCorrect(email string, password str
 		return false
 	}
 
-	return bcrypt.CompareHashAndPassword([]byte(credential.Hash), []byte(password)) == nil
+	return credential.Has2FAEnabled
 }
 
-func hash(text string) (hash string, err error) {
-	bts := []byte(text)
+func (r *credentialsRespository) Has2FAEnabledByUID(uid string) bool {
+	var credential model.Credential
 
-	raw, err := bcrypt.GenerateFromPassword(bts, bcrypt.DefaultCost)
-	return string(raw[:]), err
+	res := r.coll.FindOne(r.ctx, bson.M{"user_id": uid})
+
+	if res.Err() != nil {
+		return false
+	}
+
+	if err := res.Decode(&credential); err != nil {
+		return false
+	}
+
+	return credential.Has2FAEnabled
+}
+
+func (r *credentialsRespository) IsCredentialsCorrect(email string, password string, token string) bool {
+	var credential model.Credential
+
+	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
+
+	if res.Err() != nil {
+		return false
+	}
+
+	if err := res.Decode(&credential); err != nil {
+		return false
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(credential.Hash), []byte(password)) == nil {
+		if credential.Has2FAEnabled {
+			return totp.Validate(token, credential.Secret)
+		}
+
+		return true
+	}
+
+	return false
 }
