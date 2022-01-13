@@ -4,7 +4,16 @@ import (
 	"raspstore.github.io/authentication/pb"
 )
 
+func Validate2FARequest(req *pb.Verify2FARequest) error {
+	if len(req.Token) != 6 {
+		return ErrInvalidTotpToken
+	}
+
+	return nil
+}
+
 func ValidateLogin(req *pb.LoginRequest) error {
+
 	if req.Email == "" {
 		return ErrEmptyEmail
 	}

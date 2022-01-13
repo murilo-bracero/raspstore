@@ -15,6 +15,15 @@ import (
 
 const usersCollectionName = "users"
 
+type UsersRepository interface {
+	Save(user *model.User) error
+	FindById(id string) (user *model.User, err error)
+	FindByEmail(email string) (user *model.User, err error)
+	DeleteUser(id string) error
+	UpdateUser(user *model.User) error
+	FindAll() (users []*model.User, err error)
+}
+
 type usersRespository struct {
 	ctx  context.Context
 	coll *mongo.Collection

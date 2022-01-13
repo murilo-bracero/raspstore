@@ -12,7 +12,6 @@ import (
 	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
-	"raspstore.github.io/authentication/service"
 )
 
 type UserController interface {
@@ -24,12 +23,13 @@ type UserController interface {
 }
 
 type controller struct {
-	repo    repository.UsersRepository
-	service service.AuthService
+	repo         repository.UsersRepository
+	authService  pb.AuthServiceServer
+	usersService pb.UsersServiceServer
 }
 
-func NewUserController(repo repository.UsersRepository, service service.AuthService) UserController {
-	return &controller{repo: repo, service: service}
+func NewUserController(repo repository.UsersRepository, as pb.AuthServiceServer, us pb.UsersServiceServer) UserController {
+	return &controller{repo: repo, authService: as, usersService: us}
 }
 
 func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber: cUserReq.PhoneNumber,
 	}
 
-	if res, err := c.service.SignUp(context.Background(), req); err != nil {
+	if res, err := c.usersService.CreateUser(context.Background(), req); err != nil {
 		w.WriteHeader(reqStatusCode(err))
 		send(w, dto.ErrorResponse{Message: "could not create user", Reason: err.Error(), Code: "RU01"})
 	} else {
@@ -118,7 +118,7 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber: cUserReq.PhoneNumber,
 	}
 
-	if res, err := c.service.UpdateUser(context.Background(), req); err != nil {
+	if res, err := c.usersService.UpdateUser(context.Background(), req); err != nil {
 		w.WriteHeader(reqStatusCode(err))
 		send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not update user with id %s", id), Reason: err.Error(), Code: "UU01"})
 	} else {

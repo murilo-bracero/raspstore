@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
 	mg "raspstore.github.io/authentication/repository"
@@ -32,17 +35,17 @@ func TestCredsRepositorySave(t *testing.T) {
 
 	id := uuid.NewString()
 
-	user := &model.User{
-		UserId:      id,
-		Email:       fmt.Sprintf("%s@test.com", id),
-		Username:    "testing_test",
-		PhoneNumber: "1196726372912",
+	cred := &model.Credential{
+		Id:     id,
+		Email:  fmt.Sprintf("%s@test.com", id),
+		Secret: "testing_test",
+		Hash:   "testing",
 	}
 
-	err = repo.Save(user, "testpass")
+	err = repo.Save(cred)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, user.UserId)
+	assert.NotNil(t, cred.Id)
 }
 
 func TestCredsRepositoryUpdate(t *testing.T) {
@@ -54,28 +57,23 @@ func TestCredsRepositoryUpdate(t *testing.T) {
 
 	id := uuid.NewString()
 
-	user := &model.User{
-		UserId:      id,
-		Email:       fmt.Sprintf("%s@test.com", id),
-		Username:    "testing_test",
-		PhoneNumber: "1196726372912",
+	cred := &model.Credential{
+		Id:     id,
+		Email:  fmt.Sprintf("%s@test.com", id),
+		Secret: "testing_test",
+		Hash:   "testing",
 	}
 
-	err = repo.Save(user, "testpass")
+	err = repo.Save(cred)
 
 	assert.NoError(t, err)
 
-	user = &model.User{
-		UserId:      id,
-		Email:       fmt.Sprintf("updated_%s@test.com", id),
-		Username:    "testing_test",
-		PhoneNumber: "1196726372912",
-	}
+	cred.Email = "sus@sus.com"
 
-	err = repo.Update(user)
+	err = repo.Update(cred)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, user.UserId)
+	assert.NotNil(t, cred.Id)
 }
 
 func TestCredsRepositoryIsCredentialsCorrect(t *testing.T) {
@@ -87,18 +85,30 @@ func TestCredsRepositoryIsCredentialsCorrect(t *testing.T) {
 
 	id := uuid.NewString()
 
-	user := &model.User{
-		UserId:      id,
-		Email:       fmt.Sprintf("%s@test.com", id),
-		Username:    "testing_test",
-		PhoneNumber: "1196726372912",
-	}
-
-	err = repo.Save(user, "testpass")
+	hash, err := hash("testpass")
 
 	assert.NoError(t, err)
 
-	isCorrect := repo.IsCredentialsCorrect(user.Email, "testpass")
+	secret, err := totp.Generate(totp.GenerateOpts{Issuer: "rasptore", AccountName: fmt.Sprintf("%s@test.com", id)})
+
+	assert.NoError(t, err)
+
+	cred := &model.Credential{
+		Id:     id,
+		Email:  fmt.Sprintf("%s@test.com", id),
+		Secret: secret.Secret(),
+		Hash:   hash,
+	}
+
+	err = repo.Save(cred)
+
+	assert.NoError(t, err)
+
+	token, err := totp.GenerateCode(cred.Secret, time.Now())
+
+	assert.NoError(t, err)
+
+	isCorrect := repo.IsCredentialsCorrect(cred.Email, "testpass", token)
 
 	assert.True(t, isCorrect)
 }
@@ -126,4 +136,11 @@ func TestCredsRepositoryDelete(t *testing.T) {
 			assert.Fail(t, err.Error())
 		}
 	}
+}
+
+func hash(text string) (hash string, err error) {
+	bts := []byte(text)
+
+	raw, err := bcrypt.GenerateFromPassword(bts, bcrypt.DefaultCost)
+	return string(raw[:]), err
 }

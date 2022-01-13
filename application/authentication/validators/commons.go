@@ -12,6 +12,7 @@ var (
 	ErrUserNotFound         = errors.New("user with provided info does not exists")
 	ErrIncorrectCredentials = errors.New("provided email or password does not match")
 	ErrEmptyToken           = errors.New("token must not be empty")
+	ErrInvalidTotpToken     = errors.New("2FA token is empty or invalid")
 )
 
 func GetErrorsList() []error {

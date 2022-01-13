@@ -39,6 +39,7 @@ func main() {
 	tokenManager := token.NewTokenManager(cfg)
 
 	authService := service.NewAuthService(usersRepo, credRepo, tokenManager)
+	usersService := service.NewUserService(usersRepo, credRepo)
 
 	authInterceptor := interceptor.NewAuthInterceptor(usersRepo, tokenManager)
 
@@ -48,28 +49,29 @@ func main() {
 
 	wg.Add(2)
 	log.Println("bootstraping servers")
-	go startGrpcServer(&wg, cfg, authInterceptor, authService)
-	go startRestServer(&wg, cfg, usersRepo, authService, authMiddleware)
+	go startGrpcServer(&wg, cfg, authInterceptor, authService, usersService)
+	go startRestServer(&wg, cfg, usersRepo, authService, usersService, authMiddleware)
 	wg.Wait()
 }
 
-func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur rp.UsersRepository, svc service.AuthService, md middleware.AuthMiddleware) {
-	uc := controller.NewUserController(ur, svc)
-	cc := controller.NewCredentialsController(ur, svc)
+func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur rp.UsersRepository, as pb.AuthServiceServer, us pb.UsersServiceServer, md middleware.AuthMiddleware) {
+	uc := controller.NewUserController(ur, as, us)
+	cc := controller.NewCredentialsController(ur, as)
 	router := api.NewRoutes(uc, cc).MountRoutes()
 	http.Handle("/", router)
 	log.Printf("Authentication API runing on port %d", cfg.RestPort())
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), md.Apply(router))
 }
 
-func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInterceptor, svc pb.AuthServiceServer) {
+func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInterceptor, as pb.AuthServiceServer, us pb.UsersServiceServer) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithUnaryAuthentication), grpc.StreamInterceptor(itc.WithStreamingAuthentication))
-	pb.RegisterAuthServiceServer(grpcServer, svc)
+	pb.RegisterAuthServiceServer(grpcServer, as)
+	pb.RegisterUsersServiceServer(grpcServer, us)
 
 	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
 

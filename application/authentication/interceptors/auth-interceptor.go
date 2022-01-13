@@ -7,10 +7,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/token"
+	"raspstore.github.io/authentication/utils"
 )
 
 var whitelistRoutes = "/pb.AuthService/Login,/pb.AuthService/SignUp,/pb.AuthService/Authenticate"
@@ -47,27 +47,23 @@ func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req inter
 		return handler(ctx, req)
 	}
 
-	if _, err := a.validateMetadata(ctx); err != nil {
+	uid, err := a.validateMetadata(ctx)
+
+	if err != nil {
 		return nil, err
 	}
+
+	ctx = context.WithValue(ctx, utils.ContextKeyUID, uid)
 
 	return handler(ctx, req)
 }
 
 func (a *authInterceptor) validateMetadata(ctx context.Context) (uid string, err error) {
-	md, exists := metadata.FromIncomingContext(ctx)
+	accessToken := utils.GetValueFromMetadata("authorization", ctx)
 
-	if !exists {
-		return "", status.Errorf(codes.Unauthenticated, "metadata not provided")
-	}
-
-	values := md["authorization"]
-
-	if len(values) == 0 {
+	if accessToken == "" {
 		return "", status.Errorf(codes.Unauthenticated, "authorization metadata not provided")
 	}
-
-	accessToken := values[0]
 
 	uid, err = a.tokenManager.Verify(accessToken)
 

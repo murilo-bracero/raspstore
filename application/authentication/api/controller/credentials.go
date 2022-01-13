@@ -8,7 +8,6 @@ import (
 	"raspstore.github.io/authentication/api/dto"
 	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
-	"raspstore.github.io/authentication/service"
 )
 
 type CredentialsController interface {
@@ -17,10 +16,10 @@ type CredentialsController interface {
 
 type credsController struct {
 	repo    repository.UsersRepository
-	service service.AuthService
+	service pb.AuthServiceServer
 }
 
-func NewCredentialsController(repo repository.UsersRepository, service service.AuthService) CredentialsController {
+func NewCredentialsController(repo repository.UsersRepository, service pb.AuthServiceServer) CredentialsController {
 	return &credsController{repo: repo, service: service}
 }
 
