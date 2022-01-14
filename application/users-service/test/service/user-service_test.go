@@ -92,7 +92,7 @@ func TestUpdateUser(t *testing.T) {
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361320",
-		Password:    "penispintorola212",
+		Password:    "testPassword",
 	}
 
 	user, errService := service.CreateUser(context.Background(), createUserRequest)
