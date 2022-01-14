@@ -16,10 +16,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN protoc --go_out=. --go-grpc_out=. ./messages/users-service.proto
-RUN protoc --go_out=. --go-grpc_out=. ./messages/authentication.proto
-
-RUN go mod tidy
+RUN protoc --go_out=. --go-grpc_out=. ./messages/*.proto
 
 RUN go build -o /users-service-app
 

@@ -13,6 +13,7 @@ import (
 	"raspstore.github.io/users-service/pb"
 	"raspstore.github.io/users-service/repository"
 	"raspstore.github.io/users-service/utils"
+	"raspstore.github.io/users-service/validators"
 )
 
 type UserController interface {
@@ -119,8 +120,14 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res, err := c.usersService.UpdateUser(context.Background(), req); err != nil {
+
+		if err == validators.ErrUserNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			utils.Send(w, dto.ErrorResponse{Message: err.Error(), Code: "UU01"})
+		}
+
 		w.WriteHeader(utils.ReqStatusCode(err))
-		utils.Send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not update user with id %s", id), Reason: err.Error(), Code: "UU01"})
+		utils.Send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not update user with id %s", id), Reason: err.Error(), Code: "UU02"})
 	} else {
 		w.WriteHeader(utils.ReqStatusCode(err))
 		utils.Send(w, model.User{

@@ -16,8 +16,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN protoc --go_out=. --go-grpc_out=. ./messages/file-manager.proto
-RUN protoc --go_out=. --go-grpc_out=. ./messages/authentication.proto
+RUN protoc --go_out=. --go-grpc_out=. ./messages/*.proto
 
 RUN go mod tidy
 

@@ -54,7 +54,7 @@ func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur rp.UsersRepository, u
 	uc := controller.NewUserController(ur, us)
 	router := api.NewRoutes(uc).MountRoutes()
 	http.Handle("/", router)
-	log.Printf("Authentication API runing on port %d", cfg.RestPort())
+	log.Printf("Users Service API runing on port %d", cfg.RestPort())
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), md.Apply(router))
 }
 
@@ -67,7 +67,7 @@ func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInte
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithUnaryAuthentication), grpc.StreamInterceptor(itc.WithStreamingAuthentication))
 	pb.RegisterUsersServiceServer(grpcServer, us)
 
-	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
+	log.Printf("Users Service gRPC running on [::]:%d\n", cfg.GrpcPort())
 
 	grpcServer.Serve(lis)
 }

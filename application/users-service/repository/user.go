@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/users-service/db"
 	"raspstore.github.io/users-service/model"
+	"raspstore.github.io/users-service/validators"
 )
 
 const usersCollectionName = "users"
@@ -89,11 +90,19 @@ func (r *usersRespository) UpdateUser(user *model.User) error {
 			"phone_number": user.PhoneNumber,
 			"updated_at":   user.UpdatedAt}})
 
-	if err == nil && (res.MatchedCount == 0 || res.ModifiedCount == 0) {
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return validators.ErrUserNotFound
+	}
+
+	if res.ModifiedCount == 0 {
 		return errors.New("user could not be updated")
 	}
 
-	return err
+	return nil
 }
 
 func (r *usersRespository) FindAll() (users []*model.User, err error) {
