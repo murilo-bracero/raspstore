@@ -18,8 +18,6 @@ COPY . ./
 
 RUN protoc --go_out=. --go-grpc_out=. ./messages/*.proto
 
-RUN go mod tidy
-
 RUN go build -o /authentication-app
 
 CMD ["/authentication-app"]
