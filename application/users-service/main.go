@@ -33,9 +33,9 @@ func main() {
 
 	defer conn.Close(context.Background())
 
-	credRepo, usersRepo := initRepos(conn)
+	usersRepo := initRepos(conn)
 
-	usersService := service.NewUserService(usersRepo, credRepo)
+	usersService := service.NewUserService(usersRepo)
 
 	authInterceptor := interceptor.NewAuthInterceptor(cfg)
 
@@ -82,7 +82,6 @@ func initDatabase(cfg db.Config) db.MongoConnection {
 	return conn
 }
 
-func initRepos(conn db.MongoConnection) (rp.CredentialsRepository, rp.UsersRepository) {
-	return rp.NewCredentialsRepository(context.Background(), conn),
-		rp.NewUsersRepository(context.Background(), conn)
+func initRepos(conn db.MongoConnection) rp.UsersRepository {
+	return rp.NewUsersRepository(context.Background(), conn)
 }

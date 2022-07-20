@@ -41,12 +41,11 @@ func TestMain(m *testing.M) {
 
 	defer conn.Close(context.Background())
 	ur := repository.NewUsersRepository(context.Background(), conn)
-	cr := repository.NewCredentialsRepository(context.Background(), conn)
-	svc := service.NewUserService(ur, cr)
+	svc := service.NewUserService(ur)
 	uc := controller.NewUserController(ur, svc)
 	routes = api.NewRoutes(uc)
 	code := m.Run()
-	err = teardown(ur, cr)
+	err = teardown(ur)
 	if err != nil {
 		log.Panicln(err.Error())
 	}
@@ -346,7 +345,7 @@ func TestListUsers(t *testing.T) {
 	assert.True(t, len(users) > 0)
 }
 
-func teardown(ur repository.UsersRepository, cr repository.CredentialsRepository) error {
+func teardown(ur repository.UsersRepository) error {
 
 	users, err := ur.FindAll()
 
@@ -356,7 +355,6 @@ func teardown(ur repository.UsersRepository, cr repository.CredentialsRepository
 
 	for _, user := range users {
 		ur.DeleteUser(user.UserId)
-		cr.Delete(user.UserId)
 	}
 
 	return nil

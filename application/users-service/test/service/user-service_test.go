@@ -30,8 +30,7 @@ func TestSignUp(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	req := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -56,8 +55,7 @@ func TestGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -85,8 +83,7 @@ func TestUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	createUserRequest := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -120,8 +117,7 @@ func TestDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	users, err1 := userRepo.FindAll()
 

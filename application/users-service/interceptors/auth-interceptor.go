@@ -15,6 +15,8 @@ import (
 
 var whitelistRoutes = "/pb.UsersService/SignUp"
 
+type UidKey string
+
 type AuthInterceptor interface {
 	WithUnaryAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error)
 	WithStreamingAuthentication(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error
@@ -69,6 +71,8 @@ func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req inter
 	}
 
 	log.Println("user ", uid, " accessed resource ", info.FullMethod)
+
+	ctx = context.WithValue(ctx, UidKey("uid"), uid)
 
 	return handler(ctx, req)
 }

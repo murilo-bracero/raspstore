@@ -2,23 +2,20 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"raspstore.github.io/users-service/model"
 	"raspstore.github.io/users-service/pb"
 	"raspstore.github.io/users-service/repository"
-	"raspstore.github.io/users-service/utils"
 	"raspstore.github.io/users-service/validators"
 )
 
 type usersService struct {
 	userRepository repository.UsersRepository
-	credRepository repository.CredentialsRepository
 	pb.UnimplementedUsersServiceServer
 }
 
-func NewUserService(usersRepository repository.UsersRepository, credRepository repository.CredentialsRepository) pb.UsersServiceServer {
-	return &usersService{userRepository: usersRepository, credRepository: credRepository}
+func NewUserService(usersRepository repository.UsersRepository) pb.UsersServiceServer {
+	return &usersService{userRepository: usersRepository}
 }
 
 func (u *usersService) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.User, error) {
@@ -41,26 +38,26 @@ func (u *usersService) CreateUser(ctx context.Context, req *pb.CreateUserRequest
 			return nil, err
 		}
 
-		hash, err := utils.Hash(req.Password)
+		// hash, err := utils.Hash(req.Password)
 
-		if err != nil {
-			return nil, err
-		}
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-		cred := &model.Credential{
-			Id:            user.UserId,
-			Email:         user.Email,
-			Hash:          hash,
-			Has2FAEnabled: false,
-		}
+		// cred := &model.Credential{
+		// 	Id:            user.UserId,
+		// 	Email:         user.Email,
+		// 	Hash:          hash,
+		// 	Has2FAEnabled: false,
+		// }
 
-		if err := u.credRepository.Save(cred); err != nil {
-			if inner_error := u.userRepository.DeleteUser(user.UserId); inner_error != nil {
-				fmt.Println("user of id ", user.UserId, " failed to be inserted in credentials database but was inserted in user database. Remove it manually")
-				return nil, inner_error
-			}
-			return nil, err
-		}
+		// if err := u.credRepository.Save(cred); err != nil {
+		// 	if inner_error := u.userRepository.DeleteUser(user.UserId); inner_error != nil {
+		// 		log.Println("user of id ", user.UserId, " failed to be inserted in credentials database but was inserted in user database. Remove it manually")
+		// 		return nil, inner_error
+		// 	}
+		// 	return nil, err
+		// }
 
 		return user.ToProtoBuffer(), nil
 	}
@@ -83,10 +80,10 @@ func (u *usersService) DeleteUser(ctx context.Context, req *pb.GetUserRequest) (
 		return nil, err
 	}
 
-	if err := u.credRepository.Delete(req.Id); err != nil {
-		fmt.Print("User ", req.Id, " was removed from user database but not for credentials database, remove it mannually")
-		return nil, err
-	}
+	// if err := u.credRepository.Delete(req.Id); err != nil {
+	// 	log.Print("User ", req.Id, " was removed from user database but not for credentials database, remove it mannually")
+	// 	return nil, err
+	// }
 
 	return &pb.DeleteUserResponse{Id: req.Id}, nil
 }
@@ -105,15 +102,15 @@ func (u *usersService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest
 		return nil, err
 	}
 
-	cred := &model.Credential{
-		Id:    usr.UserId,
-		Email: usr.Email,
-	}
+	// cred := &model.Credential{
+	// 	Id:    usr.UserId,
+	// 	Email: usr.Email,
+	// }
 
-	if err := u.credRepository.Update(cred); err != nil {
-		fmt.Println("user of id ", usr.UserId, " failed to be updated in credentials database but was inserted in user database. Update it manually")
-		return nil, err
-	}
+	// if err := u.credRepository.Update(cred); err != nil {
+	// 	log.Println("user of id ", usr.UserId, " failed to be updated in credentials database but was inserted in user database. Update it manually")
+	// 	return nil, err
+	// }
 
 	if found, err := u.userRepository.FindById(req.Id); err != nil {
 		return nil, err

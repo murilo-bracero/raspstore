@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,7 +42,7 @@ func (r *usersRespository) Save(user *model.User) error {
 	_, err := r.coll.InsertOne(r.ctx, user)
 
 	if err != nil {
-		fmt.Println("Coud not create user ", user, " in MongoDB: ", err.Error())
+		log.Println("Coud not create user ", user, " in MongoDB: ", err.Error())
 		return err
 	}
 
