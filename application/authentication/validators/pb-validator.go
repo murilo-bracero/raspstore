@@ -4,14 +4,6 @@ import (
 	"raspstore.github.io/authentication/pb"
 )
 
-func Validate2FARequest(req *pb.Verify2FARequest) error {
-	if len(req.Token) != 6 {
-		return ErrInvalidTotpToken
-	}
-
-	return nil
-}
-
 func ValidateLogin(req *pb.LoginRequest) error {
 
 	if req.Email == "" {
@@ -32,37 +24,17 @@ func ValidateAuthenticate(req *pb.AuthenticateRequest) error {
 	return nil
 }
 
-func ValidateSignUp(req *pb.CreateUserRequest) error {
+func ValidateCreateCredentials(req *pb.CreateCredentialsRequest) error {
 	if req.Email == "" {
 		return ErrEmptyEmail
 	}
 
-	if req.Username == "" {
-		return ErrEmptyUsername
-	}
-
-	if req.Password == "" {
+	if req.Hash == "" {
 		return ErrEmptyPassword
 	}
 
-	if len(req.Password) < 8 {
-		return ErrComplexityPassword
-	}
-
-	return nil
-}
-
-func ValidateUpdate(req *pb.UpdateUserRequest) error {
-	if req.Id == "" {
-		return ErrInvalidId
-	}
-
-	if req.Email == "" {
-		return ErrEmptyEmail
-	}
-
-	if req.Username == "" {
-		return ErrEmptyUsername
+	if req.UserId == "" {
+		return ErrEmptyUserId
 	}
 
 	return nil
