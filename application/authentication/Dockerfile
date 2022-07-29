@@ -1,22 +1,10 @@
 FROM golang:1.17-alpine as build
 
-RUN apk add --no-cache protoc
-
 WORKDIR /app
 
-RUN GO111MODULE=on \
-        go get google.golang.org/protobuf/cmd/protoc-gen-go \
-        google.golang.org/grpc/cmd/protoc-gen-go-grpc
-
-COPY authentication ./
-
-COPY proto/authentication.proto ./
-
-COPY proto/users-service.proto ./
+COPY . ./
 
 RUN go mod download
-
-RUN protoc --go_out=. --go-grpc_out=. *.proto
 
 RUN go build -o authentication-app
 

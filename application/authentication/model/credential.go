@@ -1,8 +1,8 @@
 package model
 
 import (
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"raspstore.github.io/authentication/pb"
 )
 
 type Credential struct {

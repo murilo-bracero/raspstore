@@ -9,12 +9,12 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
 	api "raspstore.github.io/authentication/api"
 	"raspstore.github.io/authentication/api/controller"
 	"raspstore.github.io/authentication/db"
 	interceptor "raspstore.github.io/authentication/interceptors"
-	"raspstore.github.io/authentication/pb"
 	rp "raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/service"
 	"raspstore.github.io/authentication/token"

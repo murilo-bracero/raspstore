@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/model"
-	"raspstore.github.io/authentication/pb"
 	"raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/token"
 	"raspstore.github.io/authentication/utils"

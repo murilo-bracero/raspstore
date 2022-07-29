@@ -7,12 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
-	"raspstore.github.io/authentication/pb"
 	mg "raspstore.github.io/authentication/repository"
 	sv "raspstore.github.io/authentication/service"
 	"raspstore.github.io/authentication/token"

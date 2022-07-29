@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"raspstore.github.io/authentication/api/dto"
-	"raspstore.github.io/authentication/pb"
 )
 
 type CredentialsController interface {
