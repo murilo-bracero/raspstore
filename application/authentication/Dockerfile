@@ -8,7 +8,7 @@ RUN go mod download
 
 RUN go build -o authentication-app
 
-FROM golang:1.17-alpine
+FROM alpine:3.16
 
 WORKDIR /app
 
