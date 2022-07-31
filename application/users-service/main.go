@@ -9,13 +9,13 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 	"google.golang.org/grpc"
 	api "raspstore.github.io/users-service/api"
 	"raspstore.github.io/users-service/api/controller"
 	"raspstore.github.io/users-service/api/middleware"
 	"raspstore.github.io/users-service/db"
 	interceptor "raspstore.github.io/users-service/interceptors"
-	"raspstore.github.io/users-service/pb"
 	rp "raspstore.github.io/users-service/repository"
 	"raspstore.github.io/users-service/service"
 )

@@ -1,7 +1,6 @@
 package controller_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -41,6 +39,16 @@ func TestMain(m *testing.M) {
 
 	defer conn.Close(context.Background())
 	ur := repository.NewUsersRepository(context.Background(), conn)
+
+	usr := &model.User{
+		UserId:      uuid.NewString(),
+		Username:    "test username",
+		Email:       "test_email@email.com",
+		PhoneNumber: "019202012131",
+	}
+
+	ur.Save(usr)
+
 	svc := service.NewUserService(ur)
 	uc := controller.NewUserController(ur, svc)
 	routes = api.NewRoutes(uc)
@@ -52,127 +60,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestCreateUserSuccess(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	var res model.User
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.CreatedAt)
-	assert.NotNil(t, res.UpdatedAt)
-	assert.Equal(t, res.CreatedAt, res.UpdatedAt)
-	assert.NotNil(t, res.UserId)
-	assert.Equal(t, fmt.Sprintf("%s-username", random), res.Username)
-	assert.Equal(t, fmt.Sprintf("%s@fake.com.br", random), res.Email)
-}
-
-func TestCreateUserFailOnAlreadyExistedEmail(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	req, _ = http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 400)
-}
-
-func TestCreateUserFailOnIncompletePayload(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"phoneNumber": "+5511243516237"
-	}`, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 400)
-}
-
-func TestGetUser(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	var res model.User
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.UserId)
-
-	req, _ = http.NewRequest("GET", fmt.Sprintf("/users/%s", res.UserId), nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 200)
-
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.CreatedAt)
-	assert.NotNil(t, res.UpdatedAt)
-	assert.Equal(t, res.CreatedAt, res.UpdatedAt)
-	assert.NotNil(t, res.UserId)
-	assert.Equal(t, fmt.Sprintf("%s-username", random), res.Username)
-	assert.Equal(t, fmt.Sprintf("%s@fake.com.br", random), res.Email)
-}
-
 func TestGetUserWithInexistedId(t *testing.T) {
 	random := uuid.NewString()
 
@@ -182,154 +69,6 @@ func TestGetUserWithInexistedId(t *testing.T) {
 	rawRes := sendReq(req)
 
 	assert.Equal(t, rawRes.Code, 404)
-}
-
-func TestUpdateUserSuccess(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	var res model.User
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.UserId)
-
-	raw = fmt.Sprintf(`{
-		"username": "updated_%s-username",
-		"email": "updated_%s@fake.com.br",
-		"phoneNumber": "+5511243516238"
-	}`, random, random)
-
-	body = []byte(raw)
-
-	req, _ = http.NewRequest("PATCH", fmt.Sprintf("/users/%s", res.UserId), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 200)
-
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.True(t, strings.Contains(res.Username, "updated"))
-	assert.True(t, strings.Contains(res.Email, "updated"))
-
-}
-
-func TestUpdateUserFailOnIncompletePayload(t *testing.T) {
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	var res model.User
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.UserId)
-
-	raw = fmt.Sprintf(`{
-		"username": "updated_%s-username",
-		"phoneNumber": "+5511243516238"
-	}`, random)
-
-	body = []byte(raw)
-
-	req, _ = http.NewRequest("PATCH", fmt.Sprintf("/users/%s", res.UserId), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 400)
-}
-
-func TestUpdateUserFailOnInexistentUserId(t *testing.T) {
-	random := uuid.NewString()
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("PATCH", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, 404, rawRes.Code)
-}
-
-func TestDeleteUser(t *testing.T) {
-
-	random := uuid.NewString()
-	random = strings.ReplaceAll(random, "-", "")
-
-	raw := fmt.Sprintf(`{
-		"username": "%s-username",
-		"password":"defaultPassword",
-		"email": "%s@fake.com.br",
-		"phoneNumber": "+5511243516237"
-	}`, random, random)
-
-	body := []byte(raw)
-
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes := sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 201)
-
-	var res model.User
-	json.Unmarshal(rawRes.Body.Bytes(), &res)
-
-	assert.NotNil(t, res.UserId)
-
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("/users/%s", res.UserId), nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, rawRes.Code, 204)
-
-	req, _ = http.NewRequest("GET", fmt.Sprintf("/users/%s", res.UserId), nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rawRes = sendReq(req)
-
-	assert.Equal(t, 404, rawRes.Code)
 }
 
 func TestListUsers(t *testing.T) {
@@ -354,7 +93,7 @@ func teardown(ur repository.UsersRepository) error {
 	}
 
 	for _, user := range users {
-		ur.DeleteUser(user.UserId)
+		ur.Delete(user.UserId)
 	}
 
 	return nil

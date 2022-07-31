@@ -20,8 +20,8 @@ type UsersRepository interface {
 	Save(user *model.User) error
 	FindById(id string) (user *model.User, err error)
 	FindByEmail(email string) (user *model.User, err error)
-	DeleteUser(id string) error
-	UpdateUser(user *model.User) error
+	Delete(id string) error
+	Update(user *model.User) error
 	FindAll() (users []*model.User, err error)
 }
 
@@ -73,13 +73,13 @@ func (r *usersRespository) FindByEmail(email string) (user *model.User, err erro
 	return user, err
 }
 
-func (r *usersRespository) DeleteUser(id string) error {
+func (r *usersRespository) Delete(id string) error {
 
 	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
 	return err
 }
 
-func (r *usersRespository) UpdateUser(user *model.User) error {
+func (r *usersRespository) Update(user *model.User) error {
 
 	user.UpdatedAt = time.Now()
 

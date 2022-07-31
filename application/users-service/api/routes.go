@@ -23,10 +23,7 @@ func (r *routes) MountRoutes() *mux.Router {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc(userBaseRoute, r.userController.SignUp).Methods("POST")
 	router.HandleFunc(userBaseRoute+"/{id}", r.userController.GetUser).Methods("GET")
-	router.HandleFunc(userBaseRoute+"/{id}", r.userController.UpdateUser).Methods("PATCH")
-	router.HandleFunc(userBaseRoute+"/{id}", r.userController.DeleteUser).Methods("DELETE")
 	router.HandleFunc(userBaseRoute, r.userController.ListUser).Methods("GET")
 
 	return router

@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/users-service/db"
 	"raspstore.github.io/users-service/model"
-	"raspstore.github.io/users-service/pb"
 	mg "raspstore.github.io/users-service/repository"
 	sv "raspstore.github.io/users-service/service"
 )
@@ -34,7 +34,6 @@ func TestSignUp(t *testing.T) {
 
 	req := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
-		Password:    "testpass",
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361318",
 	}
@@ -89,7 +88,6 @@ func TestUpdateUser(t *testing.T) {
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361320",
-		Password:    "testPassword",
 	}
 
 	user, errService := service.CreateUser(context.Background(), createUserRequest)

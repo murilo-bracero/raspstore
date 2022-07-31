@@ -5,12 +5,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"raspstore.github.io/users-service/db"
-	"raspstore.github.io/users-service/pb"
 )
 
 var whitelistRoutes = "/pb.UsersService/SignUp"

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"raspstore.github.io/users-service/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 )
 
 type User struct {

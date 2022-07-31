@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 	"raspstore.github.io/users-service/model"
-	"raspstore.github.io/users-service/pb"
 	"raspstore.github.io/users-service/repository"
 	"raspstore.github.io/users-service/validators"
 )
@@ -38,27 +38,6 @@ func (u *usersService) CreateUser(ctx context.Context, req *pb.CreateUserRequest
 			return nil, err
 		}
 
-		// hash, err := utils.Hash(req.Password)
-
-		// if err != nil {
-		// 	return nil, err
-		// }
-
-		// cred := &model.Credential{
-		// 	Id:            user.UserId,
-		// 	Email:         user.Email,
-		// 	Hash:          hash,
-		// 	Has2FAEnabled: false,
-		// }
-
-		// if err := u.credRepository.Save(cred); err != nil {
-		// 	if inner_error := u.userRepository.DeleteUser(user.UserId); inner_error != nil {
-		// 		log.Println("user of id ", user.UserId, " failed to be inserted in credentials database but was inserted in user database. Remove it manually")
-		// 		return nil, inner_error
-		// 	}
-		// 	return nil, err
-		// }
-
 		return user.ToProtoBuffer(), nil
 	}
 
@@ -76,14 +55,9 @@ func (u *usersService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb
 }
 
 func (u *usersService) DeleteUser(ctx context.Context, req *pb.GetUserRequest) (*pb.DeleteUserResponse, error) {
-	if err := u.userRepository.DeleteUser(req.Id); err != nil {
+	if err := u.userRepository.Delete(req.Id); err != nil {
 		return nil, err
 	}
-
-	// if err := u.credRepository.Delete(req.Id); err != nil {
-	// 	log.Print("User ", req.Id, " was removed from user database but not for credentials database, remove it mannually")
-	// 	return nil, err
-	// }
 
 	return &pb.DeleteUserResponse{Id: req.Id}, nil
 }
@@ -98,25 +72,11 @@ func (u *usersService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest
 		return nil, err
 	}
 
-	if err := u.userRepository.UpdateUser(usr); err != nil {
+	if err := u.userRepository.Update(usr); err != nil {
 		return nil, err
 	}
 
-	// cred := &model.Credential{
-	// 	Id:    usr.UserId,
-	// 	Email: usr.Email,
-	// }
-
-	// if err := u.credRepository.Update(cred); err != nil {
-	// 	log.Println("user of id ", usr.UserId, " failed to be updated in credentials database but was inserted in user database. Update it manually")
-	// 	return nil, err
-	// }
-
-	if found, err := u.userRepository.FindById(req.Id); err != nil {
-		return nil, err
-	} else {
-		return found.ToProtoBuffer(), nil
-	}
+	return usr.ToProtoBuffer(), nil
 }
 
 func (u *usersService) ListUser(req *pb.ListUsersRequest, stream pb.UsersService_ListUserServer) error {

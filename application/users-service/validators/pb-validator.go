@@ -1,8 +1,6 @@
 package validators
 
-import (
-	"raspstore.github.io/users-service/pb"
-)
+import "github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 
 func ValidateSignUp(req *pb.CreateUserRequest) error {
 	if req.Email == "" {
@@ -11,14 +9,6 @@ func ValidateSignUp(req *pb.CreateUserRequest) error {
 
 	if req.Username == "" {
 		return ErrEmptyUsername
-	}
-
-	if req.Password == "" {
-		return ErrEmptyPassword
-	}
-
-	if len(req.Password) < 8 {
-		return ErrComplexityPassword
 	}
 
 	return nil
