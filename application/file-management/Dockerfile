@@ -1,23 +1,19 @@
-FROM golang:1.17-alpine
-
-RUN apk add --no-cache protoc
+FROM golang:1.17-alpine AS build
 
 WORKDIR /app
 
-RUN GO111MODULE=on \
-        go get google.golang.org/protobuf/cmd/protoc-gen-go \
-        google.golang.org/grpc/cmd/protoc-gen-go-grpc
-
-COPY go.mod ./
-
-COPY go.sum ./
+COPY . ./
 
 RUN go mod download
 
-COPY . ./
+RUN go build -o file-manager-app
 
-RUN protoc --go_out=. --go-grpc_out=. ./messages/*.proto
+FROM alpine:3.16
 
-RUN go build -o /file-manager-app
+WORKDIR /app
 
-CMD ["/file-manager-app"]
+COPY --from=build /app/file-manager-app .
+
+EXPOSE 8080 8081
+
+CMD ["./file-manager-app"]

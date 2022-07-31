@@ -16,4 +16,4 @@ COPY --from=build /app/authentication-app authentication-app
 
 EXPOSE 8080 8081
 
-CMD ["/authentication-app"]
+CMD ["./authentication-app"]

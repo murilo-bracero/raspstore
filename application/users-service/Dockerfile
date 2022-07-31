@@ -18,4 +18,6 @@ WORKDIR /app
 
 COPY --from=build /app/users-service-app .
 
-CMD ["/users-service-app"]
+EXPOSE 8080 8081
+
+CMD ["./users-service-app"]

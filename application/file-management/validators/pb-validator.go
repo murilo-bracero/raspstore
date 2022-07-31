@@ -3,7 +3,7 @@ package validators
 import (
 	"errors"
 
-	"raspstore.github.io/file-manager/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/file-manager/pb"
 )
 
 var (

@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/murilo-bracero/raspstore-protofiles/file-manager/pb"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"raspstore.github.io/file-manager/pb"
 )
 
 type File struct {

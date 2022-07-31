@@ -11,10 +11,10 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/file-manager/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"raspstore.github.io/file-manager/db"
-	"raspstore.github.io/file-manager/pb"
 	"raspstore.github.io/file-manager/repository"
 )
 

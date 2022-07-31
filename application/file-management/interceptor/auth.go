@@ -4,12 +4,13 @@ import (
 	"context"
 	"log"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"raspstore.github.io/file-manager/db"
-	"raspstore.github.io/file-manager/pb"
 )
 
 type AuthInterceptor interface {
@@ -63,7 +64,7 @@ func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req inter
 }
 
 func (a *authInterceptor) validateToken(token string) (uid string, err error) {
-	conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithInsecure())
+	conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())
