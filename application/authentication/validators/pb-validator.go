@@ -1,8 +1,6 @@
 package validators
 
-import (
-	"raspstore.github.io/authentication/pb"
-)
+import "github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 
 func ValidateLogin(req *pb.LoginRequest) error {
 
