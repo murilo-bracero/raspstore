@@ -2,44 +2,43 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
-	"raspstore.github.io/authentication/pb"
+	"raspstore.github.io/authentication/model"
 	mg "raspstore.github.io/authentication/repository"
 	sv "raspstore.github.io/authentication/service"
 	"raspstore.github.io/authentication/token"
 )
 
+func init() {
+	err := godotenv.Load("../../.env")
+
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+}
+
 func TestLogin(t *testing.T) {
 	ctx := context.Background()
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(ctx, cfg)
-	assert.NoError(t, err)
+	as, conn, cr := bootstrap(ctx)
+
 	defer conn.Close(ctx)
-	userRepo := mg.NewUsersRepository(ctx, conn)
-	credRepo := mg.NewCredentialsRepository(ctx, conn)
-	tokenManager := token.NewTokenManager(cfg)
-	as := sv.NewAuthService(userRepo, credRepo, tokenManager)
-	us := sv.NewUserService(userRepo, credRepo)
 
-	createUserRequest := &pb.CreateUserRequest{
-		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
-		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
-		PhoneNumber: "+552738361320",
-		Password:    "penispintorola212",
-	}
+	cred := createCredential()
 
-	_, errService := us.CreateUser(ctx, createUserRequest)
-
-	assert.NoError(t, errService)
+	cr.Save(cred)
 
 	loginRequest := &pb.LoginRequest{
-		Email:    createUserRequest.Email,
-		Password: createUserRequest.Password,
+		Email:    cred.Email,
+		Password: "testpassword",
 	}
 
 	res, err := as.Login(ctx, loginRequest)
@@ -51,30 +50,18 @@ func TestLogin(t *testing.T) {
 
 func TestAuthenticate(t *testing.T) {
 	ctx := context.Background()
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(ctx, cfg)
-	assert.NoError(t, err)
+	as, conn, cr := bootstrap(ctx)
+
 	defer conn.Close(ctx)
-	userRepo := mg.NewUsersRepository(ctx, conn)
-	credRepo := mg.NewCredentialsRepository(ctx, conn)
-	tokenManager := token.NewTokenManager(cfg)
-	as := sv.NewAuthService(userRepo, credRepo, tokenManager)
-	us := sv.NewUserService(userRepo, credRepo)
 
-	createUserRequest := &pb.CreateUserRequest{
-		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
-		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
-		PhoneNumber: "+552738361320",
-		Password:    "penispintorola212",
-	}
+	cred := createCredential()
 
-	_, errService := us.CreateUser(ctx, createUserRequest)
-
-	assert.NoError(t, errService)
+	cr.Save(cred)
 
 	loginRequest := &pb.LoginRequest{
-		Email:    createUserRequest.Email,
-		Password: createUserRequest.Password,
+		Email:    cred.Email,
+		Password: "testpassword",
+		MfaToken: "",
 	}
 
 	res, err := as.Login(ctx, loginRequest)
@@ -90,4 +77,33 @@ func TestAuthenticate(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, tokenRes.Uid)
+}
+
+func createCredential() *model.Credential {
+	id := uuid.NewString()
+
+	pass, _ := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
+
+	return &model.Credential{
+		Id:            primitive.NewObjectID(),
+		UserId:        id,
+		Email:         id + "_test@email.com",
+		Secret:        "",
+		Hash:          string(pass[:]),
+		Has2FAEnabled: false,
+	}
+}
+
+func bootstrap(ctx context.Context) (pb.AuthServiceServer, db.MongoConnection, mg.CredentialsRepository) {
+
+	cfg := db.NewConfig()
+	conn, err := db.NewMongoConnection(ctx, cfg)
+
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	credRepo := mg.NewCredentialsRepository(ctx, conn)
+	tokenManager := token.NewTokenManager(cfg)
+	return sv.NewAuthService(credRepo, tokenManager), conn, credRepo
 }

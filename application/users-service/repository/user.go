@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/users-service/db"
 	"raspstore.github.io/users-service/model"
+	"raspstore.github.io/users-service/validators"
 )
 
 const usersCollectionName = "users"
@@ -19,8 +20,8 @@ type UsersRepository interface {
 	Save(user *model.User) error
 	FindById(id string) (user *model.User, err error)
 	FindByEmail(email string) (user *model.User, err error)
-	DeleteUser(id string) error
-	UpdateUser(user *model.User) error
+	Delete(id string) error
+	Update(user *model.User) error
 	FindAll() (users []*model.User, err error)
 }
 
@@ -41,7 +42,7 @@ func (r *usersRespository) Save(user *model.User) error {
 	_, err := r.coll.InsertOne(r.ctx, user)
 
 	if err != nil {
-		fmt.Println("Coud not create user ", user, " in MongoDB: ", err.Error())
+		log.Println("Coud not create user ", user, " in MongoDB: ", err.Error())
 		return err
 	}
 
@@ -72,13 +73,13 @@ func (r *usersRespository) FindByEmail(email string) (user *model.User, err erro
 	return user, err
 }
 
-func (r *usersRespository) DeleteUser(id string) error {
+func (r *usersRespository) Delete(id string) error {
 
 	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
 	return err
 }
 
-func (r *usersRespository) UpdateUser(user *model.User) error {
+func (r *usersRespository) Update(user *model.User) error {
 
 	user.UpdatedAt = time.Now()
 
@@ -89,11 +90,19 @@ func (r *usersRespository) UpdateUser(user *model.User) error {
 			"phone_number": user.PhoneNumber,
 			"updated_at":   user.UpdatedAt}})
 
-	if err == nil && (res.MatchedCount == 0 || res.ModifiedCount == 0) {
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return validators.ErrUserNotFound
+	}
+
+	if res.ModifiedCount == 0 {
 		return errors.New("user could not be updated")
 	}
 
-	return err
+	return nil
 }
 
 func (r *usersRespository) FindAll() (users []*model.User, err error) {

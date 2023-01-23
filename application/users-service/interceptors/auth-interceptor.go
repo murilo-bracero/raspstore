@@ -5,15 +5,17 @@ import (
 	"log"
 	"strings"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"raspstore.github.io/users-service/db"
-	"raspstore.github.io/users-service/pb"
 )
 
 var whitelistRoutes = "/pb.UsersService/SignUp"
+
+type UidKey string
 
 type AuthInterceptor interface {
 	WithUnaryAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error)
@@ -69,6 +71,8 @@ func (a *authInterceptor) WithUnaryAuthentication(ctx context.Context, req inter
 	}
 
 	log.Println("user ", uid, " accessed resource ", info.FullMethod)
+
+	ctx = context.WithValue(ctx, UidKey("uid"), uid)
 
 	return handler(ctx, req)
 }

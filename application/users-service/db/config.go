@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config interface {
@@ -53,7 +54,7 @@ func NewConfig() Config {
 	value, exists := os.LookupEnv("MONGO_URI")
 	if exists {
 		cfg.mongoUri = value
-		cfg.mongoDatabase = os.Getenv("MONGO_DATABASE_NAME")
+		cfg.mongoDatabase = getDatabaseNameFromUrl(value)
 		return &cfg
 	}
 
@@ -91,4 +92,20 @@ func (c *config) RestPort() int {
 
 func (c *config) AuthServiceUrl() string {
 	return c.authServiceUrl
+}
+
+func getDatabaseNameFromUrl(url string) string {
+	arr := strings.Split(url, "/")
+
+	if len(arr) != 4 {
+		return ""
+	}
+
+	dbargsarr := strings.Split(arr[3], "?")
+
+	if len(dbargsarr) == 0 {
+		return ""
+	}
+
+	return dbargsarr[0]
 }

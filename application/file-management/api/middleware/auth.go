@@ -6,10 +6,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"raspstore.github.io/file-manager/api/dto"
 	"raspstore.github.io/file-manager/db"
-	"raspstore.github.io/file-manager/pb"
 )
 
 type AuthMiddleware interface {
@@ -31,14 +32,16 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 		if token == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			send(w, dto.ErrorResponse{Message: "authorization header is missing", Code: "AM01"})
 			return
 		}
 
-		conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithInsecure())
+		conn, err := grpc.Dial(a.cfg.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 		if err != nil {
-			log.Fatalln("could not stablish connection to auth service, it may goes down: ", err.Error())
+			log.Println("could not stablish connection to auth service, it may goes down: ", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			send(w, dto.ErrorResponse{Message: "feature temporatily unavailable.", Code: "AM99"})
+			return
 		}
 
 		defer conn.Close()
@@ -49,7 +52,6 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 		if res, err := client.Authenticate(context.Background(), in); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			send(w, dto.ErrorResponse{Message: "authorization header is missing", Reason: err.Error(), Code: "AM02"})
 			return
 		} else {
 			r.Header.Add("UID", res.Uid)

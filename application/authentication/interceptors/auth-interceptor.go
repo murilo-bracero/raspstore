@@ -8,12 +8,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"raspstore.github.io/authentication/model"
 	"raspstore.github.io/authentication/repository"
 	"raspstore.github.io/authentication/token"
 	"raspstore.github.io/authentication/utils"
 )
 
-var whitelistRoutes = "/pb.AuthService/Login,/pb.AuthService/SignUp,/pb.AuthService/Authenticate"
+var whitelistRoutes = "/pb.AuthService/login,/pb.AuthService/createCredentials,/pb.AuthService/authenticate"
 
 type AuthInterceptor interface {
 	WithUnaryAuthentication(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error)
@@ -21,12 +22,12 @@ type AuthInterceptor interface {
 }
 
 type authInterceptor struct {
-	repo         repository.UsersRepository
-	tokenManager token.TokenManager
+	tokenManager          token.TokenManager
+	credentialsRepository repository.CredentialsRepository
 }
 
-func NewAuthInterceptor(repo repository.UsersRepository, tokenManager token.TokenManager) AuthInterceptor {
-	return &authInterceptor{repo: repo, tokenManager: tokenManager}
+func NewAuthInterceptor(tokenManager token.TokenManager, credentialsRepository repository.CredentialsRepository) AuthInterceptor {
+	return &authInterceptor{tokenManager: tokenManager, credentialsRepository: credentialsRepository}
 }
 
 func (a *authInterceptor) WithStreamingAuthentication(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -62,22 +63,24 @@ func (a *authInterceptor) validateMetadata(ctx context.Context) (uid string, err
 	accessToken := utils.GetValueFromMetadata("authorization", ctx)
 
 	if accessToken == "" {
-		return "", status.Errorf(codes.Unauthenticated, "authorization metadata not provided")
+		return "", status.Errorf(codes.Unauthenticated, "token invalid or malformed")
 	}
 
 	uid, err = a.tokenManager.Verify(accessToken)
 
 	if err != nil {
-		return "", status.Errorf(codes.Unauthenticated, "token invalid or expired")
+		return "", status.Errorf(codes.Unauthenticated, "token invalid or malformed")
 	}
 
-	// just verifies if user exists on database, securing against fraud generated tokens
+	// just verifies if credentials exists on database, securing against fraud generated tokens
 
-	if usr, err := a.repo.FindById(uid); err != nil {
-		return "", status.Errorf(codes.Unauthenticated, "fraudulent token")
-	} else {
-		fmt.Println("user ", usr.Email, "authenticated")
+	var cred *model.Credential
+
+	if cred, err = a.credentialsRepository.FindByUserId(uid); err != nil {
+		return "", status.Errorf(codes.Unauthenticated, "token invalid or malformed")
 	}
+
+	fmt.Println("user ", cred.UserId, "authenticated")
 
 	return uid, nil
 }

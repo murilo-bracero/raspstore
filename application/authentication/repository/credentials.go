@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pquerna/otp/totp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/authentication/db"
 	"raspstore.github.io/authentication/model"
 )
@@ -19,10 +17,8 @@ type CredentialsRepository interface {
 	Save(cred *model.Credential) error
 	Update(cred *model.Credential) error
 	Delete(id string) error
-	IsCredentialsCorrect(email string, password string, token string) bool
-	Has2FAEnabledByEmail(email string) bool
-	Has2FAEnabledByUID(uid string) bool
-	FindById(id string) (cred *model.Credential, err error)
+	FindByUserId(id string) (cred *model.Credential, err error)
+	FindByEmail(email string) (cred *model.Credential, err error)
 }
 
 type credentialsRespository struct {
@@ -46,12 +42,19 @@ func (r *credentialsRespository) Save(cred *model.Credential) error {
 
 func (r *credentialsRespository) Delete(id string) error {
 
-	_, err := r.coll.DeleteOne(r.ctx, bson.M{"user_id": id})
+	_, err := r.coll.DeleteOne(r.ctx, bson.M{"_id": id})
 	return err
 }
 
-func (r *credentialsRespository) FindById(id string) (cred *model.Credential, err error) {
+func (r *credentialsRespository) FindByUserId(id string) (cred *model.Credential, err error) {
 	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
+
+	err = res.Decode(&cred)
+	return cred, err
+}
+
+func (r *credentialsRespository) FindByEmail(email string) (cred *model.Credential, err error) {
+	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
 
 	err = res.Decode(&cred)
 	return cred, err
@@ -59,7 +62,7 @@ func (r *credentialsRespository) FindById(id string) (cred *model.Credential, er
 
 func (r *credentialsRespository) Update(cred *model.Credential) error {
 
-	filter := bson.D{{Key: "user_id", Value: cred.Id}}
+	filter := bson.D{{Key: "_id", Value: cred.Id}}
 
 	update := bson.D{{Key: "$set",
 		Value: bson.D{
@@ -77,60 +80,4 @@ func (r *credentialsRespository) Update(cred *model.Credential) error {
 	}
 
 	return err
-}
-
-func (r *credentialsRespository) Has2FAEnabledByEmail(email string) bool {
-	var credential model.Credential
-
-	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
-
-	if res.Err() != nil {
-		return false
-	}
-
-	if err := res.Decode(&credential); err != nil {
-		return false
-	}
-
-	return credential.Has2FAEnabled
-}
-
-func (r *credentialsRespository) Has2FAEnabledByUID(uid string) bool {
-	var credential model.Credential
-
-	res := r.coll.FindOne(r.ctx, bson.M{"user_id": uid})
-
-	if res.Err() != nil {
-		return false
-	}
-
-	if err := res.Decode(&credential); err != nil {
-		return false
-	}
-
-	return credential.Has2FAEnabled
-}
-
-func (r *credentialsRespository) IsCredentialsCorrect(email string, password string, token string) bool {
-	var credential model.Credential
-
-	res := r.coll.FindOne(r.ctx, bson.M{"email": email})
-
-	if res.Err() != nil {
-		return false
-	}
-
-	if err := res.Decode(&credential); err != nil {
-		return false
-	}
-
-	if bcrypt.CompareHashAndPassword([]byte(credential.Hash), []byte(password)) == nil {
-		if credential.Has2FAEnabled {
-			return totp.Validate(token, credential.Secret)
-		}
-
-		return true
-	}
-
-	return false
 }

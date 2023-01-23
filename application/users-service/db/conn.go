@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +18,7 @@ type conn struct {
 }
 
 func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error) {
-	fmt.Println("Connecting to MongoDB...")
+	log.Println("Connecting to MongoDB...")
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoUri()))
 
 	if err != nil {
@@ -27,7 +26,7 @@ func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error
 		return nil, err
 	}
 
-	fmt.Println("Connected to MongoDB Successfully")
+	log.Println("Connected to MongoDB Successfully")
 	return &conn{database: client.Database(cfg.MongoDatabaseName())}, nil
 }
 

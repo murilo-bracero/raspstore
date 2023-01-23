@@ -9,13 +9,13 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 	"google.golang.org/grpc"
 	api "raspstore.github.io/users-service/api"
 	"raspstore.github.io/users-service/api/controller"
 	"raspstore.github.io/users-service/api/middleware"
 	"raspstore.github.io/users-service/db"
 	interceptor "raspstore.github.io/users-service/interceptors"
-	"raspstore.github.io/users-service/pb"
 	rp "raspstore.github.io/users-service/repository"
 	"raspstore.github.io/users-service/service"
 )
@@ -33,9 +33,9 @@ func main() {
 
 	defer conn.Close(context.Background())
 
-	credRepo, usersRepo := initRepos(conn)
+	usersRepo := initRepos(conn)
 
-	usersService := service.NewUserService(usersRepo, credRepo)
+	usersService := service.NewUserService(usersRepo)
 
 	authInterceptor := interceptor.NewAuthInterceptor(cfg)
 
@@ -54,7 +54,7 @@ func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur rp.UsersRepository, u
 	uc := controller.NewUserController(ur, us)
 	router := api.NewRoutes(uc).MountRoutes()
 	http.Handle("/", router)
-	log.Printf("Authentication API runing on port %d", cfg.RestPort())
+	log.Printf("Users Service API runing on port %d", cfg.RestPort())
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), md.Apply(router))
 }
 
@@ -67,7 +67,7 @@ func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInte
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithUnaryAuthentication), grpc.StreamInterceptor(itc.WithStreamingAuthentication))
 	pb.RegisterUsersServiceServer(grpcServer, us)
 
-	log.Printf("Authentication service running on [::]:%d\n", cfg.GrpcPort())
+	log.Printf("Users Service gRPC running on [::]:%d\n", cfg.GrpcPort())
 
 	grpcServer.Serve(lis)
 }
@@ -82,7 +82,6 @@ func initDatabase(cfg db.Config) db.MongoConnection {
 	return conn
 }
 
-func initRepos(conn db.MongoConnection) (rp.CredentialsRepository, rp.UsersRepository) {
-	return rp.NewCredentialsRepository(context.Background(), conn),
-		rp.NewUsersRepository(context.Background(), conn)
+func initRepos(conn db.MongoConnection) rp.UsersRepository {
+	return rp.NewUsersRepository(context.Background(), conn)
 }

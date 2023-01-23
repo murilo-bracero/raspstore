@@ -40,11 +40,11 @@ func TestInterceptorWhenRouteIsNotWhitelisted(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
+	credRepo := repository.NewCredentialsRepository(context.Background(), conn)
 	defer conn.Close(context.Background())
-	userRepo := repository.NewUsersRepository(context.Background(), conn)
 	tokenManager := new(mockTokenManager)
 
-	mdwr := interceptor.NewAuthInterceptor(userRepo, tokenManager)
+	mdwr := interceptor.NewAuthInterceptor(tokenManager, credRepo)
 
 	m := make(map[string]string)
 	m["authorization"] = "tokenmock"
@@ -62,11 +62,11 @@ func TestInterceptorWhenRouteIsWhitelisted(t *testing.T) {
 	cfg := db.NewConfig()
 	conn, err := db.NewMongoConnection(context.Background(), cfg)
 	assert.NoError(t, err)
+	credRepo := repository.NewCredentialsRepository(context.Background(), conn)
 	defer conn.Close(context.Background())
-	userRepo := repository.NewUsersRepository(context.Background(), conn)
 	tokenManager := new(mockTokenManager)
 
-	mdwr := interceptor.NewAuthInterceptor(userRepo, tokenManager)
+	mdwr := interceptor.NewAuthInterceptor(tokenManager, credRepo)
 
 	m := make(map[string]string)
 	m["authorization"] = "tokenmock"

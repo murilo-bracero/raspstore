@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/users-service/db"
 	"raspstore.github.io/users-service/model"
-	"raspstore.github.io/users-service/pb"
 	mg "raspstore.github.io/users-service/repository"
 	sv "raspstore.github.io/users-service/service"
 )
@@ -30,12 +30,10 @@ func TestSignUp(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	req := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
-		Password:    "testpass",
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361318",
 	}
@@ -56,8 +54,7 @@ func TestGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	user := &model.User{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
@@ -85,14 +82,12 @@ func TestUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	createUserRequest := &pb.CreateUserRequest{
 		Username:    fmt.Sprintf("tes_%s", uuid.NewString()),
 		Email:       fmt.Sprintf("%s@email.com", uuid.NewString()),
 		PhoneNumber: "+552738361320",
-		Password:    "penispintorola212",
 	}
 
 	user, errService := service.CreateUser(context.Background(), createUserRequest)
@@ -120,8 +115,7 @@ func TestDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	userRepo := mg.NewUsersRepository(context.Background(), conn)
-	credRepo := mg.NewCredentialsRepository(context.Background(), conn)
-	service := sv.NewUserService(userRepo, credRepo)
+	service := sv.NewUserService(userRepo)
 
 	users, err1 := userRepo.FindAll()
 

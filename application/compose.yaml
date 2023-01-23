@@ -1,0 +1,22 @@
+version: "3.9"
+services: 
+  authentication-service:
+    build: authentication
+    ports: 
+      - "8080:8080"
+      - "8081:8081"
+  file-manager-service:
+    build: file-management
+    ports:
+      - "8080:8082"
+      - "8081:8083"
+  users-service:
+    build: users-service
+    ports:
+      - "8080:8084"
+      - "8081:8085"
+
+networks:
+  default:
+    external: true
+    name: raspstore-network

@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
 	"google.golang.org/grpc"
 	"raspstore.github.io/users-service/api/dto"
 	"raspstore.github.io/users-service/db"
-	"raspstore.github.io/users-service/pb"
 	"raspstore.github.io/users-service/utils"
 )
 
@@ -19,7 +19,7 @@ type AuthMiddleware interface {
 type authMiddleware struct {
 	cfg db.Config
 }
-
+ 
 func NewAuthMiddleware(cfg db.Config) AuthMiddleware {
 	return &authMiddleware{cfg: cfg}
 }

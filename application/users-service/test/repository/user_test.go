@@ -118,7 +118,7 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 		PhoneNumber: "1196726372912",
 	}
 
-	error1 := repo.UpdateUser(updated)
+	error1 := repo.Update(updated)
 
 	assert.NoError(t, error1)
 
@@ -154,7 +154,7 @@ func TestUsersRepositoryDeleteUser(t *testing.T) {
 	assert.True(t, len(users) > 0)
 
 	for _, user := range users {
-		repo.DeleteUser(user.UserId)
+		repo.Delete(user.UserId)
 		break
 	}
 }

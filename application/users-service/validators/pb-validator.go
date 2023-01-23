@@ -1,36 +1,6 @@
 package validators
 
-import (
-	"raspstore.github.io/users-service/pb"
-)
-
-func Validate2FARequest(req *pb.Verify2FARequest) error {
-	if len(req.Token) != 6 {
-		return ErrInvalidTotpToken
-	}
-
-	return nil
-}
-
-func ValidateLogin(req *pb.LoginRequest) error {
-
-	if req.Email == "" {
-		return ErrEmptyEmail
-	}
-
-	if req.Password == "" {
-		return ErrEmptyPassword
-	}
-
-	return nil
-}
-
-func ValidateAuthenticate(req *pb.AuthenticateRequest) error {
-	if req.Token == "" {
-		return ErrEmptyToken
-	}
-	return nil
-}
+import "github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
 
 func ValidateSignUp(req *pb.CreateUserRequest) error {
 	if req.Email == "" {
@@ -39,14 +9,6 @@ func ValidateSignUp(req *pb.CreateUserRequest) error {
 
 	if req.Username == "" {
 		return ErrEmptyUsername
-	}
-
-	if req.Password == "" {
-		return ErrEmptyPassword
-	}
-
-	if len(req.Password) < 8 {
-		return ErrComplexityPassword
 	}
 
 	return nil
