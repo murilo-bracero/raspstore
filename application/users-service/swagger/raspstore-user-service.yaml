@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Raspstore User Service
+  description: Microservice REST specification of users-service endpoints.
+  contact:
+    email: soon@todo.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:9000/users-service/users
+tags:
+  - name: users
+    description: Users workflow
+
+paths:
+  /users:
+    post:
+      tags:
+        - users
+      summary: Create user
+      description: Create new user
+      operationId: createUser
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUserRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessCreateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    get:
+      tags:
+        - users
+      summary: Get All Users
+      description: Get all users based on parameters provided
+      operationId: getUsers
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParameter'
+        - $ref: '#/components/parameters/SizeQueryParameter'
+        - $ref: '#/components/parameters/UsernameQueryParameter'
+        - $ref: '#/components/parameters/EmailQueryParameter'
+        - $ref: '#/components/parameters/EnableQueryParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUsersListResponse'
+  /users/{userId}:
+    get:
+      tags:
+        - users
+      summary: Get user by user name
+      description: ''
+      operationId: getUserByName
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRepresentation'
+        '400':
+          description: Invalid username supplied
+        '404':
+          $ref: '#/components/responses/UserNotFoundErrorResponse'
+    put:
+      tags:
+        - users
+      summary: Update user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateUserRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUpdateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestUpdateUserResponse'
+        '404':
+          description: user with provided id not found in database
+        '409':
+          description: user with provided info already exists in database
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      responses:
+        '204':
+          description: User removed successfully
+        '400':
+          description: Invalid userId
+        '404':
+          description: User not found
+components:
+  schemas:
+    UserRepresentation:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          example: john.doe@dummy.com
+        isEnabled:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date
+          pattern: YYYY-MM-DD HH:mm:ss
+          example: '2022-10-25 19:43:12'
+        updatedAt:
+          type: string
+          format: date
+          pattern: YYYY-MM-DD HH:mm:ss
+          example: '2022-10-25 19:43:12'
+    CreateUserRepresentation:
+      type: object
+      properties:
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          example: john.doe@dummy.com
+        password:
+          type: string
+          example: super-secret-password
+    PageRepresentation:
+      type: object
+      properties:
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        next:
+          type: string
+          example: 'http://localhost:9000/users?page=2&size=10'
+    UpdateUserRepresentation:
+      type: object
+      properties:
+        username:
+          type: string
+          example: coolusername
+        email:
+          type: string
+          format: email
+          example: new-cool-email@example.com
+        isEnabled:
+          type: boolean
+          example: true
+    ApiErrorException:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'ERR010'
+        message:
+          type: string
+          example: 'Field email must not be null or empty'
+        traceId:
+          type: string
+          example: 'df438c36-9aa4-11ed-a8fc-0242ac120002'
+  requestBodies:
+    CreateUserRequest:
+      description: User request object required to create a new user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserRepresentation'
+    UpdateUserRequest:
+      description: User request object required to update a existing user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserRepresentation'
+  parameters:
+    UsernameQueryParameter:
+      name: username
+      in: query
+      schema:
+        type: string
+        example: johndoe
+    EmailQueryParameter:
+      name: email
+      in: query
+      schema:
+        type: string
+        example: john.doe@mail.com
+    EnableQueryParameter:
+      name: enabled
+      in: query
+      schema:
+        type: boolean
+        example: true
+    PageQueryParameter:
+      name: page
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    SizeQueryParameter:
+      name: size
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    UserIdPathParameter:
+      name: userId
+      in: path
+      description: 'The userId that needs to be fetched.'
+      required: true
+      schema:
+        type: string
+        example: 507f1f77bcf86cd799439011
+  responses:
+    BadRequestCreateUserResponse:
+      description: payload invalid or malformed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+      
+    SuccessCreateUserResponse:
+      description: successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserRepresentation'
+    
+    SuccessUpdateUserResponse:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserRepresentation'
+    
+    BadRequestUpdateUserResponse:
+      description: payload invalid or malformed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+    
+    SuccessUsersListResponse:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PageRepresentation'
+              - type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserRepresentation'
+    
+    InternalServerErrorResponse:
+      description: internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+          example:
+            code: "ERR500"
+            message: "An expected error occured"
+            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
+            
+    UserNotFoundErrorResponse:
+      description: user with provided id not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+          example:
+            code: "ERR404"
+            message: "User not found"
+            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
+  
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
