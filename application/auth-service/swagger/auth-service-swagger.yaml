@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Raspstore Authentication Service
+  description: REST specification of auth-service microservice endpoints.
+  contact:
+    email: soon@todo.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:9000/auth-service/
+tags:
+  - name: auth
+    description: Operations about authentication
+paths:
+  /login:
+    post:
+      security:
+        - loginAuth: []
+      tags:
+        - auth
+      summary: Login
+      description: |- 
+        Uses Basic credentials sent in Authorization header and mfaToken
+        (when enabled) to authenticate user against backend
+      operationId: login
+      requestBody:
+        $ref: '#/components/requestBodies/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessLoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestLoginResponse'
+        '401':
+          description: Username, password or mfa token invalid
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  
+  /refresh:
+    get:
+      security:
+        - cookieRefreshToken: []
+      tags:
+        - auth
+      summary: Request a new JWT using provided refreshToken
+      description: Sends refreshToken as HttpOnly cookie and validates it
+      operationId: refreshJwtByToken
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessRefreshResponse'
+        '401':
+          description: Refresh Token is invalid or inexistent
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+        
+components:
+  schemas:
+    TokenRepresentation:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: 'abcdef1233'
+        accessTokenExpiresIn:
+          type: integer
+          format: int64
+          example: 18000
+        refreshToken:
+          type: string
+          example: 'abcdef1233'
+        refreshTokenExpiresIn:
+          type: integer
+          format: int64
+          example: 32000
+    LoginRepresentation:
+      type: object
+      properties:
+        mfaToken:
+          type: integer
+          format: int32
+          example: 548263
+    ApiErrorException:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'ERR010'
+        message:
+          type: string
+          example: 'Field email must not be null or empty'
+        traceId:
+          type: string
+          example: 'df438c36-9aa4-11ed-a8fc-0242ac120002'
+  requestBodies:
+    LoginRequest:
+      description: login request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRepresentation'
+  
+  responses:
+    SuccessLoginResponse:
+      description: login request returns with status success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenRepresentation'
+            
+    BadRequestLoginResponse:
+      description: payload invalid or malformed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+    
+    SuccessRefreshResponse:
+      description: refresh request returns with status success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenRepresentation'
+    
+    InternalServerErrorResponse:
+      description: internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+          example:
+            code: "ERR500"
+            message: "An expected error occured"
+            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
+  
+  securitySchemes:
+    loginAuth:
+      type: http
+      scheme: basic
+    cookieRefreshToken:
+      type: apiKey
+      in: cookie
+      name: Refresh Token

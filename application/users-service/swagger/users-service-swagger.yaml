@@ -9,7 +9,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9000/users-service/users
+  - url: http://localhost:9000/users-service
 tags:
   - name: users
     description: Users workflow
