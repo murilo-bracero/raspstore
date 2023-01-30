@@ -77,9 +77,8 @@ components:
       type: object
       properties:
         mfaToken:
-          type: integer
-          format: int32
-          example: 548263
+          type: string
+          example: '548263'
     ApiErrorException:
       type: object
       properties:

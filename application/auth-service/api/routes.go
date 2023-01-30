@@ -2,10 +2,11 @@ package api
 
 import (
 	"github.com/gorilla/mux"
-	"raspstore.github.io/authentication/api/controller"
+	"raspstore.github.io/auth-service/api/controller"
 )
 
-const loginRoute = "/auth"
+const baseRoute = "/auth-service"
+const loginRoute = baseRoute + "/login"
 
 type Routes interface {
 	MountRoutes() *mux.Router
