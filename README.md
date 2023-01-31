@@ -54,42 +54,10 @@ A cloud-like storage app for raspberry pi cluster, with automatic installation, 
 
 ## Architecture
 
-- User Data Storage options:
-    - MongoDB
-    - Cloud Datastore
+- User Data Storage options: MongoDB
 
-- User Credentials Storage:
-    - Firebase Authentication (Recommended for federated logins)
-    - MongoDB
-    - Datastore
+- User Credentials Storage: MongoDB
 
-- History and Logging:
-    - Stackdriver (new Cloud Operations)
-    - MongoDB
-    - Pub/Sub (when available)
-    - Kafka (when available)
-    - RabbitMQ (when available)
-    - Redis (when available)
+- History and Logging: MongoDB
 
-- Metadata fast recovery:
-    - Cassandra
-    - Datastore
-    - MongoDB
-    - Redis (when available)
-
-- Infrastructure:
-    - Application is hosted in Raspberry Pi infrastructure
-    - MongoDB hosted at Atlas
-    - Firebase is a Cloud Service, hosted at Google Cloud
-    - Stackdriver is a managed logging system hosted at Google Cloud
-    - Datastore is a NoSQL managed cloud database available on Google Cloud
-    - Cassandra self-hosted or hosted at some Cloud environment
-
-Disclaimer: I highly recommend that you use cloud environments if you are looking for low-config and low-management, but there is no problem to host all these thing in your own infrastructure if you have a well-suited raspberry pi cluster
-
-## Recommended Architecture
-
-- MongoDB or Datastore for user dara storage
-- Firebase Authentication for user credential storage
-- Stackdriver for history and logging
-- Cassandra or Datastore for fast data recovery
+- Metadata fast recovery: MongoDB

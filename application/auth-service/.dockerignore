@@ -1,0 +1,4 @@
+pb/
+tmp/
+.air.conf
+*.sh
