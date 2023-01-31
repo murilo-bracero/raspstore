@@ -7,8 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/authentication/db"
-	"raspstore.github.io/authentication/token"
+	"raspstore.github.io/auth-service/token"
 )
 
 func init() {
@@ -20,8 +19,7 @@ func init() {
 }
 
 func TestGenerateToken(t *testing.T) {
-	cfg := db.NewConfig()
-	mngr := token.NewTokenManager(cfg)
+	mngr := token.NewTokenManager()
 
 	uid := uuid.NewString()
 
@@ -39,8 +37,7 @@ func TestGenerateToken(t *testing.T) {
 }
 
 func TestFakeToken(t *testing.T) {
-	cfg := db.NewConfig()
-	mngr := token.NewTokenManager(cfg)
+	mngr := token.NewTokenManager()
 
 	token := "faketoken.token.fake"
 

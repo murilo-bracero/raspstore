@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"raspstore.github.io/authentication/db"
+	"raspstore.github.io/auth-service/db"
 )
 
 type TokenManager interface {
@@ -13,12 +13,10 @@ type TokenManager interface {
 	Generate(uid string) (token string, err error)
 }
 
-type tokenManager struct {
-	cfg db.Config
-}
+type tokenManager struct{}
 
-func NewTokenManager(cfg db.Config) TokenManager {
-	return &tokenManager{cfg: cfg}
+func NewTokenManager() TokenManager {
+	return &tokenManager{}
 }
 
 func (t *tokenManager) Verify(rawToken string) (string, error) {
@@ -27,7 +25,7 @@ func (t *tokenManager) Verify(rawToken string) (string, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("error reading jwt: wrong signing method: %v", token.Header["alg"])
 		} else {
-			return []byte(t.cfg.TokenSecret()), nil
+			return []byte(db.TokenSecret()), nil
 		}
 	})
 
@@ -42,12 +40,12 @@ func (t *tokenManager) Generate(uid string) (string, error) {
 
 	claims := UserClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Duration(t.cfg.TokenDuration()) * time.Second).Unix(),
+			ExpiresAt: time.Now().Add(time.Duration(db.TokenDuration()) * time.Second).Unix(),
 		},
 		Uid: uid,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(t.cfg.TokenSecret()))
+	return token.SignedString([]byte(db.TokenSecret()))
 }

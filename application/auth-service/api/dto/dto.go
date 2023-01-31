@@ -1,11 +1,12 @@
 package dto
 
 type LoginRequest struct {
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	TotpToken string `json:"totpToken"`
+	MfaToken string `json:"mfaToken"`
 }
 
 type LoginResponse struct {
-	Token string `json:"token,omitempty"`
+	AccessToken           string `json:"accessToken,omitempty"`
+	AccessTokenExpiresIn  int64  `json:"accessTokenExpiresIn,omitempty"`
+	RefreshToken          string `json:"refreshToken,omitempty"`
+	RefreshTokenExpiresIn int64  `json:"refreshTokenExpiresIn,omitempty"`
 }

@@ -18,9 +18,9 @@ type conn struct {
 	database *mongo.Database
 }
 
-func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error) {
+func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	fmt.Println("Connecting to MongoDB...")
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoUri()))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoUri()))
 
 	if err != nil {
 		log.Fatalln("Could not connect to MongoDB: ", err.Error())
@@ -28,7 +28,7 @@ func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error
 	}
 
 	fmt.Println("Connected to MongoDB Successfully")
-	return &conn{database: client.Database(cfg.MongoDatabaseName())}, nil
+	return &conn{database: client.Database(MongoDatabaseName())}, nil
 }
 
 func (c *conn) Close(ctx context.Context) {

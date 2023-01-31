@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
-	"raspstore.github.io/authentication/api/dto"
+	"raspstore.github.io/auth-service/api/dto"
+	"raspstore.github.io/auth-service/usecase"
+	"raspstore.github.io/auth-service/utils"
 )
 
 type CredentialsController interface {
@@ -14,35 +15,40 @@ type CredentialsController interface {
 }
 
 type credsController struct {
-	service pb.AuthServiceServer
+	loginService usecase.LoginUseCase
 }
 
-func NewCredentialsController(service pb.AuthServiceServer) CredentialsController {
-	return &credsController{service: service}
+func NewCredentialsController(ls usecase.LoginUseCase) CredentialsController {
+	return &credsController{loginService: ls}
 }
 
 func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
+	log.Printf("initializing request")
+
 	var lr dto.LoginRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		utils.Send(w, nil)
 		return
 	}
 
-	req := &pb.LoginRequest{
-		Email:    lr.Email,
-		Password: lr.Password,
-	}
+	log.Printf("extracting authentication")
 
-	res, err := c.service.Login(context.Background(), req)
+	username, password, ok := r.BasicAuth()
 
-	if err != nil {
-		w.WriteHeader(reqStatusCode(err))
-		send(w, nil)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
-	send(w, dto.LoginResponse{
-		Token: res.Token,
-	})
-
+	if accessToken, refreshToken, err := c.loginService.AuthenticateCredentials(username, password, lr.MfaToken); err != nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	} else {
+		utils.Send(w, dto.LoginResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		})
+	}
 }
