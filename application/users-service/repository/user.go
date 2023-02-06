@@ -18,6 +18,7 @@ const usersCollectionName = "users"
 
 type UsersRepository interface {
 	Save(user *model.User) error
+	ExistsByEmailOrUsername(email string, username string) (bool, error)
 	FindById(id string) (user *model.User, err error)
 	FindByEmail(email string) (user *model.User, err error)
 	Delete(id string) error
@@ -49,13 +50,20 @@ func (r *usersRespository) Save(user *model.User) error {
 	return nil
 }
 
-func (r *usersRespository) FindById(id string) (user *model.User, err error) {
+func (r *usersRespository) ExistsByEmailOrUsername(email string, username string) (bool, error) {
+	filter := bson.M{"$or": []bson.M{{"email": email}, {"username": username}}}
 
-	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
+	count, err := r.coll.CountDocuments(r.ctx, filter)
 
-	if res.Err() == mongo.ErrNoDocuments {
-		return nil, nil
+	if err != nil {
+		return false, err
 	}
+
+	return count > 0, nil
+}
+
+func (r *usersRespository) FindById(id string) (user *model.User, err error) {
+	res := r.coll.FindOne(r.ctx, bson.M{"user_id": id})
 
 	err = res.Decode(&user)
 	return user, err
@@ -87,6 +95,7 @@ func (r *usersRespository) Update(user *model.User) error {
 		"$set": bson.M{
 			"username":     user.Username,
 			"email":        user.Email,
+			"password":     user.PasswordHash,
 			"phone_number": user.PhoneNumber,
 			"updated_at":   user.UpdatedAt}})
 

@@ -9,7 +9,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9000/users-service
+  - url: http://localhost:9090/users-service
 tags:
   - name: users
     description: Users workflow
@@ -25,10 +25,12 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CreateUserRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/SuccessCreateUserResponse'
         '400':
           $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '422':
+          description: "Unprocessable Entity"
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
     get:
@@ -169,6 +171,9 @@ components:
         isEnabled:
           type: boolean
           example: true
+        password:
+          type: string
+          example: 'new-super-secret-password'
     ApiErrorException:
       type: object
       properties:

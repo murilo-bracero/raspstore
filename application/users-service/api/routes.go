@@ -1,14 +1,16 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"raspstore.github.io/users-service/api/controller"
 )
 
-const userBaseRoute = "/users"
+const serviceBaseRoute = "/users-service"
+const userBaseRoute = serviceBaseRoute + "/users"
 
 type Routes interface {
-	MountRoutes() *mux.Router
+	MountRoutes() *chi.Mux
 }
 
 type routes struct {
@@ -19,12 +21,20 @@ func NewRoutes(uc controller.UserController) Routes {
 	return &routes{userController: uc}
 }
 
-func (r *routes) MountRoutes() *mux.Router {
+func (rt *routes) MountRoutes() *chi.Mux {
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 
-	router.HandleFunc(userBaseRoute+"/{id}", r.userController.GetUser).Methods("GET")
-	router.HandleFunc(userBaseRoute, r.userController.ListUser).Methods("GET")
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+
+	router.Route(userBaseRoute, func(r chi.Router) {
+		r.Get("/", rt.userController.ListUser)
+		r.Post("/", rt.userController.CreateUser)
+		r.Get("/{id}", rt.userController.GetUser)
+		r.Put("/{id}", rt.userController.UpdateUser)
+		r.Delete("/{id}", rt.userController.DeleteUser)
+	})
 
 	return router
 

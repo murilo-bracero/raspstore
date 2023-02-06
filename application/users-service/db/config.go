@@ -54,7 +54,7 @@ func NewConfig() Config {
 	value, exists := os.LookupEnv("MONGO_URI")
 	if exists {
 		cfg.mongoUri = value
-		cfg.mongoDatabase = getDatabaseNameFromUrl(value)
+		cfg.mongoDatabase = os.Getenv("MONGO_DATABASE_NAME")
 		return &cfg
 	}
 

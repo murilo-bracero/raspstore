@@ -10,14 +10,14 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o users-service-app
+RUN go build -o users-service
 
 FROM alpine:3.16
 
 WORKDIR /app
 
-COPY --from=build /app/users-service-app .
+COPY --from=build /app/users-service .
 
-EXPOSE 8080 8081
+EXPOSE 9000 9090
 
-CMD ["./users-service-app"]
+CMD ["./users-service"]

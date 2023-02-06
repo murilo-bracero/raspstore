@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"google.golang.org/grpc"
 	"raspstore.github.io/users-service/api/dto"
 	"raspstore.github.io/users-service/db"
@@ -19,7 +19,7 @@ type AuthMiddleware interface {
 type authMiddleware struct {
 	cfg db.Config
 }
- 
+
 func NewAuthMiddleware(cfg db.Config) AuthMiddleware {
 	return &authMiddleware{cfg: cfg}
 }
@@ -49,7 +49,7 @@ func (a *authMiddleware) Apply(h http.Handler) http.Handler {
 
 		if res, err := client.Authenticate(context.Background(), in); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			utils.Send(w, dto.ErrorResponse{Message: "authorization header is missing", Reason: err.Error(), Code: "AM02"})
+			utils.Send(w, dto.ErrorResponse{Message: "authorization header is missing", Code: "AM02"})
 			return
 		} else {
 			r.Header.Add("UID", res.Uid)

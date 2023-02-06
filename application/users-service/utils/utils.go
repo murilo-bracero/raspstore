@@ -9,11 +9,9 @@ import (
 
 func Send(w http.ResponseWriter, obj interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(obj)
-	if err != nil {
-		return
+	if jsonResponse, err := json.Marshal(obj); err == nil {
+		w.Write(jsonResponse)
 	}
-	w.Write(jsonResponse)
 }
 
 func ReqStatusCode(err error) int {

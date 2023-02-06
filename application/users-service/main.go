@@ -4,20 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"sync"
 
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
-	"google.golang.org/grpc"
 	api "raspstore.github.io/users-service/api"
 	"raspstore.github.io/users-service/api/controller"
 	"raspstore.github.io/users-service/api/middleware"
 	"raspstore.github.io/users-service/db"
-	interceptor "raspstore.github.io/users-service/interceptors"
 	rp "raspstore.github.io/users-service/repository"
-	"raspstore.github.io/users-service/service"
 )
 
 func main() {
@@ -35,41 +29,16 @@ func main() {
 
 	usersRepo := initRepos(conn)
 
-	usersService := service.NewUserService(usersRepo)
-
-	authInterceptor := interceptor.NewAuthInterceptor(cfg)
-
 	authMiddleware := middleware.NewAuthMiddleware(cfg)
 
-	var wg sync.WaitGroup
-
-	wg.Add(2)
-	log.Println("bootstraping servers")
-	go startGrpcServer(&wg, cfg, authInterceptor, usersService)
-	go startRestServer(&wg, cfg, usersRepo, usersService, authMiddleware)
-	wg.Wait()
+	startRestServer(cfg, usersRepo, authMiddleware)
 }
 
-func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur rp.UsersRepository, us pb.UsersServiceServer, md middleware.AuthMiddleware) {
-	uc := controller.NewUserController(ur, us)
+func startRestServer(cfg db.Config, ur rp.UsersRepository, md middleware.AuthMiddleware) {
+	uc := controller.NewUserController(ur)
 	router := api.NewRoutes(uc).MountRoutes()
-	http.Handle("/", router)
 	log.Printf("Users Service API runing on port %d", cfg.RestPort())
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), md.Apply(router))
-}
-
-func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, itc interceptor.AuthInterceptor, us pb.UsersServiceServer) {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(itc.WithUnaryAuthentication), grpc.StreamInterceptor(itc.WithStreamingAuthentication))
-	pb.RegisterUsersServiceServer(grpcServer, us)
-
-	log.Printf("Users Service gRPC running on [::]:%d\n", cfg.GrpcPort())
-
-	grpcServer.Serve(lis)
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), router)
 }
 
 func initDatabase(cfg db.Config) db.MongoConnection {
