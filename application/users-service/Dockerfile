@@ -2,13 +2,13 @@ FROM golang:1.17-alpine AS build
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY --chown=185 go.mod ./
 
-COPY go.sum ./
+COPY --chown=185 go.sum ./
 
 RUN go mod download
 
-COPY . ./
+COPY --chown=185 . ./
 
 RUN go build -o users-service
 
