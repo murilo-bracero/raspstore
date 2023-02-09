@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"raspstore.github.io/users-service/api/controller"
+	mw "raspstore.github.io/users-service/api/middleware"
 )
 
 const serviceBaseRoute = "/users-service"
@@ -29,11 +30,11 @@ func (rt *routes) MountRoutes() *chi.Mux {
 	router.Use(middleware.Logger)
 
 	router.Route(userBaseRoute, func(r chi.Router) {
-		r.Get("/", rt.userController.ListUser)
+		r.With(mw.Authentication).Get("/", rt.userController.ListUser)
+		r.With(mw.Authentication).Get("/{id}", rt.userController.GetUser)
+		r.With(mw.Authentication).Put("/{id}", rt.userController.UpdateUser)
+		r.With(mw.Authentication).Delete("/{id}", rt.userController.DeleteUser)
 		r.Post("/", rt.userController.CreateUser)
-		r.Get("/{id}", rt.userController.GetUser)
-		r.Put("/{id}", rt.userController.UpdateUser)
-		r.Delete("/{id}", rt.userController.DeleteUser)
 	})
 
 	return router

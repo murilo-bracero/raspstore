@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 	"raspstore.github.io/users-service/api/dto"
 	"raspstore.github.io/users-service/model"
 	"raspstore.github.io/users-service/repository"
-	"raspstore.github.io/users-service/utils"
+	"raspstore.github.io/users-service/validators"
 )
 
-const defaultDateFormat = "2006-01-02 15:04:05"
+const maxListSize = 50
 
 type UserController interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
@@ -36,6 +35,59 @@ func NewUserController(repo repository.UsersRepository) UserController {
 	return &controller{repo: repo}
 }
 
+func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	if err := validators.ValidateCreateUserRequest(req); err != nil {
+		BadRequest(w, dto.ErrorResponse{
+			Code:    "ERR001",
+			Message: err.Error(),
+			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
+		})
+		return
+	}
+
+	if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
+		InternalServerError(w, traceId)
+		return
+	} else if exists {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
+		BadRequest(w, dto.ErrorResponse{
+			Code:    "ERR002",
+			Message: "User with provided email or username already exists",
+			TraceId: traceId,
+		})
+		return
+	}
+
+	usr := model.NewUserByCreateUserRequest(req)
+
+	if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
+		InternalServerError(w, traceId)
+		return
+	} else {
+		usr.PasswordHash = string(hash)
+	}
+
+	if err := c.repo.Save(usr); err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Panicln(fmt.Sprintf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error()))
+		InternalServerError(w, traceId)
+		return
+	}
+
+	Created(w, usr.ToDto())
+}
+
 func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -49,28 +101,48 @@ func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could search user with id %s in database: %s", traceId, id, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR099",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
+		InternalServerError(w, traceId)
 		return
 	}
 
-	utils.Send(w, user)
+	Send(w, user)
 }
 
 func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
-	users, err := c.repo.FindAll()
+	if size == 0 || size > maxListSize {
+		size = maxListSize
+	}
+
+	userPage, err := c.repo.FindAll(page, size)
 
 	if err != nil {
-		w.WriteHeader(utils.ReqStatusCode(err))
-		utils.Send(w, dto.ErrorResponse{Message: "could not retrieve users list", Code: "LU01"})
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: Could list users due to error: %s", traceId, err.Error())
+		InternalServerError(w, traceId)
 		return
 	}
 
-	utils.Send(w, users)
+	content := make([]dto.UserResponse, len(userPage.Content))
+	for i, usr := range userPage.Content {
+		content[i] = usr.ToDto()
+	}
+
+	nextUrl := ""
+
+	if len(content) == size {
+		nextUrl = fmt.Sprintf("%s/users-service/users?page=%d&size=%d", r.Host, page+1, size)
+	}
+
+	Send(w, dto.UserResponseList{
+		Page:          page,
+		Size:          size,
+		TotalElements: userPage.Count,
+		Next:          nextUrl,
+		Content:       content,
+	})
 }
 
 func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -79,13 +151,12 @@ func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := c.repo.Delete(id)
 
 	if err != nil {
-		w.WriteHeader(utils.ReqStatusCode(err))
-		utils.Send(w, dto.ErrorResponse{Message: fmt.Sprintf("could not retrieve user with id %s", id), Code: "GU02"})
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		InternalServerError(w, traceId)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	utils.Send(w, nil)
 }
 
 func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -95,183 +166,65 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Email == "" || req.Username == "" {
-		badRequest(w, dto.ErrorResponse{
-			Code:    "ERR001",
-			Message: "Field must not be null or empty",
-			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
-		})
-		return
-	}
-
-	if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR098",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
-		return
-	} else if exists {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		conflict(w, dto.ErrorResponse{
-			Code:    "ERR002",
-			Message: "User with provided email or username already exists",
-			TraceId: traceId,
-		})
-		return
-	}
-
 	id := chi.URLParam(r, "id")
 
-	usr := &model.User{
-		UserId:      id,
-		Username:    req.Username,
-		Email:       req.Email,
-		IsEnabled:   *req.IsEnabled,
-		PhoneNumber: "",
+	user, err := c.repo.FindById(id)
+
+	if err == mongo.ErrNoDocuments {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: Could not search user with id %s in database: %s", traceId, id, err.Error())
+		InternalServerError(w, traceId)
+		return
+	}
+
+	if req.Username != "" || req.Email != "" {
+		if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
+			traceId := r.Context().Value(middleware.RequestIDKey).(string)
+			log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
+			InternalServerError(w, traceId)
+			return
+		} else if exists {
+			traceId := r.Context().Value(middleware.RequestIDKey).(string)
+			log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
+			http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
+			return
+		}
+	}
+
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+
+	if req.Username != "" {
+		user.Username = req.Username
+	}
+
+	if req.IsEnabled != nil {
+		user.IsEnabled = *req.IsEnabled
 	}
 
 	if req.Password != "" {
 		if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
 			traceId := r.Context().Value(middleware.RequestIDKey).(string)
 			log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-			internalServerError(w, dto.ErrorResponse{
-				Code:    "ERR099",
-				Message: "Service currently unavailable",
-				TraceId: traceId,
-			})
+			InternalServerError(w, traceId)
 			return
 		} else {
-			usr.PasswordHash = string(hash)
+			user.PasswordHash = string(hash)
 		}
 	}
 
-	if err := c.repo.Update(usr); err != nil {
+	if err := c.repo.Update(user); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: An unknown error occured while updating user with id %s: %s", traceId, id, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR098",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
+		InternalServerError(w, traceId)
 		return
 	}
 
-	user, err := c.repo.FindById(id)
-
-	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could search user with id %s in database: %s", traceId, id, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR099",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
-		return
-	}
-
-	utils.Send(w, user)
-}
-
-func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-		return
-	}
-
-	if req.Email == "" || req.Password == "" || req.Username == "" {
-		badRequest(w, dto.ErrorResponse{
-			Code:    "ERR001",
-			Message: "Field must not be null or empty",
-			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
-		})
-		return
-	}
-
-	if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR098",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
-		return
-	} else if exists {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		badRequest(w, dto.ErrorResponse{
-			Code:    "ERR002",
-			Message: "User with provided email or username already exists",
-			TraceId: traceId,
-		})
-		return
-	}
-
-	usr := &model.User{
-		UserId:      uuid.NewString(),
-		Username:    req.Username,
-		Email:       req.Email,
-		IsEnabled:   true,
-		PhoneNumber: "",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR099",
-			Message: "Service currently unavailable",
-			TraceId: traceId,
-		})
-		return
-	} else {
-		usr.PasswordHash = string(hash)
-	}
-
-	if err := c.repo.Save(usr); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Panicln(fmt.Sprintf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error()))
-		internalServerError(w, dto.ErrorResponse{
-			Code:    "ERR002",
-			Message: "Could not save user",
-			TraceId: traceId,
-		})
-		return
-	}
-
-	created(w, dto.UserResponse{
-		UserId:    usr.UserId,
-		Username:  usr.Username,
-		Email:     usr.Email,
-		IsEnabled: usr.IsEnabled,
-		CreatedAt: usr.CreatedAt.Format(defaultDateFormat),
-		UpdatedAt: usr.UpdatedAt.Format(defaultDateFormat),
-	})
-}
-
-func badRequest(w http.ResponseWriter, body dto.ErrorResponse) {
-	w.WriteHeader(http.StatusBadRequest)
-	utils.Send(w, body)
-}
-
-func conflict(w http.ResponseWriter, body dto.ErrorResponse) {
-	w.WriteHeader(http.StatusConflict)
-	utils.Send(w, body)
-}
-
-func internalServerError(w http.ResponseWriter, body dto.ErrorResponse) {
-	w.WriteHeader(http.StatusInternalServerError)
-	utils.Send(w, body)
-}
-
-func created(w http.ResponseWriter, body dto.UserResponse) {
-	w.WriteHeader(http.StatusCreated)
-	utils.Send(w, body)
+	Send(w, user.ToDto())
 }

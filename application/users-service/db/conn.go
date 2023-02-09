@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"raspstore.github.io/users-service/internal"
 )
 
 type MongoConnection interface {
@@ -17,9 +18,9 @@ type conn struct {
 	database *mongo.Database
 }
 
-func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error) {
+func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	log.Println("Connecting to MongoDB...")
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoUri()))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()))
 
 	if err != nil {
 		log.Fatalln("Could not connect to MongoDB: ", err.Error())
@@ -27,7 +28,7 @@ func NewMongoConnection(ctx context.Context, cfg Config) (MongoConnection, error
 	}
 
 	log.Println("Connected to MongoDB Successfully")
-	return &conn{database: client.Database(cfg.MongoDatabaseName())}, nil
+	return &conn{database: client.Database(internal.MongoDatabaseName())}, nil
 }
 
 func (c *conn) Close(ctx context.Context) {

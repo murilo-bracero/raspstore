@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -239,45 +240,12 @@ func TestUpdateUserSuccess(t *testing.T) {
 	assert.NotEmpty(t, usrRes.UpdatedAt)
 }
 
-func TestUpdateUserWithInvalidPayload(t *testing.T) {
-	ur := &userRepositoryMock{}
-	ctr := controller.NewUserController(ur)
-
-	random := uuid.NewString()
-	reqBody := []byte(fmt.Sprintf(`{
-		"username": "%s",
-		"email": "updated_%s@test.com"
-	  }`, random, random))
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(reqBody))
-	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	req = req.WithContext(ctx)
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(ctr.UpdateUser)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	var errRes dto.ErrorResponse
-	json.Unmarshal(rr.Body.Bytes(), &errRes)
-	assert.NotEmpty(t, errRes.Code)
-	assert.NotEmpty(t, errRes.Message)
-	assert.NotEmpty(t, errRes.TraceId)
-}
-
 func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 	ur := &userRepositoryMock{shouldReturn409: true}
 	ctr := controller.NewUserController(ur)
 
 	random := uuid.NewString()
-	reqBody := []byte(fmt.Sprintf(`{
-		"username": "%s",
-		"email": "existed@test.com",
-		"isEnabled": true,
-		"password": "%s_super-secret-password"
-	  }`, random, random))
+	reqBody := []byte(`{ "email": "existed@test.com"}`)
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
@@ -289,12 +257,6 @@ func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusConflict, rr.Code)
-
-	var errRes dto.ErrorResponse
-	json.Unmarshal(rr.Body.Bytes(), &errRes)
-	assert.NotEmpty(t, errRes.Code)
-	assert.NotEmpty(t, errRes.Message)
-	assert.NotEmpty(t, errRes.TraceId)
 }
 
 func TestUpdateUserInternalServerError(t *testing.T) {
@@ -337,18 +299,81 @@ func TestListUsers(t *testing.T) {
 	handler := http.HandlerFunc(ctr.ListUser)
 	handler.ServeHTTP(rr, req)
 
-	var users []model.User
-	json.Unmarshal(rr.Body.Bytes(), &users)
+	var userPage model.UserPage
+	json.Unmarshal(rr.Body.Bytes(), &userPage)
 
-	assert.Equal(t, 200, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
 
-	assert.True(t, len(users) > 0)
+	assert.True(t, len(userPage.Content) > 0)
+}
+
+func TestListUsersWithPagination(t *testing.T) {
+	totalElements := 10
+	ur := &userRepositoryMock{totalElements: totalElements}
+	ctr := controller.NewUserController(ur)
+
+	size := 2
+	page := 0
+
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/users?page=%d&size=%d", page, size), nil)
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(ctr.ListUser)
+	handler.ServeHTTP(rr, req)
+
+	var userResponseList dto.UserResponseList
+	json.Unmarshal(rr.Body.Bytes(), &userResponseList)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	assert.Equal(t, page, userResponseList.Page)
+	assert.Equal(t, size, userResponseList.Size)
+	assert.Equal(t, totalElements, userResponseList.TotalElements)
+	assert.True(t, strings.HasSuffix(userResponseList.Next, fmt.Sprintf("/users?page=%d&size=%d", page+1, size)))
+	assert.Equal(t, size, len(userResponseList.Content))
+}
+
+func TestDeleteSuccess(t *testing.T) {
+	ur := &userRepositoryMock{}
+	ctr := controller.NewUserController(ur)
+
+	random := uuid.NewString()
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/users/%s", random), nil)
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(ctr.DeleteUser)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+}
+
+func TestDeleteInternalServerError(t *testing.T) {
+	ur := &userRepositoryMock{shouldReturn500: true}
+	ctr := controller.NewUserController(ur)
+
+	random := uuid.NewString()
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/users/%s", random), nil)
+	rr := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	req = req.WithContext(ctx)
+
+	handler := http.HandlerFunc(ctr.DeleteUser)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	var errRes dto.ErrorResponse
+	json.Unmarshal(rr.Body.Bytes(), &errRes)
+	assert.NotEmpty(t, errRes.Code)
+	assert.NotEmpty(t, errRes.Message)
+	assert.NotEmpty(t, errRes.TraceId)
 }
 
 type userRepositoryMock struct {
 	shouldReturn500 bool
 	shouldReturn409 bool
 	shouldReturn404 bool
+	totalElements   int
 }
 
 func (u *userRepositoryMock) Save(user *model.User) error {
@@ -417,8 +442,20 @@ func (u *userRepositoryMock) ExistsByEmailOrUsername(email string, username stri
 	return false, nil
 }
 
-func (*userRepositoryMock) FindAll() (users []*model.User, err error) {
-	return []*model.User{createRandomUser("", ""), createRandomUser("", ""), createRandomUser("", "")}, nil
+func (u *userRepositoryMock) FindAll(page int, size int) (userPage *model.UserPage, err error) {
+
+	users := make([]*model.User, 0)
+
+	for i := 0; i < size; i++ {
+		users = append(users, createRandomUser("", ""))
+	}
+
+	userPage = &model.UserPage{
+		Content: users,
+		Count:   u.totalElements,
+	}
+
+	return userPage, nil
 }
 
 func createRandomUser(id string, email string) *model.User {

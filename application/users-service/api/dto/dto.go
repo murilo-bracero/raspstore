@@ -27,3 +27,11 @@ type UserResponse struct {
 	CreatedAt string `json:"createdAt,omitempty"`
 	UpdatedAt string `json:"updatedAt,omitempty"`
 }
+
+type UserResponseList struct {
+	Page          int            `json:"page"`
+	Size          int            `json:"size"`
+	TotalElements int            `json:"totalElements"`
+	Next          string         `json:"next"`
+	Content       []UserResponse `json:"content"`
+}
