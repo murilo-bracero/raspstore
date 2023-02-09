@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

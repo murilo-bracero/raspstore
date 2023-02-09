@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore-protofiles/file-manager/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
 	"google.golang.org/grpc"
 	"raspstore.github.io/file-manager/api"
 	"raspstore.github.io/file-manager/api/controller"
@@ -19,7 +19,6 @@ import (
 	"raspstore.github.io/file-manager/interceptor"
 	"raspstore.github.io/file-manager/repository"
 	"raspstore.github.io/file-manager/service"
-	"raspstore.github.io/file-manager/system"
 )
 
 func main() {
@@ -42,9 +41,8 @@ func main() {
 	defer conn.Close(context.Background())
 
 	fileRepo := repository.NewFilesRepository(ctx, conn)
-	diskStore := system.NewDiskStore(cfg.RootFolder())
 
-	fileManagerService := service.NewFileManagerService(diskStore, fileRepo)
+	fileManagerService := service.NewFileManagerService(fileRepo)
 
 	authInterceptor := interceptor.NewAuthInterceptor(cfg)
 
@@ -55,26 +53,26 @@ func main() {
 	wg.Add(2)
 	log.Println("bootstraping servers")
 	go startGrpcServer(&wg, cfg, authInterceptor, fileManagerService)
-	go startRestServer(&wg, cfg, fileRepo, diskStore, md)
+	go startRestServer(&wg, cfg, fileRepo, md)
 	wg.Wait()
 }
 
-func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, authInterceptor interceptor.AuthInterceptor, fileManagerService pb.FileManagerServiceServer) {
+func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, authInterceptor interceptor.AuthInterceptor, fileManagerService pb.FileInfoServiceServer) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithUnaryAuthentication), grpc.StreamInterceptor(authInterceptor.WithStreamingAuthentication))
-	pb.RegisterFileManagerServiceServer(grpcServer, fileManagerService)
+	pb.RegisterFileInfoServiceServer(grpcServer, fileManagerService)
 
 	log.Printf("File Manager service running on [::]:%d\n", cfg.GrpcPort())
 
 	grpcServer.Serve(lis)
 }
 
-func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur repository.FilesRepository, ds system.DiskStore, md middleware.AuthMiddleware) {
-	fc := controller.NewFilesController(ur, ds)
+func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur repository.FilesRepository, md middleware.AuthMiddleware) {
+	fc := controller.NewFilesController(ur)
 	router := api.NewRoutes(fc).MountRoutes()
 	http.Handle("/", router)
 	log.Printf("File Manager API runing on port %d", cfg.RestPort())
