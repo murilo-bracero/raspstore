@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore-protofiles/authentication/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"raspstore.github.io/file-manager/api/dto"

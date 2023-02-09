@@ -1,10 +1,9 @@
 package model
 
 import (
-	"log"
 	"time"
 
-	"github.com/murilo-bracero/raspstore-protofiles/file-manager/pb"
+	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -29,33 +28,20 @@ func NewFile(filename string, createdBy string, size uint32) *File {
 	}
 }
 
-func (f *File) ToProtoBuffer() *pb.FileRef {
-	return &pb.FileRef{
-		Id:        f.Id.Hex(),
-		Uri:       f.Uri,
-		Size:      f.Size,
-		UpdatedAt: f.UpdatedAt.Unix(),
-		CreatedBy: f.CreatedBy,
-		UpdatedBy: f.UpdatedBy,
+func (f *File) ToProtoBuffer() *pb.FileMetadata {
+	return &pb.FileMetadata{
+		FileId:   f.Id.Hex(),
+		Filename: f.Filename,
+		Path:     f.Uri,
+		OwnerId:  f.CreatedBy,
 	}
 }
 
-func (f *File) FromCreateProto(file *pb.CreateFileRequestData) {
+func (f *File) FromCreateProto(file *pb.CreateFileMetadataRequest) {
 	f.Id = primitive.NewObjectID()
 	f.UpdatedAt = time.Now()
-	f.CreatedBy = file.CreatedBy
-	f.UpdatedBy = file.CreatedBy
+	f.CreatedBy = file.OwnerId
+	f.UpdatedBy = file.OwnerId
 	f.Filename = file.Filename
-}
-
-func (f *File) FromUpdateProto(file *pb.UpdateFileRequestData) {
-	f.UpdatedAt = time.Now()
-	f.UpdatedBy = file.UpdatedBy
-	f.Filename = file.Filename
-	if id, err := primitive.ObjectIDFromHex(file.Id); err != nil {
-		log.Println("error converting ", file.Id, " to ObjectId")
-	} else {
-		f.Id = id
-	}
-
+	f.Uri = file.Path
 }

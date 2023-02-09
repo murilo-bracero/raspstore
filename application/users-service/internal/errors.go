@@ -1,4 +1,4 @@
-package validators
+package internal
 
 import "errors"
 
@@ -14,15 +14,3 @@ var (
 	ErrEmptyToken           = errors.New("token must not be empty")
 	ErrInvalidTotpToken     = errors.New("2FA token is empty or invalid")
 )
-
-func GetErrorsList() []error {
-	return []error{ErrInvalidId,
-		ErrEmptyUsername,
-		ErrEmptyEmail,
-		ErrEmptyPassword,
-		ErrComplexityPassword,
-		ErrEmailOrUsernameInUse,
-		ErrUserNotFound,
-		ErrIncorrectCredentials,
-		ErrEmptyToken}
-}

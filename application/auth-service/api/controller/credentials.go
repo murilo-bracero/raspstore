@@ -43,6 +43,7 @@ func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if accessToken, refreshToken, err := c.loginService.AuthenticateCredentials(username, password, lr.MfaToken); err != nil {
+		log.Printf("[ERROR] Error while authenticating user: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	} else {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,7 +12,6 @@ import (
 	"raspstore.github.io/file-manager/api/dto"
 	"raspstore.github.io/file-manager/model"
 	"raspstore.github.io/file-manager/repository"
-	"raspstore.github.io/file-manager/system"
 	"raspstore.github.io/file-manager/validators"
 )
 
@@ -27,11 +25,10 @@ type FilesController interface {
 
 type filesController struct {
 	repo repository.FilesRepository
-	ds   system.DiskStore
 }
 
-func NewFilesController(repo repository.FilesRepository, ds system.DiskStore) FilesController {
-	return &filesController{repo: repo, ds: ds}
+func NewFilesController(repo repository.FilesRepository) FilesController {
+	return &filesController{repo: repo}
 }
 
 func (f *filesController) Upload(w http.ResponseWriter, r *http.Request) {
@@ -77,20 +74,8 @@ func (f *filesController) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := f.ds.Save(fileRef, buffer); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		send(w, dto.ErrorResponse{Message: "could not write file to server, try again later", Reason: err.Error(), Code: "UP06"})
-		return
-	}
-
 	if err := f.repo.Save(fileRef); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
-		// delete file locally
-		if delErr := f.ds.Delete(fileRef.Uri); delErr != nil {
-			log.Println("WARNING: FILE ", fileRef.Id, " COULD NOT BE DELETED LOCALLY. MANUAL DELETE IS REQUIRED.")
-		}
-
 		send(w, dto.ErrorResponse{Message: "could not save file in database. Try again later.", Reason: err.Error(), Code: "UP04"})
 		return
 	}
@@ -161,17 +146,6 @@ func (f *filesController) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := f.repo.Delete(id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		send(w, dto.ErrorResponse{Message: "Could not delete file. Try again later.", Reason: err.Error(), Code: "DL04"})
-		return
-	}
-
-	if err := f.ds.Delete(file.Uri); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		// writing file in database again
-
-		f.repo.Save(file)
-
-		send(w, dto.ErrorResponse{Message: "Could not delete file from server. Try again later.", Reason: err.Error(), Code: "DL05"})
 		return
 	}
 
@@ -249,21 +223,10 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
 	fileRef.Filename = header.Filename
 
-	if err := f.ds.Save(fileRef, buffer); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		send(w, dto.ErrorResponse{Message: "could not write file to server, try again later", Reason: err.Error(), Code: "UP08"})
-		return
-	}
-
 	fileRef.UpdatedBy = r.Header.Get("UID")
 
 	if err := f.repo.Update(fileRef); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
-		// delete file locally
-		if delErr := f.ds.Delete(fileRef.Uri); delErr != nil {
-			log.Println("WARNING: FILE ", fileRef.Id, " COULD NOT BE DELETED LOCALLY. MANUAL DELETE IS REQUIRED.")
-		}
 
 		send(w, dto.ErrorResponse{Message: "could not save file in database. Try again later.", Reason: err.Error(), Code: "UP09"})
 		return

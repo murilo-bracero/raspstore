@@ -2,22 +2,22 @@ FROM golang:1.17-alpine AS build
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY --chown=185 go.mod ./
 
-COPY go.sum ./
+COPY --chown=185 go.sum ./
 
 RUN go mod download
 
-COPY . ./
+COPY --chown=185 . ./
 
-RUN go build -o users-service-app
+RUN go build -o users-service
 
 FROM alpine:3.16
 
 WORKDIR /app
 
-COPY --from=build /app/users-service-app .
+COPY --from=build /app/users-service .
 
-EXPOSE 8080 8081
+EXPOSE 9000 9090
 
-CMD ["./users-service-app"]
+CMD ["./users-service"]
