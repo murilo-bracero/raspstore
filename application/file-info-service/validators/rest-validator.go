@@ -1,6 +1,10 @@
 package validators
 
-import "strings"
+import (
+	"strings"
+
+	"raspstore.github.io/file-manager/internal"
+)
 
 func ValidateBody(received string, desired string) bool {
 	clean := strings.Split(received, ";")
@@ -10,7 +14,7 @@ func ValidateBody(received string, desired string) bool {
 
 func ValidateId(id string) error {
 	if len(id) != 24 {
-		return ErrWrongID
+		return internal.ErrWrongID
 	}
 
 	return nil

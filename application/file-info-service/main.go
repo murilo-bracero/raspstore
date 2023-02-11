@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -16,7 +15,6 @@ import (
 	"raspstore.github.io/file-manager/api/controller"
 	"raspstore.github.io/file-manager/api/middleware"
 	"raspstore.github.io/file-manager/db"
-	"raspstore.github.io/file-manager/interceptor"
 	"raspstore.github.io/file-manager/repository"
 	"raspstore.github.io/file-manager/service"
 )
@@ -24,10 +22,8 @@ import (
 func main() {
 	ctx := context.Background()
 
-	if os.Getenv("ENVIRONMENT") != "PRODUCTION" {
-		if err := godotenv.Load(); err != nil {
-			log.Panicln("Could not load local variables")
-		}
+	if err := godotenv.Load(); err != nil {
+		log.Println("Could not load .env file. Using system variables instead")
 	}
 
 	cfg := db.NewConfig()
@@ -44,26 +40,24 @@ func main() {
 
 	fileManagerService := service.NewFileManagerService(fileRepo)
 
-	authInterceptor := interceptor.NewAuthInterceptor(cfg)
-
 	md := middleware.NewAuthMiddleware(cfg)
 
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	log.Println("bootstraping servers")
-	go startGrpcServer(&wg, cfg, authInterceptor, fileManagerService)
+	go startGrpcServer(&wg, cfg, fileManagerService)
 	go startRestServer(&wg, cfg, fileRepo, md)
 	wg.Wait()
 }
 
-func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, authInterceptor interceptor.AuthInterceptor, fileManagerService pb.FileInfoServiceServer) {
+func startGrpcServer(wg *sync.WaitGroup, cfg db.Config, fileManagerService pb.FileInfoServiceServer) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcPort()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.WithUnaryAuthentication), grpc.StreamInterceptor(authInterceptor.WithStreamingAuthentication))
+	grpcServer := grpc.NewServer()
 	pb.RegisterFileInfoServiceServer(grpcServer, fileManagerService)
 
 	log.Printf("File Manager service running on [::]:%d\n", cfg.GrpcPort())
@@ -76,5 +70,5 @@ func startRestServer(wg *sync.WaitGroup, cfg db.Config, ur repository.FilesRepos
 	router := api.NewRoutes(fc).MountRoutes()
 	http.Handle("/", router)
 	log.Printf("File Manager API runing on port %d", cfg.RestPort())
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), md.Apply(router))
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.RestPort()), router)
 }

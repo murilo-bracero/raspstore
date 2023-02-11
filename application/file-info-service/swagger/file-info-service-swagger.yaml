@@ -9,7 +9,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9000/file-info-service
+  - url: http://localhost:9090/file-info-service
 tags:
   - name: files
     description: File Metadata workflow
@@ -95,6 +95,10 @@ components:
         filename:
           type: string
           example: file.txt
+        size:
+          type: number
+          format: int64
+          example: 1024
         owner:
           type: string
           example: 63d14edc2f4ee7bec256515b
@@ -123,7 +127,7 @@ components:
           format: date
           pattern: YYYY-MM-DD HH:mm:ss
           example: '2022-10-25 19:43:12'
-        UpdatedAt:
+        updatedAt:
           type: string
           format: date
           pattern: YYYY-MM-DD HH:mm:ss

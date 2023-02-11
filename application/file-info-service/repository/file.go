@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"raspstore.github.io/file-manager/db"
 	"raspstore.github.io/file-manager/model"
 )
@@ -20,7 +22,7 @@ type FilesRepository interface {
 	FindById(id string) (*model.File, error)
 	Delete(id string) error
 	Update(file *model.File) error
-	FindAll() (files []*model.File, err error)
+	FindAll(page int, size int) (filesPage *model.FilePage, err error)
 }
 
 type filesRepository struct {
@@ -33,6 +35,10 @@ func NewFilesRepository(ctx context.Context, conn db.MongoConnection) FilesRepos
 }
 
 func (f *filesRepository) Save(file *model.File) error {
+	file.FileId = uuid.NewString()
+	file.CreatedAt = time.Now()
+	file.UpdatedAt = time.Now()
+
 	if _, err := f.coll.InsertOne(f.ctx, file); err != nil {
 		fmt.Println("could not create file metadata in database ", file, ", with error: ", err.Error())
 		return err
@@ -78,21 +84,37 @@ func (f *filesRepository) Delete(id string) error {
 }
 
 func (f *filesRepository) Update(file *model.File) error {
-	update := bson.M{"$set": bson.M{
-		"filename":   file.Filename,
-		"size":       file.Size,
-		"updated_at": time.Now(),
-		"updated_by": file.UpdatedBy}}
+	// update := bson.M{"$set": bson.M{
+	// 	"filename":   file.Filename,
+	// 	"size":       file.Size,
+	// 	"updated_at": time.Now(),
+	// 	"updated_by": file.UpdatedBy}}
 
-	f.coll.UpdateByID(f.ctx, file.Id, update)
+	//f.coll.UpdateByID(f.ctx, file.Id, update)
 
 	return nil
 }
 
-func (f *filesRepository) FindAll() (files []*model.File, err error) {
-	var cursor *mongo.Cursor
+func (f *filesRepository) FindAll(page int, size int) (filesPage *model.FilePage, err error) {
+	skip := page * size
 
-	cursor, err = f.coll.Find(f.ctx, bson.M{})
+	contentField := []bson.M{{"$skip": skip}, {"$limit": size}}
+	totalCountField := []bson.M{{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}}}}
+	facet := bson.D{
+		primitive.E{Key: "$facet", Value: bson.D{
+			primitive.E{Key: "content", Value: contentField}, primitive.E{Key: "totalCount", Value: totalCountField},
+		}},
+	}
+
+	project := bson.D{
+		primitive.E{Key: "$project", Value: bson.D{
+			primitive.E{Key: "content", Value: "$content"},
+			primitive.E{Key: "count", Value: bson.D{
+				primitive.E{Key: "$arrayElemAt", Value: []interface{}{"$totalCount.count", 0}}}},
+		}},
+	}
+
+	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{facet, project}, &options.AggregateOptions{})
 
 	if err != nil {
 		return nil, err
@@ -101,13 +123,10 @@ func (f *filesRepository) FindAll() (files []*model.File, err error) {
 	defer cursor.Close(f.ctx)
 
 	for cursor.Next(f.ctx) {
-		var file *model.File
-		if err = cursor.Decode(&file); err != nil {
+		if err = cursor.Decode(&filesPage); err != nil {
 			return nil, err
 		}
-
-		files = append(files, file)
 	}
 
-	return files, nil
+	return filesPage, nil
 }
