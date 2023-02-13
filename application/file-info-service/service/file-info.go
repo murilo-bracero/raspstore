@@ -16,7 +16,7 @@ type fileInfoService struct {
 	pb.UnimplementedFileInfoServiceServer
 }
 
-func NewFileManagerService(fileRepository repository.FilesRepository) pb.FileInfoServiceServer {
+func NewFileInfoService(fileRepository repository.FilesRepository) pb.FileInfoServiceServer {
 	return &fileInfoService{fileRepository: fileRepository}
 }
 

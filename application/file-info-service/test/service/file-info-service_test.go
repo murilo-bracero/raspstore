@@ -19,7 +19,7 @@ import (
 func TestCreateFileMetadataSuccess(t *testing.T) {
 	ctx := context.Background()
 	fr := &filesRepositoryMock{}
-	svc := service.NewFileManagerService(fr)
+	svc := service.NewFileInfoService(fr)
 
 	filename := uuid.NewString()
 
@@ -27,6 +27,7 @@ func TestCreateFileMetadataSuccess(t *testing.T) {
 		OwnerId:  uuid.NewString(),
 		Filename: filename,
 		Path:     uuid.NewString() + "/" + filename,
+		Size:     3214,
 	})
 
 	assert.NoError(t, err)
@@ -40,7 +41,7 @@ func TestCreateFileMetadataSuccess(t *testing.T) {
 func TestCreateFileMetadataFail(t *testing.T) {
 	ctx := context.Background()
 	fr := &filesRepositoryMock{shouldReturnErr: true}
-	svc := service.NewFileManagerService(fr)
+	svc := service.NewFileInfoService(fr)
 
 	filename := uuid.NewString()
 
@@ -56,7 +57,7 @@ func TestCreateFileMetadataFail(t *testing.T) {
 func TestFindFileMetadataByIdSuccess(t *testing.T) {
 	ctx := context.Background()
 	fr := &filesRepositoryMock{}
-	svc := service.NewFileManagerService(fr)
+	svc := service.NewFileInfoService(fr)
 
 	id := primitive.NewObjectID().Hex()
 
@@ -98,6 +99,10 @@ func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
 		CreatedBy: uuid.NewString(),
 		UpdatedBy: uuid.NewString(),
 	}, nil
+}
+
+func (f *filesRepositoryMock) FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error) {
+	return nil, errors.New("Not Implemented!")
 }
 
 func (f *filesRepositoryMock) Delete(id string) error {

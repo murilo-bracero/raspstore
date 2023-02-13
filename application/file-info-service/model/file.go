@@ -23,13 +23,13 @@ type FileMetadataLookup struct {
 	Filename  string     `json:"path,omitempty" bson:"filename"`
 	Path      string     `json:"filename,omitempty" bson:"path"`
 	Size      int64      `json:"size,omitempty" bson:"size"`
-	Owner     string     `json:"owner,omitempty" bson:"owner_user_id"`
+	Owner     UserView   `json:"owner,omitempty" bson:"owner"`
 	Editors   []UserView `json:"editors" bson:"editors"`
 	Viewers   []UserView `json:"viewers" bson:"viewers"`
-	CreatedAt time.Time  `json:"createdBy,omitempty" bson:"created_at"`
-	UpdatedAt time.Time  `json:"updatedBy,omitempty" bson:"updated_at"`
-	CreatedBy UserView   `json:"createdAt,omitempty" bson:"created_by"`
-	UpdatedBy UserView   `json:"updatedAt,omitempty" bson:"updated_by"`
+	CreatedAt time.Time  `json:"createdAt,omitempty" bson:"created_at"`
+	UpdatedAt time.Time  `json:"updatedAt,omitempty" bson:"updated_at"`
+	CreatedBy UserView   `json:"createdBy,omitempty" bson:"created_by"`
+	UpdatedBy UserView   `json:"updatedBy,omitempty" bson:"updated_by"`
 }
 
 type UserView struct {
@@ -38,6 +38,6 @@ type UserView struct {
 }
 
 type FilePage struct {
-	Content []*File `bson:"content"`
-	Count   int     `bson:"count"`
+	Content []*FileMetadataLookup `bson:"content"`
+	Count   int                   `bson:"count"`
 }

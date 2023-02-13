@@ -64,7 +64,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.ListFiles)
+	handler := http.HandlerFunc(ctr.Delete)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)
@@ -82,7 +82,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.ListFiles)
+	handler := http.HandlerFunc(ctr.Delete)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -108,10 +108,27 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.ListFiles)
+	handler := http.HandlerFunc(ctr.Update)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var res model.FileMetadataLookup
+	err := json.Unmarshal(rr.Body.Bytes(), &res)
+
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, res.CreatedAt)
+	assert.NotEmpty(t, res.UpdatedAt)
+	assert.NotEmpty(t, res.CreatedBy)
+	assert.NotEmpty(t, res.UpdatedBy)
+	assert.NotNil(t, res.Editors)
+	assert.NotNil(t, res.Viewers)
+	assert.NotEmpty(t, res.FileId)
+	assert.NotEmpty(t, res.Filename)
+	assert.NotEmpty(t, res.Owner)
+	assert.NotEmpty(t, res.Path)
+	assert.NotEqual(t, 0, res.Size)
 }
 
 func TestUpdateFileNotFound(t *testing.T) {
@@ -129,7 +146,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.ListFiles)
+	handler := http.HandlerFunc(ctr.Update)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
@@ -150,7 +167,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.ListFiles)
+	handler := http.HandlerFunc(ctr.Update)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -184,6 +201,18 @@ func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
 	return createFileMetadata(id), nil
 }
 
+func (f *filesRepositoryMock) FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error) {
+	if f.shouldReturnErr {
+		return nil, mongo.ErrClientDisconnected
+	}
+
+	if f.shouldNotFindFile {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	return createFileMetadataLookup(id), nil
+}
+
 func (f *filesRepositoryMock) Delete(id string) error {
 	if f.shouldReturnErr {
 		return mongo.ErrClientDisconnected
@@ -201,9 +230,9 @@ func (f *filesRepositoryMock) Update(file *model.File) error {
 }
 
 func (f *filesRepositoryMock) FindAll(page int, size int) (filesPage *model.FilePage, err error) {
-	files := make([]*model.File, 1)
+	files := make([]*model.FileMetadataLookup, 1)
 	for i := 0; i < f.totalElements; i++ {
-		files = append(files, createFileMetadata(""))
+		files = append(files, createFileMetadataLookup(""))
 	}
 
 	return &model.FilePage{
@@ -226,5 +255,26 @@ func createFileMetadata(id string) *model.File {
 		UpdatedAt: time.Now(),
 		CreatedBy: uuid.NewString(),
 		UpdatedBy: uuid.NewString(),
+	}
+}
+
+func createFileMetadataLookup(id string) *model.FileMetadataLookup {
+
+	if id == "" {
+		id = uuid.NewString()
+	}
+
+	return &model.FileMetadataLookup{
+		FileId:    id,
+		Filename:  id,
+		Path:      uuid.NewString() + "/" + id,
+		Size:      int64(rand.Int()),
+		Owner:     model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
+		Editors:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
+		Viewers:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		CreatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
+		UpdatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
 	}
 }
