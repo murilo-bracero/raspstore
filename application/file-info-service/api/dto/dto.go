@@ -1,34 +1,24 @@
 package dto
 
-type FileMetadata struct {
-	Uri       string `json:"uri,omitempty"`
-	UpdatedAt int    `json:"updatedAt,omitempty"`
-	CreatedBy string `json:"createdBy,omitempty"`
-	UpdatedBy string `json:"updatedBy,omitempty"`
-}
+import "raspstore.github.io/file-manager/model"
 
-type CreateFileRequestData struct {
-	Filename  string `json:"filename,omitempty"`
-	CreatedBy string `json:"createdBy,omitempty"`
-}
-
-type UpdateFileRequestData struct {
-	Id        string `json:"id,omitempty"`
-	UpdatedBy string `json:"updatedBy,omitempty"`
-}
-
-type CreateFileRequest struct {
-	Filedata CreateFileRequestData `json:"id,omitempty"`
-	Chunk    []byte                `json:"chunk,omitempty"`
+type FileMetadataList struct {
+	Size          int                         `json:"size"`
+	TotalElements int                         `json:"totalElements"`
+	Page          int                         `json:"page"`
+	Next          string                      `json:"next"`
+	Content       []*model.FileMetadataLookup `json:"content"`
 }
 
 type UpdateFileRequest struct {
-	Filedata UpdateFileRequestData `json:"filedata,omitempty"`
-	Chunk    []byte                `json:"chunk,omitempty"`
+	Path     string   `json:"path,omitempty"`
+	Filename string   `json:"filename,omitempty"`
+	Editors  []string `json:"editors"`
+	Viewers  []string `json:"viewers"`
 }
 
 type ErrorResponse struct {
 	Message string `json:"message,omitempty"`
-	Reason  string `json:"reason,omitempty"`
+	TraceId string `json:"traceId,omitempty"`
 	Code    string `json:"code,omitempty"`
 }

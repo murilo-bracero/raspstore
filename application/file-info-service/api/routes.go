@@ -1,14 +1,17 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"raspstore.github.io/file-manager/api/controller"
+	md "raspstore.github.io/file-manager/api/middleware"
 )
 
-const fileBaseRoute = "/files"
+const serviceBaseRoute = "/file-info-service"
+const fileBaseRoute = serviceBaseRoute + "/files"
 
 type Routes interface {
-	MountRoutes() *mux.Router
+	MountRoutes() *chi.Mux
 }
 
 type routes struct {
@@ -19,14 +22,18 @@ func NewRoutes(fc controller.FilesController) Routes {
 	return &routes{fc: fc}
 }
 
-func (r *routes) MountRoutes() *mux.Router {
-	router := mux.NewRouter()
+func (rt *routes) MountRoutes() *chi.Mux {
+	router := chi.NewRouter()
 
-	router.HandleFunc(fileBaseRoute, r.fc.Upload).Methods("POST")
-	router.HandleFunc(fileBaseRoute+"/{id}", r.fc.Download).Methods("GET")
-	router.HandleFunc(fileBaseRoute+"/{id}", r.fc.Update).Methods("PATCH")
-	router.HandleFunc(fileBaseRoute+"/{id}", r.fc.Delete).Methods("DELETE")
-	router.HandleFunc(fileBaseRoute, r.fc.ListFiles).Methods("GET")
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+
+	router.Route(fileBaseRoute, func(r chi.Router) {
+		r.With(md.AuthMiddleware).Get("/", rt.fc.ListFiles)
+		r.With(md.AuthMiddleware).Put("/{id}", rt.fc.Update)
+		r.With(md.AuthMiddleware).Delete("/{id}", rt.fc.Delete)
+	})
 
 	return router
+
 }
