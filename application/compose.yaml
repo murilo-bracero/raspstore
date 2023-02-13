@@ -17,6 +17,13 @@ services:
       - "3003:9090"
     env_file:
       - users-service/.env
+  file-info-service:
+    build: file-info-service
+    ports:
+      - "3004:9000"
+      - "3005:9090"
+    env_file:
+      - file-info-service/.env
 
 networks:
   default:
