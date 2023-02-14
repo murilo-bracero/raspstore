@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"raspstore.github.io/fs-service/api/controller"
 )
 
 const serviceBaseRoute = "/fs-service"
@@ -13,11 +14,11 @@ type Routes interface {
 }
 
 type routes struct {
-	fc interface{}
+	fc controller.FileServeController
 }
 
-func NewRoutes() Routes {
-	return &routes{fc: nil}
+func NewRoutes(fc controller.FileServeController) Routes {
+	return &routes{fc: fc}
 }
 
 func (rt *routes) MountRoutes() *chi.Mux {
@@ -27,9 +28,8 @@ func (rt *routes) MountRoutes() *chi.Mux {
 	router.Use(middleware.Logger)
 
 	router.Route(fileBaseRoute, func(r chi.Router) {
-		r.Get("/", rt.fc.ListFiles)
-		r.Put("/{id}", rt.fc.Update)
-		r.Delete("/{id}", rt.fc.Delete)
+		r.Get("/{id}", rt.fc.Download)
+		r.Post("/", rt.fc.Upload)
 	})
 
 	return router
