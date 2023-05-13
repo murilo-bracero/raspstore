@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"raspstore.github.io/fs-service/api"
@@ -18,6 +19,15 @@ func main() {
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("Could not load .env file. Using system variables instead")
+	}
+
+	if _, err := os.Stat(internal.StoragePath()); os.IsNotExist(err) {
+		log.Println("[INFO] Base path does not exists, starting creation")
+		err = os.MkdirAll(internal.StoragePath(), 0755)
+
+		if err != nil {
+			log.Println("[ERROR] Could not create base path: ", err.Error())
+		}
 	}
 
 	fileUseCase := usecase.NewFileInfoUseCase(ctx)
