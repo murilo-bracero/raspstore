@@ -2,7 +2,7 @@ name: Go package
 on:
   push:
     paths:
-    - 'application/fs-service/**'
+    - 'application/users-service/**'
 jobs: 
   build:
     runs-on: ubuntu-latest
