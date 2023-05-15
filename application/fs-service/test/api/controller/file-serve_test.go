@@ -270,7 +270,7 @@ type fileInfoUseCaseMock struct {
 	shouldReturnError bool
 }
 
-func (f *fileInfoUseCaseMock) GetFileMetadataById(id string) (fileMtadata *pb.FileMetadata, err error) {
+func (f *fileInfoUseCaseMock) GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error) {
 	if f.shouldReturnError {
 		return nil, errors.New("generic error")
 	}

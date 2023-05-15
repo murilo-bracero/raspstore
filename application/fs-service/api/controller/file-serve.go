@@ -107,8 +107,9 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 
 	fileId := chi.URLParam(r, "fileId")
+	userId := r.Context().Value(md.UserIdKey).(string)
 
-	fileInfo, err := f.fiuc.GetFileMetadataById(fileId)
+	fileInfo, err := f.fiuc.GetFileMetadataById(fileId, userId)
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)

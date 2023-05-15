@@ -10,7 +10,7 @@ import (
 )
 
 type FileInfoUseCase interface {
-	GetFileMetadataById(id string) (fileMtadata *pb.FileMetadata, err error)
+	GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error)
 	CreateFileMetadata(req *pb.CreateFileMetadataRequest) (fileMtadata *pb.FileMetadata, err error)
 }
 
@@ -22,7 +22,7 @@ func NewFileInfoUseCase(ctx context.Context) FileInfoUseCase {
 	return &fileInfoUseCase{ctx: ctx}
 }
 
-func (f *fileInfoUseCase) GetFileMetadataById(id string) (fileMtadata *pb.FileMetadata, err error) {
+func (f *fileInfoUseCase) GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error) {
 	conn, err := grpc.Dial(internal.FileInfoServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -33,7 +33,7 @@ func (f *fileInfoUseCase) GetFileMetadataById(id string) (fileMtadata *pb.FileMe
 
 	client := pb.NewFileInfoServiceClient(conn)
 
-	return client.FindFileMetadataById(f.ctx, &pb.FindFileMetadataByIdRequest{FileId: id})
+	return client.FindFileMetadataById(f.ctx, &pb.FindFileMetadataByIdRequest{FileId: fileId, RequesterUserId: userId})
 }
 
 func (f *fileInfoUseCase) CreateFileMetadata(req *pb.CreateFileMetadataRequest) (fileMtadata *pb.FileMetadata, err error) {
