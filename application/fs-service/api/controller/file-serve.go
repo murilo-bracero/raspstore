@@ -3,10 +3,10 @@ package controller
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -83,6 +83,13 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 		InternalServerError(w, traceId)
 		return
 	}
+
+	Created(w, &dto.UploadSuccessResponse{
+		FileId:   res.FileId,
+		Filename: res.Filename,
+		Path:     res.Path,
+		OwnerId:  res.OwnerId,
+	})
 }
 
 func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
@@ -121,26 +128,20 @@ func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
+	fileStat, err := file.Stat()
+
+	if err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: Could not get status from fs due to error: %s", traceId, err.Error())
+		InternalServerError(w, traceId)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileInfo.Filename))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileStat.Size()))
 
-	bytes, err := ioutil.ReadAll(file)
-
-	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not read file in fs due to error: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
-		return
-	}
-
-	_, err = w.Write(bytes)
-
-	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not write file to response due to error: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
-		return
-	}
+	http.ServeContent(w, r, fileInfo.Filename, time.Now(), file)
 }
 
 func (f *fileServeController) userHasPermission(fileInfo *pb.FileMetadata, userId string) bool {
