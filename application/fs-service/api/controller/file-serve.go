@@ -107,7 +107,6 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 
 	fileId := chi.URLParam(r, "fileId")
-	userId := r.Context().Value(md.UserIdKey).(string)
 
 	fileInfo, err := f.fiuc.GetFileMetadataById(fileId)
 
@@ -115,11 +114,6 @@ func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not retrieve file from file-info-service due to error: %s", traceId, err.Error())
 		InternalServerError(w, traceId)
-		return
-	}
-
-	if !f.userHasPermission(fileInfo, userId) {
-		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -153,8 +147,4 @@ func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileStat.Size()))
 
 	http.ServeContent(w, r, fileInfo.Filename, time.Now(), file)
-}
-
-func (f *fileServeController) userHasPermission(fileInfo *pb.FileMetadata, userId string) bool {
-	return userId == fileInfo.OwnerId
 }
