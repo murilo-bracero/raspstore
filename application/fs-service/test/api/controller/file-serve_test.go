@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/fs-service/api/controller"
 	"raspstore.github.io/fs-service/api/dto"
+	md "raspstore.github.io/fs-service/api/middleware"
 	"raspstore.github.io/fs-service/internal"
 )
 
@@ -60,6 +61,8 @@ func TestUploadFileSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	req, err := http.NewRequest("POST", "/files", body)
+	ctx := context.WithValue(req.Context(), md.UserIdKey, defaultUserId)
+	req = req.WithContext(ctx)
 	assert.NoError(t, err)
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -111,6 +114,7 @@ func TestUploadFileBadRequestWithNoPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
@@ -149,6 +153,7 @@ func TestUploadFileBadRequestWithNoFile(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/files", body)
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	assert.NoError(t, err)
 
@@ -204,6 +209,7 @@ func TestUploadFileInternalServerError(t *testing.T) {
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -238,6 +244,8 @@ func TestDownloadFileSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files/%s", fileId), nil)
+	ctx := context.WithValue(req.Context(), md.UserIdKey, defaultUserId)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -247,6 +255,34 @@ func TestDownloadFileSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code, "Status code should be 200 OK")
 	assert.Equal(t, "application/octet-stream", rr.Header().Get("Content-Type"))
 	assert.Equal(t, fmt.Sprintf("attachment; filename=\"%s\"", testFilename), rr.Header().Get("Content-Disposition"))
+}
+
+func TestDownloadFileFailAccessDenied(t *testing.T) {
+	if err := godotenv.Load("../../test.env"); err != nil {
+		log.Println("Could not load .env file. Using system variables instead")
+	}
+
+	fileId := uuid.NewString()
+	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId, defaultFileId: fileId}
+	ctr := controller.NewFileServeController(useCase)
+
+	f, err := os.Create(internal.StoragePath() + "/" + fileId)
+	defer os.Remove(internal.StoragePath() + "/" + fileId)
+	assert.NoError(t, err)
+
+	_, err = f.WriteString("Test file")
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/files/%s", fileId), nil)
+	ctx := context.WithValue(req.Context(), md.UserIdKey, uuid.NewString())
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(ctr.Download)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNotFound, rr.Code, "Status code should be 400 NotFound")
 }
 
 func createTempFile() (string, error) {

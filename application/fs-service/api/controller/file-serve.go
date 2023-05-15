@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
 	"raspstore.github.io/fs-service/api/dto"
+	md "raspstore.github.io/fs-service/api/middleware"
 	"raspstore.github.io/fs-service/internal"
 	"raspstore.github.io/fs-service/usecase"
 )
@@ -30,6 +31,7 @@ func NewFileServeController(fiuc usecase.FileInfoUseCase) FileServeController {
 }
 
 func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(md.UserIdKey).(string)
 	r.ParseMultipartForm(32 << 20)
 
 	file, header, err := r.FormFile("file")
@@ -59,8 +61,7 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	req := &pb.CreateFileMetadataRequest{
-		//TODO:Get user ID from JWT
-		OwnerId:  "e9e28c79-a5e8-4545-bd32-e536e690bd4a",
+		OwnerId:  userId,
 		Filename: header.Filename,
 		Size:     header.Size,
 		Path:     path,
@@ -106,8 +107,7 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 
 	fileId := chi.URLParam(r, "fileId")
-	//TODO:Get user ID from JWT
-	userId := "e9e28c79-a5e8-4545-bd32-e536e690bd4a"
+	userId := r.Context().Value(md.UserIdKey).(string)
 
 	fileInfo, err := f.fiuc.GetFileMetadataById(fileId)
 
@@ -119,7 +119,7 @@ func (f *fileServeController) Download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !f.userHasPermission(fileInfo, userId) {
-		http.Error(w, "Not Found", http.StatusUnauthorized)
+		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
