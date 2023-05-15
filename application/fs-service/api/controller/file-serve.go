@@ -33,10 +33,21 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 
 	file, header, err := r.FormFile("file")
+	path := r.FormValue("path")
+
+	if path == "" {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		BadRequest(w, dto.ErrorResponse{
+			TraceId: traceId,
+			Message: "File filed is null or malformed",
+			Code:    "ERR001",
+		})
+		return
+	}
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could list files due to error: %s", traceId, err.Error())
+		log.Printf("[ERROR] - [%s]: Could not open Multipart Form file: %s", traceId, err.Error())
 		BadRequest(w, dto.ErrorResponse{
 			TraceId: traceId,
 			Message: "File filed is null or malformed",
@@ -52,7 +63,7 @@ func (f *fileServeController) Upload(w http.ResponseWriter, r *http.Request) {
 		OwnerId:  "e9e28c79-a5e8-4545-bd32-e536e690bd4a",
 		Filename: header.Filename,
 		Size:     header.Size,
-		Path:     r.FormValue("path"),
+		Path:     path,
 	}
 
 	res, err := f.fiuc.CreateFileMetadata(req)
