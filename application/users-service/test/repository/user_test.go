@@ -23,8 +23,7 @@ func init() {
 	}
 }
 func TestUsersRepositorySave(t *testing.T) {
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
@@ -46,8 +45,7 @@ func TestUsersRepositorySave(t *testing.T) {
 }
 
 func TestUsersRepositoryFindById(t *testing.T) {
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
@@ -68,8 +66,7 @@ func TestUsersRepositoryFindById(t *testing.T) {
 }
 
 func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
@@ -94,9 +91,7 @@ func TestUsersRepositoryFindByEmailOrUsername(t *testing.T) {
 }
 
 func TestUsersRepositoryUpdateUser(t *testing.T) {
-	cfg := db.NewConfig()
-
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
@@ -130,30 +125,28 @@ func TestUsersRepositoryUpdateUser(t *testing.T) {
 }
 
 func TestUsersRepositoryFindAll(t *testing.T) {
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
 
-	users, error1 := repo.FindAll()
+	page, error1 := repo.FindAll(0, 10)
 	assert.NoError(t, error1)
-	assert.True(t, len(users) > 0)
+	assert.True(t, len(page.Content) > 0)
 }
 
 func TestUsersRepositoryDeleteUser(t *testing.T) {
-	cfg := db.NewConfig()
-	conn, err := db.NewMongoConnection(context.Background(), cfg)
+	conn, err := db.NewMongoConnection(context.Background())
 	assert.NoError(t, err)
 	defer conn.Close(context.Background())
 	repo := mg.NewUsersRepository(context.Background(), conn)
 
-	users, error1 := repo.FindAll()
+	page, error1 := repo.FindAll(0, 10)
 
 	assert.NoError(t, error1)
-	assert.True(t, len(users) > 0)
+	assert.True(t, len(page.Content) > 0)
 
-	for _, user := range users {
+	for _, user := range page.Content {
 		repo.Delete(user.UserId)
 		break
 	}

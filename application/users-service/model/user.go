@@ -3,40 +3,47 @@ package model
 import (
 	"time"
 
-	"github.com/murilo-bracero/raspstore-protofiles/users-service/pb"
+	"github.com/google/uuid"
+	"raspstore.github.io/users-service/api/dto"
 )
 
+const defaultDateFormat = "2006-01-02 15:04:05"
+
 type User struct {
-	UserId      string    `bson:"user_id" json:"userId"`
-	Username    string    `bson:"username" json:"username"`
-	Email       string    `bson:"email" json:"email"`
-	PhoneNumber string    `bson:"phone_number" json:"phoneNumber"`
-	CreatedAt   time.Time `bson:"created_at" json:"createdAt"`
-	UpdatedAt   time.Time `bson:"updated_at" json:"updatedAt"`
+	UserId       string    `bson:"user_id"`
+	Username     string    `bson:"username"`
+	Email        string    `bson:"email"`
+	PasswordHash string    `bson:"password"`
+	IsEnabled    bool      `bson:"is_enabled"`
+	PhoneNumber  string    `bson:"phone_number"`
+	CreatedAt    time.Time `bson:"created_at"`
+	UpdatedAt    time.Time `bson:"updated_at"`
 }
 
-func (u *User) ToProtoBuffer() *pb.User {
-	return &pb.User{
-		Id:          u.UserId,
-		Username:    u.Username,
-		Email:       u.Email,
-		PhoneNumber: u.PhoneNumber,
-		CreatedAt:   u.CreatedAt.Unix(),
-		UpdatedAt:   u.UpdatedAt.Unix(),
+func NewUserByCreateUserRequest(req dto.CreateUserRequest) *User {
+	return &User{
+		UserId:      uuid.NewString(),
+		Username:    req.Username,
+		Email:       req.Email,
+		IsEnabled:   true,
+		PhoneNumber: "",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 }
 
-func (u *User) FromProtoBuffer(user *pb.CreateUserRequest) {
-
-	u.Username = user.Username
-	u.Email = user.Email
-	u.PhoneNumber = user.PhoneNumber
+func (usr *User) ToDto() dto.UserResponse {
+	return dto.UserResponse{
+		UserId:    usr.UserId,
+		Username:  usr.Username,
+		Email:     usr.Email,
+		IsEnabled: usr.IsEnabled,
+		CreatedAt: usr.CreatedAt.Format(defaultDateFormat),
+		UpdatedAt: usr.UpdatedAt.Format(defaultDateFormat),
+	}
 }
 
-func (u *User) FromUpdateProto(user *pb.UpdateUserRequest) error {
-	u.UserId = user.Id
-	u.Username = user.Username
-	u.Email = user.Email
-	u.PhoneNumber = user.PhoneNumber
-	return nil
+type UserPage struct {
+	Content []*User `bson:"content"`
+	Count   int     `bson:"count"`
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	tokenReq := &pb.AuthenticateRequest{Token: token}
+	tokenReq := &pb.AuthenticateRequest{Token: fmt.Sprintf("Bearer %s", token)}
 
 	tokenRes, err := as.Authenticate(ctx, tokenReq)
 
@@ -40,13 +41,35 @@ func TestAuthenticateSuccess(t *testing.T) {
 	assert.Equal(t, id, tokenRes.Uid)
 }
 
-func TestAuthenticateFail(t *testing.T) {
+func TestAuthenticateFailWithInvalidToken(t *testing.T) {
 	ctx := context.Background()
 	as, _ := bootstrap(ctx)
 
 	token := "testffailtokeninvalid"
 
-	tokenReq := &pb.AuthenticateRequest{Token: token}
+	tokenReq := &pb.AuthenticateRequest{Token: fmt.Sprintf("Bearer %s", token)}
+
+	_, err := as.Authenticate(ctx, tokenReq)
+
+	assert.Error(t, err)
+}
+
+func TestAuthenticateFailWithEmptyToken(t *testing.T) {
+	ctx := context.Background()
+	as, _ := bootstrap(ctx)
+
+	tokenReq := &pb.AuthenticateRequest{Token: ""}
+
+	_, err := as.Authenticate(ctx, tokenReq)
+
+	assert.Error(t, err)
+}
+
+func TestAuthenticateFailWithInsufficientParts(t *testing.T) {
+	ctx := context.Background()
+	as, _ := bootstrap(ctx)
+
+	tokenReq := &pb.AuthenticateRequest{Token: "Bearer "}
 
 	_, err := as.Authenticate(ctx, tokenReq)
 

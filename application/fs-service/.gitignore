@@ -1,0 +1,4 @@
+pb/
+.env
+tmp/
+.air.conf

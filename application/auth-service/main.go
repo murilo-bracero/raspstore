@@ -21,10 +21,8 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Panicln("Could not load local variables")
+	if err := godotenv.Load(); err != nil {
+		log.Println("Could not load .env file. Using system variables instead")
 	}
 
 	conn := initDatabase()
