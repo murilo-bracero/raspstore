@@ -24,7 +24,13 @@ services:
       - "3005:9090"
     env_file:
       - file-info-service/.env
-
+  fs-service:
+    build: fs-service
+    ports:
+      - "3006:9090"
+    env_file:
+      - fs-service/.env
+      
 networks:
   default:
     external: true

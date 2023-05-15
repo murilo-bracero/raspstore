@@ -58,9 +58,9 @@ components:
         path:
           type: string
           description: /folder1/folder2
-        filename:
+        file:
           type: string
-          description: coolfile.exe
+          format: binary
     ApiErrorException:
       type: object
       properties:
