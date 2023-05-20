@@ -70,7 +70,7 @@ func (f *fileInfoService) FindFileMetadataById(ctx context.Context, req *pb.Find
 		return nil, internal.ErrEmptyFileId
 	}
 
-	file, err := f.fileRepository.FindById(req.FileId)
+	file, err := f.fileRepository.FindById(req.RequesterUserId, req.FileId)
 
 	if err != nil {
 		return nil, err

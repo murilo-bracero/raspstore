@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/file-manager/api/controller"
 	"raspstore.github.io/file-manager/api/dto"
+	md "raspstore.github.io/file-manager/api/middleware"
 	"raspstore.github.io/file-manager/model"
 )
 
@@ -27,6 +28,8 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -45,6 +48,8 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -61,6 +66,8 @@ func TestDeleteFileSuccess(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -77,7 +84,8 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -105,6 +113,9 @@ func TestUpdateFileSuccess(t *testing.T) {
 	  }`, random))
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -142,6 +153,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, md.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -163,6 +175,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, md.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -189,7 +202,7 @@ func (f *filesRepositoryMock) Save(file *model.File) error {
 	return errors.New("Not Implemented!")
 }
 
-func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
+func (f *filesRepositoryMock) FindById(userId string, id string) (*model.File, error) {
 	if f.shouldReturnErr {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -201,7 +214,7 @@ func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
 	return createFileMetadata(id), nil
 }
 
-func (f *filesRepositoryMock) FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error) {
+func (f *filesRepositoryMock) FindByIdLookup(userId string, id string) (fileMetadata *model.FileMetadataLookup, err error) {
 	if f.shouldReturnErr {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -213,7 +226,7 @@ func (f *filesRepositoryMock) FindByIdLookup(id string) (fileMetadata *model.Fil
 	return createFileMetadataLookup(id), nil
 }
 
-func (f *filesRepositoryMock) Delete(id string) error {
+func (f *filesRepositoryMock) Delete(userId string, fileId string) error {
 	if f.shouldReturnErr {
 		return mongo.ErrClientDisconnected
 	}
@@ -221,7 +234,7 @@ func (f *filesRepositoryMock) Delete(id string) error {
 	return nil
 }
 
-func (f *filesRepositoryMock) Update(file *model.File) error {
+func (f *filesRepositoryMock) Update(userId string, file *model.File) error {
 	if f.shouldReturnErr {
 		return mongo.ErrClientDisconnected
 	}
@@ -229,7 +242,7 @@ func (f *filesRepositoryMock) Update(file *model.File) error {
 	return nil
 }
 
-func (f *filesRepositoryMock) FindAll(page int, size int) (filesPage *model.FilePage, err error) {
+func (f *filesRepositoryMock) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
 	files := make([]*model.FileMetadataLookup, 1)
 	for i := 0; i < f.totalElements; i++ {
 		files = append(files, createFileMetadataLookup(""))

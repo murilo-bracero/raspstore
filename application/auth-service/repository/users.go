@@ -35,7 +35,7 @@ func (r *usersRespository) FindByUsername(username string) (usr *model.User, err
 
 func (r *usersRespository) Update(usr *model.User) error {
 
-	filter := bson.D{{Key: "_id", Value: usr.Id}}
+	filter := bson.D{{Key: "user_id", Value: usr.UserId}}
 
 	update := bson.D{{Key: "$set",
 		Value: bson.D{

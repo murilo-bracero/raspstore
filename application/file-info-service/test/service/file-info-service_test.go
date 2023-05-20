@@ -85,7 +85,7 @@ func (f *filesRepositoryMock) Save(file *model.File) error {
 	return nil
 }
 
-func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
+func (f *filesRepositoryMock) FindById(userId string, id string) (*model.File, error) {
 	if f.shouldReturnErr {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -101,18 +101,18 @@ func (f *filesRepositoryMock) FindById(id string) (*model.File, error) {
 	}, nil
 }
 
-func (f *filesRepositoryMock) FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error) {
+func (f *filesRepositoryMock) FindByIdLookup(userId string, id string) (fileMetadata *model.FileMetadataLookup, err error) {
 	return nil, errors.New("Not Implemented!")
 }
 
-func (f *filesRepositoryMock) Delete(id string) error {
+func (f *filesRepositoryMock) Delete(userId string, fileId string) error {
 	return errors.New("Not Implemented!")
 }
 
-func (f *filesRepositoryMock) Update(file *model.File) error {
+func (f *filesRepositoryMock) Update(userId string, file *model.File) error {
 	return errors.New("Not Implemented!")
 }
 
-func (f *filesRepositoryMock) FindAll(page int, size int) (filesPage *model.FilePage, err error) {
+func (f *filesRepositoryMock) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
 	return nil, errors.New("Not Implemented!")
 }

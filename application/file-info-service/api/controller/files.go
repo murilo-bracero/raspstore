@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	"raspstore.github.io/file-manager/api/dto"
+	md "raspstore.github.io/file-manager/api/middleware"
 	"raspstore.github.io/file-manager/repository"
 )
 
@@ -38,7 +39,9 @@ func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
 		size = maxListSize
 	}
 
-	filesPage, err := f.repo.FindAll(page, size)
+	userId := r.Context().Value(md.UserIdKey).(string)
+
+	filesPage, err := f.repo.FindAll(userId, page, size)
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
@@ -69,9 +72,11 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := chi.URLParam(r, "id")
+	fileId := chi.URLParam(r, "id")
+	userId := r.Context().Value(md.UserIdKey).(string)
+	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 
-	file, err := f.repo.FindById(id)
+	file, err := f.repo.FindById(userId, fileId)
 
 	if err == mongo.ErrNoDocuments {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -79,11 +84,12 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not search file with id %s in database: %s", traceId, id, err.Error())
+		log.Printf("[ERROR] - [%s]: Could not search file with id %s in database: %s", traceId, fileId, err.Error())
 		InternalServerError(w, traceId)
 		return
 	}
+
+	log.Printf("[INFO] - [%s]: File with id=%s found", traceId, fileId)
 
 	if req.Filename != "" {
 		file.Filename = req.Filename
@@ -101,18 +107,18 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 		file.Editors = req.Editors
 	}
 
-	if err := f.repo.Update(file); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not update file with id %s in database: %s", traceId, id, err.Error())
+	if err := f.repo.Update(userId, file); err != nil {
+		log.Printf("[ERROR] - [%s]: Could not update file with id %s in database: %s", traceId, fileId, err.Error())
 		InternalServerError(w, traceId)
 		return
 	}
 
-	fileMetadata, err := f.repo.FindByIdLookup(id)
+	log.Printf("[INFO] - [%s]: File with id=%s updated successfully", traceId, fileId)
+
+	fileMetadata, err := f.repo.FindByIdLookup(userId, fileId)
 
 	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not search lookup file with id %s in database: %s", traceId, id, err.Error())
+		log.Printf("[ERROR] - [%s]: Could not search lookup file with id %s in database: %s", traceId, fileId, err.Error())
 		InternalServerError(w, traceId)
 		return
 	}
@@ -121,11 +127,13 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *filesController) Delete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	fileId := chi.URLParam(r, "id")
 
-	if err := f.repo.Delete(id); err != nil {
+	userId := r.Context().Value(md.UserIdKey).(string)
+
+	if err := f.repo.Delete(userId, fileId); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not delete file with id %s in database: %s", traceId, id, err.Error())
+		log.Printf("[ERROR] - [%s]: Could not delete file with id %s in database: %s", traceId, fileId, err.Error())
 		InternalServerError(w, traceId)
 		return
 	}

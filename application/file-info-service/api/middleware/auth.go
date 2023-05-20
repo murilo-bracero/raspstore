@@ -28,7 +28,7 @@ func AuthMiddleware(h http.Handler) http.Handler {
 		conn, err := grpc.Dial(internal.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 		if err != nil {
-			log.Println("[ERROR] Could not stablish connection to auth service, it may goes down: ", err.Error())
+			log.Println("[ERROR] Could not stablish connection to auth service: ", err.Error())
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}

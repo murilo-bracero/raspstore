@@ -17,11 +17,11 @@ const filesCollectionName = "files"
 
 type FilesRepository interface {
 	Save(file *model.File) error
-	FindById(id string) (*model.File, error)
-	FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error)
-	Delete(id string) error
-	Update(file *model.File) error
-	FindAll(page int, size int) (filesPage *model.FilePage, err error)
+	FindById(userId string, fileId string) (*model.File, error)
+	FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error)
+	Delete(userId string, fileId string) error
+	Update(userId string, file *model.File) error
+	FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error)
 }
 
 type filesRepository struct {
@@ -46,18 +46,31 @@ func (f *filesRepository) Save(file *model.File) error {
 	return nil
 }
 
-func (f *filesRepository) FindById(id string) (file *model.File, err error) {
-	found := f.coll.FindOne(f.ctx, bson.M{"file_id": id})
+func (f *filesRepository) FindById(userId string, fileId string) (file *model.File, err error) {
+	ownerClause := bson.M{}
+	addOwnerPermissionValidation(ownerClause, userId)
+
+	viewerClause := bson.M{}
+	addViewerPermissionValidation(ownerClause, userId)
+
+	editorClause := bson.M{}
+	addEditorPermissionValidation(ownerClause, userId)
+
+	orClauses := []bson.M{ownerClause, viewerClause, editorClause}
+
+	found := f.coll.FindOne(f.ctx, bson.M{"file_id": fileId, "$or": orClauses})
 
 	err = found.Decode(&file)
 
 	return file, err
 }
 
-func (f *filesRepository) FindByIdLookup(id string) (fileMetadata *model.FileMetadataLookup, err error) {
-	match := bson.D{bson.E{Key: "$match", Value: bson.M{"file_id": id}}}
+func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error) {
+	match := bson.D{bson.E{Key: "$match", Value: filterByFileId(fileId)}}
 
-	pipeline := append([]bson.D{match}, lookupFileMetadata()...)
+	pipeline := append([]bson.D{match}, lookupUserFields()...)
+
+	pipeline = append(pipeline, aggregateAccessControl(userId))
 
 	cursor, err := f.coll.Aggregate(f.ctx, pipeline)
 
@@ -74,14 +87,18 @@ func (f *filesRepository) FindByIdLookup(id string) (fileMetadata *model.FileMet
 	return fileMetadata, nil
 }
 
-func (f *filesRepository) Delete(id string) error {
-	_, err := f.coll.DeleteOne(f.ctx, bson.M{"file_id": id})
+func (f *filesRepository) Delete(userId string, fileId string) error {
+	filter := filterByFileId(fileId)
+	addEditorPermissionValidation(filter, userId)
+
+	_, err := f.coll.DeleteOne(f.ctx, filter)
 
 	return err
 }
 
-func (f *filesRepository) Update(file *model.File) error {
-	filter := bson.M{"file_id": file.FileId}
+func (f *filesRepository) Update(userId string, file *model.File) error {
+	filter := filterByFileId(file.FileId)
+	addEditorPermissionValidation(filter, userId)
 
 	update := bson.M{"$set": bson.M{
 		"filename":   file.Filename,
@@ -96,30 +113,21 @@ func (f *filesRepository) Update(file *model.File) error {
 	return nil
 }
 
-func (f *filesRepository) FindAll(page int, size int) (filesPage *model.FilePage, err error) {
+func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
 
 	skip := bson.D{bson.E{Key: "$skip", Value: page * size}}
 
 	limit := bson.D{bson.E{Key: "$limit", Value: size}}
 
-	contentField := append([]bson.D{skip, limit}, lookupFileMetadata()...)
+	contentField := append([]bson.D{skip, limit}, lookupUserFields()...)
 
 	totalCountField := []bson.M{{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}}}}
-	facet := bson.D{
-		primitive.E{Key: "$facet", Value: bson.D{
-			primitive.E{Key: "content", Value: contentField}, primitive.E{Key: "totalCount", Value: totalCountField},
-		}},
-	}
 
-	project := bson.D{
-		primitive.E{Key: "$project", Value: bson.D{
-			primitive.E{Key: "content", Value: "$content"},
-			primitive.E{Key: "count", Value: bson.D{
-				primitive.E{Key: "$arrayElemAt", Value: []interface{}{"$totalCount.count", 0}}}},
-		}},
-	}
+	accessControl := aggregateAccessControl(userId)
+	facet := facet(contentField, totalCountField)
+	project := project()
 
-	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{facet, project})
+	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{accessControl, facet, project})
 
 	if err != nil {
 		return nil, err
@@ -136,7 +144,54 @@ func (f *filesRepository) FindAll(page int, size int) (filesPage *model.FilePage
 	return filesPage, nil
 }
 
-func lookupFileMetadata() []bson.D {
+func filterByFileId(fileId string) bson.M {
+	return bson.M{"file_id": fileId}
+}
+
+func addOwnerPermissionValidation(query bson.M, userId string) {
+	query["owner_user_id"] = userId
+}
+
+func addViewerPermissionValidation(query bson.M, userId string) {
+	query["viewers"] = userId
+}
+
+func addEditorPermissionValidation(query bson.M, userId string) {
+	query["editors"] = userId
+}
+
+func facet(contentField []primitive.D, totalCountField []primitive.M) bson.D {
+	return bson.D{
+		primitive.E{Key: "$facet", Value: bson.D{
+			primitive.E{Key: "content", Value: contentField}, primitive.E{Key: "totalCount", Value: totalCountField},
+		}},
+	}
+}
+
+func project() bson.D {
+	return bson.D{
+		primitive.E{Key: "$project", Value: bson.D{
+			primitive.E{Key: "content", Value: "$content"},
+			primitive.E{Key: "count", Value: bson.D{
+				primitive.E{Key: "$arrayElemAt", Value: []interface{}{"$totalCount.count", 0}}}},
+		}},
+	}
+}
+
+func aggregateAccessControl(userId string) bson.D {
+
+	orClauses := []bson.D{{bson.E{Key: "owner_user_id", Value: userId}}}
+
+	orClauses = append(orClauses, bson.D{bson.E{Key: "viewers", Value: userId}})
+
+	orClauses = append(orClauses, bson.D{bson.E{Key: "editors", Value: userId}})
+
+	orClause := bson.D{bson.E{Key: "$or", Value: orClauses}}
+
+	return bson.D{bson.E{Key: "$match", Value: orClause}}
+}
+
+func lookupUserFields() []bson.D {
 	lookupOwner := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
 		"localField":   "owner_user_id",
 		"foreignField": "user_id",
