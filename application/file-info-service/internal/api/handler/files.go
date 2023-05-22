@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"encoding/json"
@@ -8,30 +8,30 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/file-manager/api/dto"
-	md "raspstore.github.io/file-manager/api/middleware"
-	"raspstore.github.io/file-manager/repository"
+	v1 "raspstore.github.io/file-manager/api/v1"
+	"raspstore.github.io/file-manager/internal/api/middleware"
+	"raspstore.github.io/file-manager/internal/repository"
 )
 
 const maxListSize = 50
 
-type FilesController interface {
+type FilesHandler interface {
 	ListFiles(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
 }
 
-type filesController struct {
+type filesHandler struct {
 	repo repository.FilesRepository
 }
 
-func NewFilesController(repo repository.FilesRepository) FilesController {
-	return &filesController{repo: repo}
+func NewFilesHandler(repo repository.FilesRepository) FilesHandler {
+	return &filesHandler{repo: repo}
 }
 
-func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
+func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
@@ -39,14 +39,14 @@ func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
 		size = maxListSize
 	}
 
-	userId := r.Context().Value(md.UserIdKey).(string)
+	userId := r.Context().Value(middleware.UserIdKey).(string)
 
 	filesPage, err := f.repo.FindAll(userId, page, size)
 
 	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could list files due to error: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
 		nextUrl = fmt.Sprintf("%s/file-info-service/files?page=%d&size=%d", r.Host, page+1, size)
 	}
 
-	Send(w, dto.FileMetadataList{
+	v1.Send(w, v1.FileResponse{
 		Page:          page,
 		Size:          size,
 		TotalElements: filesPage.Count,
@@ -65,16 +65,16 @@ func (f *filesController) ListFiles(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
-	var req dto.UpdateFileRequest
+func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var req v1.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
 	fileId := chi.URLParam(r, "id")
-	userId := r.Context().Value(md.UserIdKey).(string)
-	traceId := r.Context().Value(middleware.RequestIDKey).(string)
+	userId := r.Context().Value(middleware.UserIdKey).(string)
+	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
 	file, err := f.repo.FindById(userId, fileId)
 
@@ -85,7 +85,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("[ERROR] - [%s]: Could not search file with id %s in database: %s", traceId, fileId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err := f.repo.Update(userId, file); err != nil {
 		log.Printf("[ERROR] - [%s]: Could not update file with id %s in database: %s", traceId, fileId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
@@ -119,22 +119,22 @@ func (f *filesController) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("[ERROR] - [%s]: Could not search lookup file with id %s in database: %s", traceId, fileId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
-	Send(w, fileMetadata)
+	v1.Send(w, fileMetadata)
 }
 
-func (f *filesController) Delete(w http.ResponseWriter, r *http.Request) {
+func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "id")
 
-	userId := r.Context().Value(md.UserIdKey).(string)
+	userId := r.Context().Value(middleware.UserIdKey).(string)
 
 	if err := f.repo.Delete(userId, fileId); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not delete file with id %s in database: %s", traceId, fileId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 

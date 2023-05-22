@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/file-manager/db"
-	"raspstore.github.io/file-manager/model"
+	db "raspstore.github.io/file-manager/internal/database"
+	"raspstore.github.io/file-manager/internal/model"
 )
 
 const filesCollectionName = "files"

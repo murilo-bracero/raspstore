@@ -15,7 +15,7 @@ type userIdKey string
 
 const UserIdKey userIdKey = "user-id-context-key"
 
-func AuthMiddleware(h http.Handler) http.Handler {
+func AuthenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		token := r.Header.Get("Authorization")

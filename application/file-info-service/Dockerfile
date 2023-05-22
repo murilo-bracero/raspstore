@@ -6,7 +6,7 @@ COPY --chown=185 . ./
 
 RUN go mod download
 
-RUN go build -o file-info-service
+RUN go build -o file-info-service ./cmd
 
 FROM alpine:3.16
 

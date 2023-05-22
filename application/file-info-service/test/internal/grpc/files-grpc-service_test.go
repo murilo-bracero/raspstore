@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/file-manager/model"
-	"raspstore.github.io/file-manager/service"
+	service "raspstore.github.io/file-manager/internal/grpc"
+	"raspstore.github.io/file-manager/internal/model"
 )
 
 func TestCreateFileMetadataSuccess(t *testing.T) {

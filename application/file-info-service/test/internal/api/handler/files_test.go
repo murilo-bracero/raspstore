@@ -16,15 +16,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/file-manager/api/controller"
-	"raspstore.github.io/file-manager/api/dto"
-	md "raspstore.github.io/file-manager/api/middleware"
-	"raspstore.github.io/file-manager/model"
+	api "raspstore.github.io/file-manager/api/v1"
+	apiHandler "raspstore.github.io/file-manager/internal/api/handler"
+	md "raspstore.github.io/file-manager/internal/api/middleware"
+	"raspstore.github.io/file-manager/internal/model"
 )
 
 func TestGetAllFilesSuccess(t *testing.T) {
 	repo := &filesRepositoryMock{}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -41,7 +41,7 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 	repo := &filesRepositoryMock{}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	page := 0
 	size := 3
@@ -61,7 +61,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 func TestDeleteFileSuccess(t *testing.T) {
 	repo := &filesRepositoryMock{}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
@@ -79,7 +79,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 func TestDeleteFileInternalServerError(t *testing.T) {
 	repo := &filesRepositoryMock{shouldReturnErr: true}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
@@ -95,7 +95,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
-	var errRes dto.ErrorResponse
+	var errRes api.ErrorResponse
 	json.Unmarshal(rr.Body.Bytes(), &errRes)
 
 	assert.NotEmpty(t, errRes.Code)
@@ -105,7 +105,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 func TestUpdateFileSuccess(t *testing.T) {
 	repo := &filesRepositoryMock{}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -144,7 +144,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 func TestUpdateFileNotFound(t *testing.T) {
 	repo := &filesRepositoryMock{shouldNotFindFile: true}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -166,7 +166,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 
 func TestUpdateFileInternalServerError(t *testing.T) {
 	repo := &filesRepositoryMock{shouldReturnErr: true}
-	ctr := controller.NewFilesController(repo)
+	ctr := apiHandler.NewFilesHandler(repo)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -184,7 +184,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-	var errRes dto.ErrorResponse
+	var errRes api.ErrorResponse
 	json.Unmarshal(rr.Body.Bytes(), &errRes)
 
 	assert.NotEmpty(t, errRes.Code)
