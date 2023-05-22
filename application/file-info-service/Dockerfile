@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --chown=185 --from=build /app/file-info-service .
 
-EXPOSE 8080 8081
+EXPOSE 9000 9090
 
 CMD ["./file-info-service"]
