@@ -12,7 +12,7 @@ import (
 
 type MongoConnection interface {
 	Close(ctx context.Context)
-	DB() *mongo.Database
+	Collection(collectionName string) *mongo.Collection
 }
 
 type conn struct {
@@ -40,6 +40,6 @@ func (c *conn) Close(ctx context.Context) {
 	}
 }
 
-func (c *conn) DB() *mongo.Database {
-	return c.database
+func (c *conn) Collection(collectionName string) *mongo.Collection {
+	return c.database.Collection(collectionName)
 }

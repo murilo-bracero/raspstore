@@ -30,7 +30,7 @@ type filesRepository struct {
 }
 
 func NewFilesRepository(ctx context.Context, conn db.MongoConnection) FilesRepository {
-	return &filesRepository{ctx: ctx, coll: conn.DB().Collection(filesCollectionName)}
+	return &filesRepository{ctx: ctx, coll: conn.Collection(filesCollectionName)}
 }
 
 func (f *filesRepository) Save(file *model.File) error {
@@ -47,18 +47,7 @@ func (f *filesRepository) Save(file *model.File) error {
 }
 
 func (f *filesRepository) FindById(userId string, fileId string) (file *model.File, err error) {
-	ownerClause := bson.M{}
-	addOwnerPermissionValidation(ownerClause, userId)
-
-	viewerClause := bson.M{}
-	addViewerPermissionValidation(ownerClause, userId)
-
-	editorClause := bson.M{}
-	addEditorPermissionValidation(ownerClause, userId)
-
-	orClauses := []bson.M{ownerClause, viewerClause, editorClause}
-
-	found := f.coll.FindOne(f.ctx, bson.M{"file_id": fileId, "$or": orClauses})
+	found := f.coll.FindOne(f.ctx, bson.M{"file_id": fileId, "$or": addAnyPermissionFilter(userId)})
 
 	err = found.Decode(&file)
 
@@ -89,7 +78,7 @@ func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMeta
 
 func (f *filesRepository) Delete(userId string, fileId string) error {
 	filter := filterByFileId(fileId)
-	addEditorPermissionValidation(filter, userId)
+	addEditorPermissionFilter(filter, userId)
 
 	_, err := f.coll.DeleteOne(f.ctx, filter)
 
@@ -98,7 +87,7 @@ func (f *filesRepository) Delete(userId string, fileId string) error {
 
 func (f *filesRepository) Update(userId string, file *model.File) error {
 	filter := filterByFileId(file.FileId)
-	addEditorPermissionValidation(filter, userId)
+	addEditorPermissionFilter(filter, userId)
 
 	update := bson.M{"$set": bson.M{
 		"filename":   file.Filename,
@@ -148,15 +137,17 @@ func filterByFileId(fileId string) bson.M {
 	return bson.M{"file_id": fileId}
 }
 
-func addOwnerPermissionValidation(query bson.M, userId string) {
-	query["owner_user_id"] = userId
+func addAnyPermissionFilter(userId string) []bson.M {
+	ownerClause := bson.M{"owner_user_id": userId}
+
+	viewerClause := bson.M{"viewers": userId}
+
+	editorClause := bson.M{"editors": userId}
+
+	return []bson.M{ownerClause, viewerClause, editorClause}
 }
 
-func addViewerPermissionValidation(query bson.M, userId string) {
-	query["viewers"] = userId
-}
-
-func addEditorPermissionValidation(query bson.M, userId string) {
+func addEditorPermissionFilter(query bson.M, userId string) {
 	query["editors"] = userId
 }
 
@@ -179,12 +170,7 @@ func project() bson.D {
 }
 
 func aggregateAccessControl(userId string) bson.D {
-
-	orClauses := []bson.D{{bson.E{Key: "owner_user_id", Value: userId}}}
-
-	orClauses = append(orClauses, bson.D{bson.E{Key: "viewers", Value: userId}})
-
-	orClauses = append(orClauses, bson.D{bson.E{Key: "editors", Value: userId}})
+	orClauses := addAnyPermissionFilter(userId)
 
 	orClause := bson.D{bson.E{Key: "$or", Value: orClauses}}
 
