@@ -43,7 +43,7 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 		return empty, empty, utils.ErrIncorrectCredentials
 	}
 
-	if accessToken, err = ls.tokenManager.Generate(usr.Id.Hex()); err != nil {
+	if accessToken, err = ls.tokenManager.Generate(usr.UserId); err != nil {
 		return empty, empty, err
 	}
 
