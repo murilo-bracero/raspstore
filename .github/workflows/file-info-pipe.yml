@@ -4,7 +4,7 @@ on:
     paths:
     - 'application/file-info-service/**'
 jobs: 
-  build:
+  file-info-service-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -4,7 +4,7 @@ on:
     paths:
     - 'application/fs-service/**'
 jobs: 
-  build:
+  fs-service-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
