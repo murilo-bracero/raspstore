@@ -25,6 +25,7 @@ func NewRoutes(fc controller.FileServeController) Routes {
 func (rt *routes) MountRoutes() *chi.Mux {
 	router := chi.NewRouter()
 
+	router.Use(md.Cors)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
 	router.Use(md.AuthMiddleware)
