@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 
@@ -22,17 +23,15 @@ func NewCredentialsHandler(ls service.LoginService) CredentialsHandler {
 }
 
 func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
-	log.Printf("initializing request")
-
 	var lr v1.LoginRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil && err != io.EOF {
 		w.WriteHeader(http.StatusInternalServerError)
 		v1.Send(w, nil)
 		return
 	}
 
-	log.Printf("extracting authentication")
+	log.Printf("[INFO] Extracting credentials from header")
 
 	username, password, ok := r.BasicAuth()
 
@@ -40,6 +39,8 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
+
+	log.Printf("[INFO] Credentials extracted successfully")
 
 	if accessToken, refreshToken, err := c.loginService.AuthenticateCredentials(username, password, lr.MfaToken); err != nil {
 		log.Printf("[ERROR] Error while authenticating user: %s", err.Error())
