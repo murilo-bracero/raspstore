@@ -1,6 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { loginForm, type LoginForm, type LoginResponse } from '../../../stores/login';
+  import { login } from '../../../service/login-service';
+  import { setToken } from '../../../service/token-service';
+  import type { LoginForm } from '../../../stores/login';
+  import { loginForm } from '../../../stores/login';
+  import { NotificationType, toast } from '../../../stores/toast';
 
   function handleLoginSubmit(event: any) {
     event.preventDefault();
@@ -9,27 +13,28 @@
 
   function loginFormSubscriptionAction(form: LoginForm) {
     if (!validateLoginForm(form)) {
-      throw new Error('Login Form invalid');
+      toast({
+        message: 'Username and Password are required',
+        type: NotificationType.ERROR
+      });
+      return;
     }
 
-    fetch(import.meta.env.VITE_LOGIN_URL, {
-      method: 'POST',
-      headers: { Authorization: 'Basic ' + btoa(`${form.username}:${form.password}`) }
-    })
-      .then((res) => res.json())
-      .then((res: LoginResponse) => {
-        storeToken(res.accessToken);
+    login(form)
+      .then((response) => {
+        setToken(response.accessToken);
         goto('/');
       })
-      .catch((err) => console.log(err));
+      .catch(() =>
+        toast({
+          message: 'Credentials invalid',
+          type: NotificationType.ERROR
+        })
+      );
   }
 
   function validateLoginForm(form: LoginForm): boolean {
-    return [form.password, form.username].filter((field) => field && field === '').length === 0;
-  }
-
-  function storeToken(token: string) {
-    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY, token);
+    return [form.password, form.username].filter((field) => !field && field !== '').length === 0;
   }
 </script>
 

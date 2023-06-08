@@ -1,34 +1,23 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import FileItem from '../../components/FileItem.svelte';
   import SearchBar from '../../components/SearchBar.svelte';
-  import type { PageData } from '../../stores/file';
   import { files } from '../../stores/file';
+  import { getFiles } from '../../service/file-info-service';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
 
   onMount(async () => {
-    const token = getToken();
+    getFiles()
+      .then((filesData) => files.set(filesData))
+      .catch((error) => {
+        if (error.status === 401) {
+          goto('/login');
+          return;
+        }
 
-    if (token === null) {
-      goto('/login');
-      return;
-    }
-
-    fetch(import.meta.env.VITE_FILES_SERVICE_URL, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then((res) => res.json())
-      .then((data: PageData) => {
-        files.set(data.content);
-      })
-      .catch((err) => console.log(err));
+        console.error(error);
+      });
   });
-
-  function getToken(): string | null {
-    return localStorage.getItem(import.meta.env.VITE_TOKEN_KEY);
-  }
 </script>
 
 <main class="mb-24 flex flex-col items-center justify-center overflow-x-hidden">

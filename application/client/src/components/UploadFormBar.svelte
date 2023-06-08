@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { clickOutside } from '../directives/clickOutsideDirective';
+  import { uploadFile } from '../service/fs-service';
+  import { NotificationType, toast } from '../stores/toast';
 
   export let open = true;
 
@@ -22,7 +24,25 @@
 
     const formData = createFormData();
 
-    saveFile(formData);
+    uploadFile(formData)
+      .then(() => {
+        handleCloseClick();
+        toast({
+          message: 'Uploaded successfully',
+          type: NotificationType.SUCCESS
+        });
+      })
+      .catch((err) => {
+        if (err.status === 401) {
+          goto('/login');
+          return;
+        }
+
+        toast({
+          message: 'Could not upload file',
+          type: NotificationType.ERROR
+        });
+      });
   }
 
   function createFormData(): FormData {
@@ -30,31 +50,6 @@
     formData.append('file', file);
     formData.append('path', path);
     return formData;
-  }
-
-  async function saveFile(body: FormData) {
-    const token = getToken();
-
-    if (token == null) {
-      goto('/login');
-      return;
-    }
-
-    fetch(import.meta.env.VITE_FS_SERVICE_URL, {
-      method: 'POST',
-      body: body,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(() => {
-        handleCloseClick();
-      })
-      .catch((err) => console.error(err));
-  }
-
-  function getToken(): string | null {
-    return localStorage.getItem(import.meta.env.VITE_TOKEN_KEY);
   }
 </script>
 
