@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { loginForm, type LoginForm, type LoginResponse } from '../../../stores/login';
 
   function handleLoginSubmit(event: any) {
@@ -17,13 +18,18 @@
     })
       .then((res) => res.json())
       .then((res: LoginResponse) => {
-        console.log(res);
+        storeToken(res.accessToken);
+        goto('/');
       })
       .catch((err) => console.log(err));
   }
 
   function validateLoginForm(form: LoginForm): boolean {
     return [form.password, form.username].filter((field) => field && field === '').length === 0;
+  }
+
+  function storeToken(token: string) {
+    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY, token);
   }
 </script>
 

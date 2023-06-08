@@ -18,11 +18,11 @@
       />
     </svg>
   </figure>
-  <div class="ml-3 flex flex-col items-start justify-center">
-    <h3 class="text-lg font-bold">{fileData?.filename}</h3>
-    <div class="flex flex-col items-start justify-center">
-      <p><span class="font-bold">Owner: </span>{fileData?.owner.username}</p>
-      <p><span class="font-bold">Size: </span>{fileData?.size}</p>
+  <div class="flex flex-col items-start justify-center pl-3">
+    <p class=" w-60 truncate text-lg font-bold">{fileData?.filename}</p>
+    <div class="flex w-60 flex-col items-start justify-center">
+      <p class="w-60 truncate"><span class="font-bold">Owner: </span>{fileData?.owner.username}</p>
+      <p class="truncate"><span class="font-bold">Size: </span>{fileData?.size}</p>
     </div>
   </div>
 </section>

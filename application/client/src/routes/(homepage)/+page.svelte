@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import FileItem from '../../components/FileItem.svelte';
   import SearchBar from '../../components/SearchBar.svelte';
   import type { PageData } from '../../stores/file';
@@ -6,10 +7,16 @@
   import { onMount } from 'svelte';
 
   onMount(async () => {
+    const token = getToken();
+
+    if (token === null) {
+      goto('/login');
+      return;
+    }
+
     fetch(import.meta.env.VITE_FILES_SERVICE_URL, {
       headers: {
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI2ODYwMDc2OTcsInVpZCI6ImM3NGQ3NzIwLTAwMjYtNDQ2Ni1iNTlmLWQxYjRhN2Y2ODg2ZiJ9.XPqmqcaJCH5dPyzL-BJmRKrpkKBqdLaWkA5P6Rg-cyw'
+        Authorization: `Bearer ${token}`
       }
     })
       .then((res) => res.json())
@@ -18,9 +25,13 @@
       })
       .catch((err) => console.log(err));
   });
+
+  function getToken(): string | null {
+    return localStorage.getItem(import.meta.env.VITE_TOKEN_KEY);
+  }
 </script>
 
-<main class="flex flex-col items-center justify-center">
+<main class="mb-24 flex flex-col items-center justify-center overflow-x-hidden">
   <article class="my-2">
     <SearchBar />
   </article>
@@ -28,3 +39,9 @@
     <FileItem bind:fileData={file} />
   {/each}
 </main>
+
+<style>
+  main {
+    overflow: auto;
+  }
+</style>

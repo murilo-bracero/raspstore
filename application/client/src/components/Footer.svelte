@@ -8,8 +8,8 @@
   }
 </script>
 
-<UploadFormBar bind:open />
-<footer class="container absolute bottom-0 flex min-w-full flex-col items-center">
+<footer class="container fixed bottom-0 flex min-w-full flex-col items-center">
+  <UploadFormBar bind:open />
   <button
     on:click={handleUploadClick}
     class="z-10 -mb-5 mr-2 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-sky-500"
@@ -20,5 +20,5 @@
       />
     </svg>
   </button>
-  <div class="z-0 mx-3 h-12 w-96 rounded-t-lg border-2 border-b-0 border-black" />
+  <div class="z-0 mx-3 h-12 w-96 rounded-t-lg border-2 border-b-0 border-black bg-white" />
 </footer>

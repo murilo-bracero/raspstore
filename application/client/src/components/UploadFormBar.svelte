@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { clickOutside } from '../directives/clickOutsideDirective';
 
   export let open = true;
@@ -32,12 +33,18 @@
   }
 
   async function saveFile(body: FormData) {
+    const token = getToken();
+
+    if (token == null) {
+      goto('/login');
+      return;
+    }
+
     fetch(import.meta.env.VITE_FS_SERVICE_URL, {
       method: 'POST',
       body: body,
       headers: {
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI2ODYxNDE4MzgsInVpZCI6ImZmYjkwMTMxLTM0NjItNDAxNC04NTMzLWQzMzYxMWE4OGE4ZCJ9.0mK72U-zhxdOStvxKbSSME_7PjlxCKS4n-rKQ27fEBU'
+        Authorization: `Bearer ${token}`
       }
     })
       .then(() => {
@@ -45,10 +52,14 @@
       })
       .catch((err) => console.error(err));
   }
+
+  function getToken(): string | null {
+    return localStorage.getItem(import.meta.env.VITE_TOKEN_KEY);
+  }
 </script>
 
 <section
-  class="bg-red h-50 absolute bottom-[-100%] z-50 w-screen border-t-2 border-black bg-white transition-[bottom] duration-300 ease-in-out"
+  class="bg-red absolute bottom-[-13rem] z-50 h-52 w-screen border-t-2 border-black bg-white transition-[bottom] duration-300 ease-in-out"
   class:open
   use:clickOutside
   on:click_outside={handleCloseClick}
