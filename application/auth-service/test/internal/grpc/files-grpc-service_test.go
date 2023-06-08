@@ -1,4 +1,4 @@
-package service
+package grpc_test
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"github.com/stretchr/testify/assert"
-	gs "raspstore.github.io/auth-service/grpcservice"
-	"raspstore.github.io/auth-service/token"
+	"raspstore.github.io/auth-service/internal/grpc"
+	"raspstore.github.io/auth-service/internal/service"
 )
 
 func init() {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load("../../.env.test")
 
 	if err != nil {
 		log.Panicln(err.Error())
@@ -76,7 +76,7 @@ func TestAuthenticateFailWithInsufficientParts(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func bootstrap(ctx context.Context) (pb.AuthServiceServer, token.TokenManager) {
-	tokenManager := token.NewTokenManager()
-	return gs.NewAuthService(tokenManager), tokenManager
+func bootstrap(ctx context.Context) (pb.AuthServiceServer, service.TokenService) {
+	ts := service.NewTokenService()
+	return grpc.NewAuthService(ts), ts
 }

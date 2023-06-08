@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"raspstore.github.io/auth-service/internal"
 )
 
 type MongoConnection interface {
 	Close(ctx context.Context)
-	DB() *mongo.Database
+	Collection(collectionName string) *mongo.Collection
 }
 
 type conn struct {
@@ -20,7 +21,7 @@ type conn struct {
 
 func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	fmt.Println("Connecting to MongoDB...")
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoUri()))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()))
 
 	if err != nil {
 		log.Fatalln("Could not connect to MongoDB: ", err.Error())
@@ -28,7 +29,7 @@ func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	}
 
 	fmt.Println("Connected to MongoDB Successfully")
-	return &conn{database: client.Database(MongoDatabaseName())}, nil
+	return &conn{database: client.Database(internal.MongoDatabaseName())}, nil
 }
 
 func (c *conn) Close(ctx context.Context) {
@@ -39,6 +40,6 @@ func (c *conn) Close(ctx context.Context) {
 	}
 }
 
-func (c *conn) DB() *mongo.Database {
-	return c.database
+func (c *conn) Collection(collectionName string) *mongo.Collection {
+	return c.database.Collection(collectionName)
 }

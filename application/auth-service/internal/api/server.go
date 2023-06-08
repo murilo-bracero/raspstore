@@ -5,15 +5,15 @@ import (
 	"log"
 	"net/http"
 
-	"raspstore.github.io/auth-service/db"
+	"raspstore.github.io/auth-service/internal"
 	"raspstore.github.io/auth-service/internal/api/handler"
-	"raspstore.github.io/auth-service/usecase"
+	"raspstore.github.io/auth-service/internal/service"
 )
 
-func StartRestServer(ls usecase.LoginUseCase) {
+func StartRestServer(ls service.LoginService) {
 	cc := handler.NewCredentialsHandler(ls)
 	router := NewRoutes(cc).MountRoutes()
 	http.Handle("/", router)
-	log.Printf("Authentication API runing on port %d", db.RestPort())
-	http.ListenAndServe(fmt.Sprintf(":%d", db.RestPort()), router)
+	log.Printf("Authentication API runing on port %d", internal.RestPort())
+	http.ListenAndServe(fmt.Sprintf(":%d", internal.RestPort()), router)
 }

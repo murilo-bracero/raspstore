@@ -6,13 +6,13 @@ COPY --chown=185 . ./
 
 RUN go mod download
 
-RUN go build -o auth-service
+RUN go build -o auth-service ./cmd
 
 FROM alpine:3.16
 
 WORKDIR /app
 
-COPY --chown=185 --from=build /app/auth-service auth-service
+COPY --chown=185 --from=build /app/auth-service .
 
 EXPOSE 9000 9090
 

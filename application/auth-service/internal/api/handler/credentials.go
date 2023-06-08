@@ -6,8 +6,7 @@ import (
 	"net/http"
 
 	v1 "raspstore.github.io/auth-service/api/v1"
-	"raspstore.github.io/auth-service/usecase"
-	"raspstore.github.io/auth-service/utils"
+	"raspstore.github.io/auth-service/internal/service"
 )
 
 type CredentialsHandler interface {
@@ -15,10 +14,10 @@ type CredentialsHandler interface {
 }
 
 type credsHandler struct {
-	loginService usecase.LoginUseCase
+	loginService service.LoginService
 }
 
-func NewCredentialsHandler(ls usecase.LoginUseCase) CredentialsHandler {
+func NewCredentialsHandler(ls service.LoginService) CredentialsHandler {
 	return &credsHandler{loginService: ls}
 }
 
@@ -29,7 +28,7 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		utils.Send(w, nil)
+		v1.Send(w, nil)
 		return
 	}
 
@@ -47,7 +46,7 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	} else {
-		utils.Send(w, v1.LoginResponse{
+		v1.Send(w, v1.LoginResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		})

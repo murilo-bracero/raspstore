@@ -10,7 +10,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/murilo-bracero/raspstore-protofiles v1.0.1
@@ -32,6 +31,5 @@ require (
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	github.com/go-chi/chi/v5 v5.0.8
 )
-
-require github.com/go-chi/chi/v5 v5.0.8 // indirect

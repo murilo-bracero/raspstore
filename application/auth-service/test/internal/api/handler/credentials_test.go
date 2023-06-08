@@ -13,12 +13,12 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	v1 "raspstore.github.io/auth-service/api/v1"
+	"raspstore.github.io/auth-service/internal"
 	"raspstore.github.io/auth-service/internal/api/handler"
-	"raspstore.github.io/auth-service/utils"
 )
 
 func init() {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load("../../../.env.test")
 
 	if err != nil {
 		log.Panicln(err.Error())
@@ -85,5 +85,5 @@ func (m *mockLoginService) AuthenticateCredentials(username string, rawPassword 
 		return "mock_access_token", "mock_refresh_token", nil
 	}
 
-	return "", "", utils.ErrIncorrectCredentials
+	return "", "", internal.ErrIncorrectCredentials
 }

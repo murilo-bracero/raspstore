@@ -6,8 +6,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/auth-service/db"
-	"raspstore.github.io/auth-service/model"
+	"raspstore.github.io/auth-service/internal/database"
+	"raspstore.github.io/auth-service/internal/model"
 )
 
 const usersCollectionName = "users"
@@ -22,8 +22,8 @@ type usersRespository struct {
 	coll *mongo.Collection
 }
 
-func NewUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
-	return &usersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
+func NewUsersRepository(ctx context.Context, conn database.MongoConnection) UsersRepository {
+	return &usersRespository{coll: conn.Collection(usersCollectionName), ctx: ctx}
 }
 
 func (r *usersRespository) FindByUsername(username string) (usr *model.User, err error) {

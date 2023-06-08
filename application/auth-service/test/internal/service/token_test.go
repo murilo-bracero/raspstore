@@ -1,4 +1,4 @@
-package token_test
+package service
 
 import (
 	"log"
@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/auth-service/token"
+	"raspstore.github.io/auth-service/internal/service"
 )
 
 func init() {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load("../../.env.test")
 
 	if err != nil {
 		log.Panicln(err.Error())
@@ -19,17 +19,17 @@ func init() {
 }
 
 func TestGenerateToken(t *testing.T) {
-	mngr := token.NewTokenManager()
+	ts := service.NewTokenService()
 
 	uid := uuid.NewString()
 
-	token, err := mngr.Generate(uid)
+	token, err := ts.Generate(uid)
 
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, token)
 
-	if verified, err := mngr.Verify(token); err != nil {
+	if verified, err := ts.Verify(token); err != nil {
 		assert.Fail(t, err.Error())
 	} else {
 		assert.Equal(t, uid, verified)
@@ -37,11 +37,11 @@ func TestGenerateToken(t *testing.T) {
 }
 
 func TestFakeToken(t *testing.T) {
-	mngr := token.NewTokenManager()
+	ts := service.NewTokenService()
 
 	token := "faketoken.token.fake"
 
-	if _, err := mngr.Verify(token); err != nil {
+	if _, err := ts.Verify(token); err != nil {
 		assert.Error(t, err)
 	} else {
 		assert.Fail(t, "accepted fraudulent token")
