@@ -1,31 +1,31 @@
-package controller
+package handler
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
 
-	"raspstore.github.io/auth-service/api/dto"
+	v1 "raspstore.github.io/auth-service/api/v1"
 	"raspstore.github.io/auth-service/usecase"
 	"raspstore.github.io/auth-service/utils"
 )
 
-type CredentialsController interface {
+type CredentialsHandler interface {
 	Login(w http.ResponseWriter, r *http.Request)
 }
 
-type credsController struct {
+type credsHandler struct {
 	loginService usecase.LoginUseCase
 }
 
-func NewCredentialsController(ls usecase.LoginUseCase) CredentialsController {
-	return &credsController{loginService: ls}
+func NewCredentialsHandler(ls usecase.LoginUseCase) CredentialsHandler {
+	return &credsHandler{loginService: ls}
 }
 
-func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
+func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Printf("initializing request")
 
-	var lr dto.LoginRequest
+	var lr v1.LoginRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func (c *credsController) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	} else {
-		utils.Send(w, dto.LoginResponse{
+		utils.Send(w, v1.LoginResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		})

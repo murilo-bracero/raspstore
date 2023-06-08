@@ -1,8 +1,4 @@
-package dto
-
-type LoginRequest struct {
-	MfaToken string `json:"mfaToken"`
-}
+package v1
 
 type LoginResponse struct {
 	AccessToken           string `json:"accessToken,omitempty"`

@@ -1,4 +1,4 @@
-package service
+package handler_test
 
 import (
 	"bytes"
@@ -12,8 +12,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/auth-service/api/controller"
-	"raspstore.github.io/auth-service/api/dto"
+	v1 "raspstore.github.io/auth-service/api/v1"
+	"raspstore.github.io/auth-service/internal/api/handler"
 	"raspstore.github.io/auth-service/utils"
 )
 
@@ -26,7 +26,7 @@ func init() {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	ctr := controller.NewCredentialsController(&mockLoginService{})
+	ctr := handler.NewCredentialsHandler(&mockLoginService{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
@@ -43,7 +43,7 @@ func TestLoginSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	var res dto.LoginResponse
+	var res v1.LoginResponse
 
 	err = json.NewDecoder(rr.Body).Decode(&res)
 
@@ -54,7 +54,7 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginFail(t *testing.T) {
-	ctr := controller.NewCredentialsController(&mockLoginService{})
+	ctr := handler.NewCredentialsHandler(&mockLoginService{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))

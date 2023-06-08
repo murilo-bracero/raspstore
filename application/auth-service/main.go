@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"google.golang.org/grpc"
-	api "raspstore.github.io/auth-service/api"
-	"raspstore.github.io/auth-service/api/controller"
 	"raspstore.github.io/auth-service/db"
 	gs "raspstore.github.io/auth-service/grpcservice"
+	"raspstore.github.io/auth-service/internal/api"
 	rp "raspstore.github.io/auth-service/repository"
 	"raspstore.github.io/auth-service/token"
 	"raspstore.github.io/auth-service/usecase"
@@ -42,16 +40,8 @@ func main() {
 	wg.Add(2)
 	log.Println("bootstraping servers")
 	go startGrpcServer(&wg, authService)
-	go startRestServer(&wg, loginService)
+	go api.StartRestServer(loginService)
 	wg.Wait()
-}
-
-func startRestServer(wg *sync.WaitGroup, ls usecase.LoginUseCase) {
-	cc := controller.NewCredentialsController(ls)
-	router := api.NewRoutes(cc).MountRoutes()
-	http.Handle("/", router)
-	log.Printf("Authentication API runing on port %d", db.RestPort())
-	http.ListenAndServe(fmt.Sprintf(":%d", db.RestPort()), router)
 }
 
 func startGrpcServer(wg *sync.WaitGroup, as pb.AuthServiceServer) {
