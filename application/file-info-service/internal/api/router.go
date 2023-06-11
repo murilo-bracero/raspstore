@@ -25,10 +25,7 @@ func NewFilesRouter(filesHandler handler.FilesHandler) FilesRouter {
 func (fr *filesRouter) MountRoutes() *chi.Mux {
 	router := chi.NewRouter()
 
-<<<<<<< HEAD
 	router.Use(middleware.Cors)
-=======
->>>>>>> 34d040875c0cd2fc339d0a35cee2eb0326d74ec3
 	router.Use(chiMiddleware.RequestID)
 	router.Use(chiMiddleware.Logger)
 
