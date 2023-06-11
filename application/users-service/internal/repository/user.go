@@ -11,9 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"raspstore.github.io/users-service/db"
 	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/model"
+	"raspstore.github.io/users-service/internal/database"
+	"raspstore.github.io/users-service/internal/model"
 )
 
 const usersCollectionName = "users"
@@ -33,8 +33,8 @@ type usersRespository struct {
 	coll *mongo.Collection
 }
 
-func NewUsersRepository(ctx context.Context, conn db.MongoConnection) UsersRepository {
-	return &usersRespository{coll: conn.DB().Collection(usersCollectionName), ctx: ctx}
+func NewUsersRepository(ctx context.Context, conn database.MongoConnection) UsersRepository {
+	return &usersRespository{coll: conn.Collection(usersCollectionName), ctx: ctx}
 }
 
 func (r *usersRespository) Save(user *model.User) error {

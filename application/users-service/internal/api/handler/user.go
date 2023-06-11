@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"encoding/json"
@@ -11,15 +11,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
-	"raspstore.github.io/users-service/api/dto"
-	"raspstore.github.io/users-service/model"
-	"raspstore.github.io/users-service/repository"
-	"raspstore.github.io/users-service/validators"
+	v1 "raspstore.github.io/users-service/api/v1"
+	"raspstore.github.io/users-service/internal/model"
+	"raspstore.github.io/users-service/internal/repository"
+	"raspstore.github.io/users-service/internal/validators"
 )
 
 const maxListSize = 50
 
-type UserController interface {
+type UserHandler interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	GetUser(w http.ResponseWriter, r *http.Request)
 	ListUser(w http.ResponseWriter, r *http.Request)
@@ -27,23 +27,23 @@ type UserController interface {
 	UpdateUser(w http.ResponseWriter, r *http.Request)
 }
 
-type controller struct {
+type handler struct {
 	repo repository.UsersRepository
 }
 
-func NewUserController(repo repository.UsersRepository) UserController {
-	return &controller{repo: repo}
+func NewUserHandler(repo repository.UsersRepository) UserHandler {
+	return &handler{repo: repo}
 }
 
-func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateUserRequest
+func (c *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var req v1.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
 	if err := validators.ValidateCreateUserRequest(req); err != nil {
-		BadRequest(w, dto.ErrorResponse{
+		v1.BadRequest(w, v1.ErrorResponse{
 			Code:    "ERR001",
 			Message: err.Error(),
 			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
@@ -54,12 +54,12 @@ func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	} else if exists {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		BadRequest(w, dto.ErrorResponse{
+		v1.BadRequest(w, v1.ErrorResponse{
 			Code:    "ERR002",
 			Message: "User with provided email or username already exists",
 			TraceId: traceId,
@@ -72,7 +72,7 @@ func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	} else {
 		usr.PasswordHash = string(hash)
@@ -81,14 +81,14 @@ func (c *controller) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err := c.repo.Save(usr); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Panicln(fmt.Sprintf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error()))
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
-	Created(w, usr.ToDto())
+	v1.Created(w, usr.ToDto())
 }
 
-func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
+func (c *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	user, err := c.repo.FindById(id)
@@ -101,14 +101,14 @@ func (c *controller) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could search user with id %s in database: %s", traceId, id, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
-	Send(w, user)
+	v1.Send(w, user)
 }
 
-func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
+func (c *handler) ListUser(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
@@ -121,11 +121,11 @@ func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could list users due to error: %s", traceId, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
-	content := make([]dto.UserResponse, len(userPage.Content))
+	content := make([]v1.UserResponse, len(userPage.Content))
 	for i, usr := range userPage.Content {
 		content[i] = usr.ToDto()
 	}
@@ -136,7 +136,7 @@ func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 		nextUrl = fmt.Sprintf("%s/users-service/users?page=%d&size=%d", r.Host, page+1, size)
 	}
 
-	Send(w, dto.UserResponseList{
+	v1.Send(w, v1.UserResponseList{
 		Page:          page,
 		Size:          size,
 		TotalElements: userPage.Count,
@@ -145,22 +145,22 @@ func (c *controller) ListUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (c *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := c.repo.Delete(id)
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var req dto.UpdateUserRequest
+func (c *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	var req v1.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
@@ -178,7 +178,7 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not search user with id %s in database: %s", traceId, id, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
@@ -186,7 +186,7 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
 			traceId := r.Context().Value(middleware.RequestIDKey).(string)
 			log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-			InternalServerError(w, traceId)
+			v1.InternalServerError(w, traceId)
 			return
 		} else if exists {
 			traceId := r.Context().Value(middleware.RequestIDKey).(string)
@@ -212,7 +212,7 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
 			traceId := r.Context().Value(middleware.RequestIDKey).(string)
 			log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-			InternalServerError(w, traceId)
+			v1.InternalServerError(w, traceId)
 			return
 		} else {
 			user.PasswordHash = string(hash)
@@ -222,9 +222,9 @@ func (c *controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err := c.repo.Update(user); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: An unknown error occured while updating user with id %s: %s", traceId, id, err.Error())
-		InternalServerError(w, traceId)
+		v1.InternalServerError(w, traceId)
 		return
 	}
 
-	Send(w, user.ToDto())
+	v1.Send(w, user.ToDto())
 }

@@ -1,11 +1,11 @@
 package validators
 
 import (
-	"raspstore.github.io/users-service/api/dto"
+	v1 "raspstore.github.io/users-service/api/v1"
 	"raspstore.github.io/users-service/internal"
 )
 
-func ValidateCreateUserRequest(req dto.CreateUserRequest) error {
+func ValidateCreateUserRequest(req v1.CreateUserRequest) error {
 	if req.Username == "" {
 		return internal.ErrEmptyUsername
 	}

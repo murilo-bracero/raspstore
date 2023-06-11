@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"raspstore.github.io/users-service/api/dto"
+	v1 "raspstore.github.io/users-service/api/v1"
 )
 
 const defaultDateFormat = "2006-01-02 15:04:05"
@@ -20,7 +20,7 @@ type User struct {
 	UpdatedAt    time.Time `bson:"updated_at"`
 }
 
-func NewUserByCreateUserRequest(req dto.CreateUserRequest) *User {
+func NewUserByCreateUserRequest(req v1.CreateUserRequest) *User {
 	return &User{
 		UserId:      uuid.NewString(),
 		Username:    req.Username,
@@ -32,8 +32,8 @@ func NewUserByCreateUserRequest(req dto.CreateUserRequest) *User {
 	}
 }
 
-func (usr *User) ToDto() dto.UserResponse {
-	return dto.UserResponse{
+func (usr *User) ToDto() v1.UserResponse {
+	return v1.UserResponse{
 		UserId:    usr.UserId,
 		Username:  usr.Username,
 		Email:     usr.Email,

@@ -10,13 +10,13 @@ RUN go mod download
 
 COPY --chown=185 . ./
 
-RUN go build -o users-service
+RUN go build -o users-service ./cmd
 
 FROM alpine:3.16
 
 WORKDIR /app
 
-COPY --from=build /app/users-service .
+COPY --chown=185 --from=build /app/users-service .
 
 EXPOSE 9000 9090
 
