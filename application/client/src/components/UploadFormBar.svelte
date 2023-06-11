@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { createEventDispatcher } from 'svelte';
   import { clickOutside } from '../directives/clickOutsideDirective';
   import { uploadFile } from '../service/fs-service';
   import { NotificationType, toast } from '../stores/toast';
@@ -10,6 +11,8 @@
   let path: string;
   let choosenFile = '';
 
+  const dispatch = createEventDispatcher();
+
   function handleCloseClick() {
     open = false;
   }
@@ -19,30 +22,15 @@
     choosenFile = file.name;
   }
 
-  function handleSubmitForm(event: any) {
-    event.preventDefault();
-
+  function handleSubmitForm(this: any) {
     const formData = createFormData();
 
-    uploadFile(formData)
-      .then(() => {
-        handleCloseClick();
-        toast({
-          message: 'Uploaded successfully',
-          type: NotificationType.SUCCESS
-        });
-      })
-      .catch((err) => {
-        if (err.status === 401) {
-          goto('/login');
-          return;
-        }
+    dispatch('upload', {
+      actionUrl: this.action,
+      formData
+    });
 
-        toast({
-          message: 'Could not upload file',
-          type: NotificationType.ERROR
-        });
-      });
+    handleCloseClick();
   }
 
   function createFormData(): FormData {
@@ -59,7 +47,7 @@
   use:clickOutside
   on:click_outside={handleCloseClick}
 >
-  <form class="flex flex-col p-6" on:submit={handleSubmitForm}>
+  <form class="flex flex-col p-6" on:submit|preventDefault={handleSubmitForm} action="?/upload">
     <div class="mb-3 flex flex-row items-center justify-start">
       <label
         class="flex-3 mr-2 rounded-lg border-2 border-black bg-sky-400 px-3 py-1 font-bold"

@@ -1,10 +1,7 @@
 import { error } from '@sveltejs/kit';
-import type { FileData, PageData } from '../stores/file';
-import { getToken } from './token-service';
+import type { PageData } from '../stores/file';
 
-export async function getFiles(): Promise<FileData[]> {
-  const token = getToken();
-
+export async function getPageFiles(token: string): Promise<PageData> {
   if (token === null) {
     throw new Error('Unauthorized');
   }
@@ -19,5 +16,5 @@ export async function getFiles(): Promise<FileData[]> {
     throw error(response.status, response.statusText);
   }
 
-  return response.json().then((body: PageData) => body.content);
+  return response.json();
 }

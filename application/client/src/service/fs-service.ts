@@ -1,13 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { getToken } from './token-service';
 
-export async function uploadFile(body: FormData) {
-  const token = getToken();
-
-  if (token == null) {
-    throw new Error('Unauthorized');
-  }
-
+export async function uploadFile(body: FormData, token: string) {
   const response = await fetch(import.meta.env.VITE_FS_SERVICE_URL, {
     method: 'POST',
     body: body,

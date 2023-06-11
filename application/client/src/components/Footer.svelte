@@ -9,7 +9,7 @@
 </script>
 
 <footer class="container fixed bottom-0 flex min-w-full flex-col items-center">
-  <UploadFormBar bind:open />
+  <UploadFormBar bind:open on:upload />
   <button
     on:click={handleUploadClick}
     class="z-10 -mb-5 mr-2 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-sky-500"
