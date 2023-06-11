@@ -40,8 +40,13 @@ func (ls *loginService) AuthenticateCredentials(username string, rawPassword str
 		return "", "", err
 	}
 
+<<<<<<< HEAD:application/auth-service/internal/service/login.go
 	if accessToken, err = ls.tokenService.Generate(usr.UserId); err != nil {
 		return "", "", err
+=======
+	if accessToken, err = ls.tokenManager.Generate(usr.UserId); err != nil {
+		return empty, empty, err
+>>>>>>> 34d040875c0cd2fc339d0a35cee2eb0326d74ec3:application/auth-service/usecase/login.go
 	}
 
 	if refreshToken, err = createRefreshToken(); err != nil {
