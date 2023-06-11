@@ -20,8 +20,8 @@ type File struct {
 
 type FileMetadataLookup struct {
 	FileId    string     `json:"fileId,omitempty" bson:"file_id"`
-	Filename  string     `json:"path,omitempty" bson:"filename"`
-	Path      string     `json:"filename,omitempty" bson:"path"`
+	Filename  string     `json:"filename,omitempty" bson:"filename"`
+	Path      string     `json:"path,omitempty" bson:"path"`
 	Size      int64      `json:"size,omitempty" bson:"size"`
 	Owner     UserView   `json:"owner,omitempty" bson:"owner"`
 	Editors   []UserView `json:"editors" bson:"editors"`

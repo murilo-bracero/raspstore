@@ -1,4 +1,5 @@
 .env
-.air.conf
+.air.toml
 pb/
 tmp/
+.vscode
