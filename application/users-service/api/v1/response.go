@@ -12,12 +12,12 @@ type ErrorResponse struct {
 }
 
 type UserResponse struct {
-	UserId    string `json:"userId,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Email     string `json:"email,omitempty"`
-	IsEnabled bool   `json:"isEnabled,omitempty"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	UpdatedAt string `json:"updatedAt,omitempty"`
+	UserId      string `json:"userId,omitempty"`
+	Username    string `json:"username,omitempty"`
+	Email       string `json:"email,omitempty"`
+	PhoneNumber string `json:"phoneNumber,omitempty"`
+	CreatedAt   string `json:"createdAt,omitempty"`
+	UpdatedAt   string `json:"updatedAt,omitempty"`
 }
 
 type UserResponseList struct {
@@ -26,6 +26,14 @@ type UserResponseList struct {
 	TotalElements int            `json:"totalElements"`
 	Next          string         `json:"next"`
 	Content       []UserResponse `json:"content"`
+}
+
+type UserConfigurationResponse struct {
+	StorageLimit            string `json:"storageLimit,omitempty"`
+	MinPasswordLength       int    `json:"minPasswordLength"`
+	AllowPublicUserCreation bool   `json:"allowPublicUserCreation"`
+	AllowLoginWithEmail     bool   `json:"allowLoginWithEmail"`
+	EnforceMfa              bool   `json:"enforceMfa"`
 }
 
 func BadRequest(w http.ResponseWriter, body ErrorResponse) {

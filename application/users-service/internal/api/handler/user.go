@@ -9,11 +9,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
 	v1 "raspstore.github.io/users-service/api/v1"
+	"raspstore.github.io/users-service/internal"
 	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/repository"
+	"raspstore.github.io/users-service/internal/service"
 	"raspstore.github.io/users-service/internal/validators"
 )
 
@@ -27,15 +26,15 @@ type UserHandler interface {
 	UpdateUser(w http.ResponseWriter, r *http.Request)
 }
 
-type handler struct {
-	repo repository.UsersRepository
+type userHandler struct {
+	userService service.UserService
 }
 
-func NewUserHandler(repo repository.UsersRepository) UserHandler {
-	return &handler{repo: repo}
+func NewUserHandler(userService service.UserService) UserHandler {
+	return &userHandler{userService: userService}
 }
 
-func (c *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req v1.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
@@ -51,12 +50,9 @@ func (c *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
-		return
-	} else if exists {
+	usr := model.NewUserByCreateUserRequest(req)
+
+	if err := h.userService.CreateUser(usr); err == internal.ErrUserAlreadyExists {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
 		v1.BadRequest(w, v1.ErrorResponse{
@@ -65,22 +61,9 @@ func (c *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 			TraceId: traceId,
 		})
 		return
-	}
-
-	usr := model.NewUserByCreateUserRequest(req)
-
-	if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
+	} else if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
-		return
-	} else {
-		usr.PasswordHash = string(hash)
-	}
-
-	if err := c.repo.Save(usr); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Panicln(fmt.Sprintf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error()))
+		log.Printf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error())
 		v1.InternalServerError(w, traceId)
 		return
 	}
@@ -88,12 +71,12 @@ func (c *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	v1.Created(w, usr.ToDto())
 }
 
-func (c *handler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	user, err := c.repo.FindById(id)
+	user, err := h.userService.GetUserById(id)
 
-	if err == mongo.ErrNoDocuments {
+	if err == internal.ErrUserNotFound {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -108,7 +91,7 @@ func (c *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	v1.Send(w, user)
 }
 
-func (c *handler) ListUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
@@ -116,7 +99,7 @@ func (c *handler) ListUser(w http.ResponseWriter, r *http.Request) {
 		size = maxListSize
 	}
 
-	userPage, err := c.repo.FindAll(page, size)
+	userPage, err := h.userService.GetAllUsersByPage(page, size)
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
@@ -145,13 +128,14 @@ func (c *handler) ListUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := c.repo.Delete(id)
+	err := h.userService.RemoveUserById(id)
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - []: Could not delete user with id=%s due to error: %s", traceId, id, err.Error())
 		v1.InternalServerError(w, traceId)
 		return
 	}
@@ -159,7 +143,7 @@ func (c *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (c *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var req v1.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
@@ -168,60 +152,30 @@ func (c *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	user, err := c.repo.FindById(id)
+	user := &model.User{
+		UserId:      id,
+		Username:    req.Username,
+		Email:       req.Email,
+		PhoneNumber: req.PhoneNumber,
+	}
 
-	if err == mongo.ErrNoDocuments {
+	user, err := h.userService.UpdateUser(user)
+
+	if err == internal.ErrUserNotFound {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	if err == internal.ErrEmailOrUsernameInUse {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
+		http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
 		return
 	}
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: Could not search user with id %s in database: %s", traceId, id, err.Error())
-		v1.InternalServerError(w, traceId)
-		return
-	}
-
-	if req.Username != "" || req.Email != "" {
-		if exists, err := c.repo.ExistsByEmailOrUsername(req.Email, req.Username); err != nil {
-			traceId := r.Context().Value(middleware.RequestIDKey).(string)
-			log.Printf("[ERROR] - [%s]: An unknown error occured while checking if user exists: %s", traceId, err.Error())
-			v1.InternalServerError(w, traceId)
-			return
-		} else if exists {
-			traceId := r.Context().Value(middleware.RequestIDKey).(string)
-			log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-			http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
-			return
-		}
-	}
-
-	if req.Email != "" {
-		user.Email = req.Email
-	}
-
-	if req.Username != "" {
-		user.Username = req.Username
-	}
-
-	if req.IsEnabled != nil {
-		user.IsEnabled = *req.IsEnabled
-	}
-
-	if req.Password != "" {
-		if hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost); err != nil {
-			traceId := r.Context().Value(middleware.RequestIDKey).(string)
-			log.Printf("[ERROR] - [%s]: Could not hash user password: %s", traceId, err.Error())
-			v1.InternalServerError(w, traceId)
-			return
-		} else {
-			user.PasswordHash = string(hash)
-		}
-	}
-
-	if err := c.repo.Update(user); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
-		log.Printf("[ERROR] - [%s]: An unknown error occured while updating user with id %s: %s", traceId, id, err.Error())
+		log.Printf("[ERROR] - [%s]: Could not update user with id=%s due to error: %s", traceId, id, err.Error())
 		v1.InternalServerError(w, traceId)
 		return
 	}

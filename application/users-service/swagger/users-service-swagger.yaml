@@ -9,10 +9,14 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9090/users-service
+  - url: http://localhost:9090/users-service/api/v1
 tags:
   - name: users
     description: Users workflow
+  - name: configuration
+    description: General user configuration for admins
+  - name: admin
+    description: Admin actions
 
 paths:
   /users:
@@ -104,6 +108,52 @@ paths:
           description: Invalid userId
         '404':
           description: User not found
+  /config:
+    get:
+      tags: 
+       - configuration
+      summary: Get all users general configuration
+      description: This can only be done by the logged in user with admin priviledges
+      operationId: getUserConfigurations
+      responses:
+        '200':
+          $ref: '#/components/responses/GetUserConfigurationResponse'
+        '401':
+          description: 'Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    patch:
+      tags: 
+       - configuration
+      summary: Update configurations partially
+      description: This can only be done by the logged in user with admin priviledges
+      operationId: updateUserConfigurations
+      responses:
+        '200':
+          $ref: '#/components/responses/GetUserConfigurationResponse'
+        '401':
+          description: 'Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /admin/users:
+    post:
+      tags: 
+       - admin
+      summary: Admin user creation
+      description: This can only be done by the logged in user with admin priviledges
+      operationId: adminCreateUser
+      requestBody:
+        $ref: '#/components/requestBodies/AdminCreateUserRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/SuccessCreateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '422':
+          description: "Unprocessable Entity"
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    
 components:
   schemas:
     UserRepresentation:
@@ -118,9 +168,9 @@ components:
         email:
           type: string
           example: john.doe@dummy.com
-        isEnabled:
-          type: boolean
-          example: true
+        phoneNumber:
+          type: string
+          example: +1111555333
         createdAt:
           type: string
           format: date
@@ -143,6 +193,19 @@ components:
         password:
           type: string
           example: super-secret-password
+        phoneNumber:
+          type: string
+          example: +1111555333
+    AdminCreateUserRepresentation:
+      allOf:
+        - $ref: '#/components/schemas/CreateUserRepresentation'
+        - type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+              example: ['admin/user-creation', 'admin/config-list']
     PageRepresentation:
       type: object
       properties:
@@ -168,12 +231,33 @@ components:
           type: string
           format: email
           example: new-cool-email@example.com
-        isEnabled:
+        phoneNumber:
+          type: string
+          example: +1111555333
+    UserConfigurationRepresentation:
+      type: object
+      properties:
+        storageLimit:
+          type: string
+          example: '5G'
+          description: default unlimited
+        minPasswordLength:
+          type: integer
+          example: 8
+          description: default 8
+        allowPublicUserCreation:
           type: boolean
           example: true
-        password:
-          type: string
-          example: 'new-super-secret-password'
+          description: default true
+        enforceMfa:
+          type: boolean
+          example: false
+          description: Not implemented
+        allowLoginWithEmail:
+          type: boolean
+          example: true
+          description: default true
+      
     ApiErrorException:
       type: object
       properties:
@@ -199,6 +283,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateUserRepresentation'
+    AdminCreateUserRequest:
+      description: User request object required to a admin create a new user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminCreateUserRepresentation'
   parameters:
     UsernameQueryParameter:
       name: username
@@ -304,6 +394,13 @@ components:
             code: "ERR404"
             message: "User not found"
             traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
+    
+    GetUserConfigurationResponse:
+      description: user general configuration
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserConfigurationRepresentation'
   
   securitySchemes:
     bearerAuth:

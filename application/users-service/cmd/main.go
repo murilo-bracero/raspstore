@@ -8,6 +8,7 @@ import (
 	"raspstore.github.io/users-service/internal/api"
 	"raspstore.github.io/users-service/internal/database"
 	"raspstore.github.io/users-service/internal/repository"
+	"raspstore.github.io/users-service/internal/service"
 )
 
 func main() {
@@ -21,9 +22,12 @@ func main() {
 
 	defer conn.Close(ctx)
 
-	usersRepo := repository.NewUsersRepository(ctx, conn)
+	usersRepository := repository.NewUsersRepository(ctx, conn)
+	configRepository := repository.NewUsersConfigRepository(ctx, conn)
 
-	api.StartRestServer(usersRepo)
+	userService := service.NewUserService(usersRepository, configRepository)
+
+	api.StartRestServer(userService, configRepository)
 }
 
 func initDatabase(ctx context.Context) database.MongoConnection {

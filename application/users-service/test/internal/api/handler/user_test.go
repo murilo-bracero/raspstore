@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,18 +12,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	v1 "raspstore.github.io/users-service/api/v1"
+	"raspstore.github.io/users-service/internal"
 	"raspstore.github.io/users-service/internal/api/handler"
 	"raspstore.github.io/users-service/internal/model"
 )
 
 func TestGetUserWithSuccess(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -42,13 +44,12 @@ func TestGetUserWithSuccess(t *testing.T) {
 	assert.NotEmpty(t, usrRes.UserId)
 	assert.NotEmpty(t, usrRes.Email)
 	assert.NotEmpty(t, usrRes.Username)
-	assert.True(t, usrRes.IsEnabled)
 	assert.NotEmpty(t, usrRes.CreatedAt)
 	assert.NotEmpty(t, usrRes.UpdatedAt)
 }
 
 func TestGetUserWithNotFoundError(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn404: true}
+	ur := &userServiceMock{throwNotFound: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -66,7 +67,7 @@ func TestGetUserWithNotFoundError(t *testing.T) {
 }
 
 func TestGetUserWithInternalServerError(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn500: true}
+	ur := &userServiceMock{throwInternalError: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -90,7 +91,7 @@ func TestGetUserWithInternalServerError(t *testing.T) {
 }
 
 func TestSaveUserWithSuccess(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -117,13 +118,12 @@ func TestSaveUserWithSuccess(t *testing.T) {
 	assert.NotEmpty(t, usrRes.UserId)
 	assert.NotEmpty(t, usrRes.Email)
 	assert.NotEmpty(t, usrRes.Username)
-	assert.True(t, usrRes.IsEnabled)
 	assert.NotEmpty(t, usrRes.CreatedAt)
 	assert.NotEmpty(t, usrRes.UpdatedAt)
 }
 
 func TestSaveUserWithInvalidPayload(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -151,7 +151,7 @@ func TestSaveUserWithInvalidPayload(t *testing.T) {
 }
 
 func TestSaveUserWithAlreadyExistedEmail(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn409: true}
+	ur := &userServiceMock{throwAlreadyExists: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -180,7 +180,7 @@ func TestSaveUserWithAlreadyExistedEmail(t *testing.T) {
 }
 
 func TestSaveUserWithInternalServerError(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn500: true}
+	ur := &userServiceMock{throwInternalError: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -209,18 +209,19 @@ func TestSaveUserWithInternalServerError(t *testing.T) {
 }
 
 func TestUpdateUserSuccess(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
 		"username": "%s",
-		"email": "updated_%s@test.com",
-		"isEnabled": true,
-		"password": "%s_super-secret-password"
-	  }`, random, random, random))
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(reqBody))
+		"email": "updated_%s@test.com"
+	  }`, random, random))
+	req, _ := http.NewRequest("PUT", "/users/{id}", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", random)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	rr := httptest.NewRecorder()
 
@@ -235,13 +236,12 @@ func TestUpdateUserSuccess(t *testing.T) {
 	assert.NotEmpty(t, usrRes.UserId)
 	assert.NotEmpty(t, usrRes.Email)
 	assert.NotEmpty(t, usrRes.Username)
-	assert.True(t, usrRes.IsEnabled)
 	assert.NotEmpty(t, usrRes.CreatedAt)
 	assert.NotEmpty(t, usrRes.UpdatedAt)
 }
 
 func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn409: true}
+	ur := &userServiceMock{throwAlreadyExists: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -260,7 +260,7 @@ func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 }
 
 func TestUpdateUserInternalServerError(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn500: true}
+	ur := &userServiceMock{throwInternalError: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -290,7 +290,7 @@ func TestUpdateUserInternalServerError(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	req, _ := http.NewRequest("GET", "/users", nil)
@@ -309,7 +309,7 @@ func TestListUsers(t *testing.T) {
 
 func TestListUsersWithPagination(t *testing.T) {
 	totalElements := 10
-	ur := &userRepositoryMock{totalElements: totalElements}
+	ur := &userServiceMock{totalElements: totalElements}
 	ctr := handler.NewUserHandler(ur)
 
 	size := 2
@@ -334,7 +334,7 @@ func TestListUsersWithPagination(t *testing.T) {
 }
 
 func TestDeleteSuccess(t *testing.T) {
-	ur := &userRepositoryMock{}
+	ur := &userServiceMock{}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -348,7 +348,7 @@ func TestDeleteSuccess(t *testing.T) {
 }
 
 func TestDeleteInternalServerError(t *testing.T) {
-	ur := &userRepositoryMock{shouldReturn500: true}
+	ur := &userServiceMock{throwInternalError: true}
 	ctr := handler.NewUserHandler(ur)
 
 	random := uuid.NewString()
@@ -369,80 +369,60 @@ func TestDeleteInternalServerError(t *testing.T) {
 	assert.NotEmpty(t, errRes.TraceId)
 }
 
-type userRepositoryMock struct {
-	shouldReturn500 bool
-	shouldReturn409 bool
-	shouldReturn404 bool
-	totalElements   int
+type userServiceMock struct {
+	throwInternalError bool
+	throwAlreadyExists bool
+	throwNotFound      bool
+	totalElements      int
 }
 
-func (u *userRepositoryMock) Save(user *model.User) error {
-	if u.shouldReturn409 {
-		return mongo.ErrInvalidIndexValue
+func (u *userServiceMock) CreateUser(user *model.User) error {
+	if u.throwAlreadyExists {
+		return internal.ErrUserAlreadyExists
 	}
 
-	if u.shouldReturn500 {
-		return mongo.ErrClientDisconnected
+	if u.throwInternalError {
+		return errors.New("generic error")
 	}
 
 	return nil
 }
 
-func (u *userRepositoryMock) FindById(id string) (user *model.User, err error) {
-	if u.shouldReturn500 {
-		return nil, mongo.ErrClientDisconnected
+func (u *userServiceMock) GetUserById(id string) (*model.User, error) {
+	if u.throwInternalError {
+		return nil, errors.New("generic error")
 	}
 
-	if u.shouldReturn404 {
-		return nil, mongo.ErrNoDocuments
+	if u.throwNotFound {
+		return nil, internal.ErrUserNotFound
 	}
 
 	return createRandomUser(id, ""), nil
 }
 
-func (u *userRepositoryMock) FindByEmail(email string) (user *model.User, err error) {
-	if u.shouldReturn404 {
-		return nil, mongo.ErrNoDocuments
-	}
-
-	return createRandomUser("", email), nil
-}
-
-func (u *userRepositoryMock) Delete(id string) error {
-	if u.shouldReturn500 {
-		return mongo.ErrClientDisconnected
+func (u *userServiceMock) RemoveUserById(id string) error {
+	if u.throwInternalError {
+		return errors.New("generic error")
 	}
 
 	return nil
 }
 
-func (u *userRepositoryMock) Update(user *model.User) error {
-	if u.shouldReturn409 {
-		return mongo.ErrInvalidIndexValue
+func (u *userServiceMock) UpdateUser(user *model.User) (*model.User, error) {
+	if u.throwAlreadyExists {
+		return nil, internal.ErrEmailOrUsernameInUse
 	}
 
-	if u.shouldReturn500 {
-		return mongo.ErrClientDisconnected
+	if u.throwInternalError {
+		return nil, errors.New("generic error")
 	}
 
-	return nil
-
+	user.IsEnabled = true
+	user.UpdatedAt = time.Now()
+	return user, nil
 }
 
-func (u *userRepositoryMock) ExistsByEmailOrUsername(email string, username string) (bool, error) {
-
-	if u.shouldReturn500 {
-		return false, mongo.ErrClientDisconnected
-	}
-
-	if u.shouldReturn409 {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (u *userRepositoryMock) FindAll(page int, size int) (userPage *model.UserPage, err error) {
+func (u *userServiceMock) GetAllUsersByPage(page int, size int) (*model.UserPage, error) {
 
 	users := make([]*model.User, 0)
 
@@ -450,7 +430,7 @@ func (u *userRepositoryMock) FindAll(page int, size int) (userPage *model.UserPa
 		users = append(users, createRandomUser("", ""))
 	}
 
-	userPage = &model.UserPage{
+	userPage := &model.UserPage{
 		Content: users,
 		Count:   u.totalElements,
 	}

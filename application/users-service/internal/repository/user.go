@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -126,7 +125,6 @@ func (r *usersRespository) Update(user *model.User) error {
 		"$set": bson.M{
 			"username":     user.Username,
 			"email":        user.Email,
-			"password":     user.PasswordHash,
 			"phone_number": user.PhoneNumber,
 			"updated_at":   user.UpdatedAt}})
 
@@ -136,10 +134,6 @@ func (r *usersRespository) Update(user *model.User) error {
 
 	if res.MatchedCount == 0 {
 		return internal.ErrUserNotFound
-	}
-
-	if res.ModifiedCount == 0 {
-		return errors.New("user could not be updated")
 	}
 
 	return nil

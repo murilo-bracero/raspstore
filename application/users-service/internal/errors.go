@@ -13,4 +13,5 @@ var (
 	ErrIncorrectCredentials = errors.New("provided email or password does not match")
 	ErrEmptyToken           = errors.New("token must not be empty")
 	ErrInvalidTotpToken     = errors.New("2FA token is empty or invalid")
+	ErrUserAlreadyExists    = errors.New("user with provided email or username already exists")
 )

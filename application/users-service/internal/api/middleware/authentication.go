@@ -5,10 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"raspstore.github.io/users-service/internal"
+	"raspstore.github.io/users-service/internal/grpc"
 )
 
 type userIdKey string
@@ -25,27 +22,13 @@ func Authentication(h http.Handler) http.Handler {
 			return
 		}
 
-		conn, err := grpc.Dial(internal.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-		if err != nil {
-			log.Println("[ERROR] Could not stablish connection to auth service, it may goes down: ", err.Error())
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
-		defer conn.Close()
-
-		client := pb.NewAuthServiceClient(conn)
-
-		in := &pb.AuthenticateRequest{Token: token}
-
-		if res, err := client.Authenticate(context.Background(), in); err != nil {
+		if uid, err := grpc.Authenticate(token); err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		} else {
-			ctx := context.WithValue(r.Context(), UserIdKey, res.Uid)
+			ctx := context.WithValue(r.Context(), UserIdKey, uid)
 			r = r.WithContext(ctx)
-			log.Printf("[INFO] User %s is accessing resource %s", res.Uid, r.RequestURI)
+			log.Printf("[INFO] User %s is accessing resource %s", uid, r.RequestURI)
 		}
 
 		h.ServeHTTP(w, r)
