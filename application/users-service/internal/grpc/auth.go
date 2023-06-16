@@ -10,12 +10,12 @@ import (
 	"raspstore.github.io/users-service/internal"
 )
 
-func Authenticate(token string) (uid string, err error) {
+func Authenticate(token string) (authResponse *pb.AuthenticateResponse, err error) {
 	conn, err := grpc.Dial(internal.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		log.Println("[ERROR] Could not stablish connection to auth service :", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	defer conn.Close()
@@ -24,9 +24,5 @@ func Authenticate(token string) (uid string, err error) {
 
 	in := &pb.AuthenticateRequest{Token: token}
 
-	if res, err := client.Authenticate(context.Background(), in); err != nil {
-		return "", err
-	} else {
-		return res.Uid, nil
-	}
+	return client.Authenticate(context.Background(), in)
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	v1 "raspstore.github.io/users-service/api/v1"
+	u "raspstore.github.io/users-service/internal/api/utils"
 	"raspstore.github.io/users-service/internal/model"
 	"raspstore.github.io/users-service/internal/repository"
 )
@@ -30,11 +31,11 @@ func (h *userConfigHandler) GetUserConfigs(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not retrieve user configuration: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	v1.Send(w, toUserConfigurationResponse(config))
+	u.Send(w, toUserConfigurationResponse(config))
 }
 
 func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +44,7 @@ func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not retrieve user configuration: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
@@ -55,11 +56,11 @@ func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Req
 	if err := h.repository.Update(config); err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not update user configuration: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	v1.Send(w, toUserConfigurationResponse(config))
+	u.Send(w, toUserConfigurationResponse(config))
 }
 
 func toUserConfigurationResponse(config *model.UserConfiguration) v1.UserConfigurationResponse {

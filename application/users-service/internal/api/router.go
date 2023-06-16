@@ -17,14 +17,13 @@ type Routes interface {
 }
 
 type routes struct {
-	userHandler             handler.UserHandler
-	userConfigHandler       handler.UserConfigHandler
-	adminUserHandler        handler.AdminUserHandler
-	authorizationMiddleware middleware.AuthorizationMiddleware
+	userHandler       handler.UserHandler
+	userConfigHandler handler.UserConfigHandler
+	adminUserHandler  handler.AdminUserHandler
 }
 
-func NewRoutes(uc handler.UserHandler, uch handler.UserConfigHandler, auh handler.AdminUserHandler, am middleware.AuthorizationMiddleware) Routes {
-	return &routes{userHandler: uc, userConfigHandler: uch, adminUserHandler: auh, authorizationMiddleware: am}
+func NewRoutes(uc handler.UserHandler, uch handler.UserConfigHandler, auh handler.AdminUserHandler) Routes {
+	return &routes{userHandler: uc, userConfigHandler: uch, adminUserHandler: auh}
 }
 
 func (rt *routes) MountRoutes() *chi.Mux {
@@ -36,22 +35,21 @@ func (rt *routes) MountRoutes() *chi.Mux {
 	router.Use(chiMiddleware.Logger)
 
 	router.Route(userBaseRoute, func(r chi.Router) {
-		r.With(middleware.Authentication).Get("/", rt.userHandler.ListUser)
-		r.With(middleware.Authentication).Get("/{id}", rt.userHandler.GetUser)
-		r.With(middleware.Authentication).Put("/{id}", rt.userHandler.UpdateUser)
-		r.With(middleware.Authentication).Delete("/{id}", rt.userHandler.DeleteUser)
+		r.With(middleware.Authorization).Get("/", rt.userHandler.ListUser)
+		r.With(middleware.Authorization).Get("/{id}", rt.userHandler.GetUser)
+		r.With(middleware.Authorization).Put("/{id}", rt.userHandler.UpdateUser)
+		r.With(middleware.Authorization).Delete("/{id}", rt.userHandler.DeleteUser)
 		r.Post("/", rt.userHandler.CreateUser)
 	})
 
 	router.Route(userConfigRoute, func(r chi.Router) {
-		r.With(middleware.Authentication).Get("/", rt.userConfigHandler.GetUserConfigs)
-		r.With(middleware.Authentication).Patch("/", rt.userConfigHandler.UpdateUserConfigs)
+		r.With(middleware.Authorization).Get("/", rt.userConfigHandler.GetUserConfigs)
+		r.With(middleware.Authorization).Patch("/", rt.userConfigHandler.UpdateUserConfigs)
 	})
 
 	router.Route(adminBaseRoute, func(r chi.Router) {
-		r.With(middleware.Authentication).With(rt.authorizationMiddleware.Apply("admin", "admin/user-create")).Post("/", rt.adminUserHandler.CreateUser)
+		r.With(middleware.Authorization).With(middleware.Authentication("admin", "admin/user-create")).Post("/", rt.adminUserHandler.CreateUser)
 	})
 
 	return router
-
 }

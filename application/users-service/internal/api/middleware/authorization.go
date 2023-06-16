@@ -1,48 +1,39 @@
 package middleware
 
 import (
+	"context"
 	"log"
 	"net/http"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"raspstore.github.io/users-service/internal/service"
+	"raspstore.github.io/users-service/internal/grpc"
 )
 
-type AuthorizationMiddleware interface {
-	Apply(requiredPermissions ...string) func(http.Handler) http.Handler
-}
+type userIdKeyType string
+type userRolesKeyType string
 
-type authorizationMiddleware struct {
-	userService service.UserService
-}
+const UserIdKey userIdKeyType = "user-id-context-key"
+const UserRolesKey userRolesKeyType = "user-roles-context-key"
 
-func NewAuthorizationMiddleware(userService service.UserService) AuthorizationMiddleware {
-	return &authorizationMiddleware{userService: userService}
-}
+func Authorization(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-func (am *authorizationMiddleware) Apply(requiredPermissions ...string) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Authorization")
 
-			requesterId := r.Context().Value(UserIdKey).(string)
+		if token == "" {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
 
-			requester, err := am.userService.GetUserById(requesterId)
+		if uid, err := grpc.Authenticate(token); err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		} else {
+			ctx := context.WithValue(r.Context(), UserIdKey, uid.Uid)
+			ctx = context.WithValue(ctx, UserRolesKey, uid.Roles)
+			r = r.WithContext(ctx)
+			log.Printf("[INFO] User %s is accessing resource %s", uid, r.RequestURI)
+		}
 
-			if err != nil {
-				traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-				log.Printf("[ERROR] - [%s]: Error while retrieving user information for id=%s: %s", traceId, requesterId, err.Error())
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-				return
-			}
-
-			for rp := range requiredPermissions {
-				for p := range requester.Permissions {
-					if rp == p {
-						h.ServeHTTP(w, r)
-					}
-				}
-			}
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		})
-	}
+		h.ServeHTTP(w, r)
+	})
 }

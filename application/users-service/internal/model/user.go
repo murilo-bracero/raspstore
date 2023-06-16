@@ -27,7 +27,7 @@ func NewUserByCreateUserRequest(req v1.CreateUserRequest) *User {
 		Username:     req.Username,
 		Email:        req.Email,
 		IsEnabled:    true,
-		PhoneNumber:  "",
+		PhoneNumber:  req.PhoneNumber,
 		Permissions:  []string{},
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -41,7 +41,7 @@ func NewUserByAdminCreateUserRequest(req v1.AdminCreateUserRequest) *User {
 		Username:     req.Username,
 		Email:        req.Email,
 		IsEnabled:    true,
-		PhoneNumber:  "",
+		PhoneNumber:  req.PhoneNumber,
 		Permissions:  req.Permissions,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -49,13 +49,26 @@ func NewUserByAdminCreateUserRequest(req v1.AdminCreateUserRequest) *User {
 	}
 }
 
-func (usr *User) ToDto() v1.UserResponse {
+func (usr *User) ToUserResponse() v1.UserResponse {
 	return v1.UserResponse{
 		UserId:    usr.UserId,
 		Username:  usr.Username,
 		Email:     usr.Email,
 		CreatedAt: usr.CreatedAt.Format(defaultDateFormat),
 		UpdatedAt: usr.UpdatedAt.Format(defaultDateFormat),
+	}
+}
+
+func (usr *User) ToAdminUserResponse() v1.AdminUserResponse {
+	return v1.AdminUserResponse{
+		UserResponse: v1.UserResponse{
+			UserId:    usr.UserId,
+			Username:  usr.Username,
+			Email:     usr.Email,
+			CreatedAt: usr.CreatedAt.Format(defaultDateFormat),
+			UpdatedAt: usr.UpdatedAt.Format(defaultDateFormat),
+		},
+		Permissions: usr.Permissions,
 	}
 }
 

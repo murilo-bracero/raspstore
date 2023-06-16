@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	v1 "raspstore.github.io/users-service/api/v1"
 	"raspstore.github.io/users-service/internal"
+	u "raspstore.github.io/users-service/internal/api/utils"
 	"raspstore.github.io/users-service/internal/model"
 	"raspstore.github.io/users-service/internal/service"
 	"raspstore.github.io/users-service/internal/validators"
@@ -42,7 +43,7 @@ func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validators.ValidateCreateUserRequest(req); err != nil {
-		v1.BadRequest(w, v1.ErrorResponse{
+		u.BadRequest(w, v1.ErrorResponse{
 			Code:    "ERR001",
 			Message: err.Error(),
 			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
@@ -55,7 +56,7 @@ func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err := h.userService.CreateUser(usr); err == internal.ErrUserAlreadyExists {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		v1.BadRequest(w, v1.ErrorResponse{
+		u.BadRequest(w, v1.ErrorResponse{
 			Code:    "ERR002",
 			Message: "User with provided email or username already exists",
 			TraceId: traceId,
@@ -64,11 +65,11 @@ func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	v1.Created(w, usr.ToDto())
+	u.Created(w, usr.ToUserResponse())
 }
 
 func (h *userHandler) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -84,11 +85,11 @@ func (h *userHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could search user with id %s in database: %s", traceId, id, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	v1.Send(w, user)
+	u.Send(w, user)
 }
 
 func (h *userHandler) ListUser(w http.ResponseWriter, r *http.Request) {
@@ -104,13 +105,13 @@ func (h *userHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could list users due to error: %s", traceId, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
 	content := make([]v1.UserResponse, len(userPage.Content))
 	for i, usr := range userPage.Content {
-		content[i] = usr.ToDto()
+		content[i] = usr.ToUserResponse()
 	}
 
 	nextUrl := ""
@@ -119,7 +120,7 @@ func (h *userHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 		nextUrl = fmt.Sprintf("%s/users-service/users?page=%d&size=%d", r.Host, page+1, size)
 	}
 
-	v1.Send(w, v1.UserResponseList{
+	u.Send(w, v1.UserResponseList{
 		Page:          page,
 		Size:          size,
 		TotalElements: userPage.Count,
@@ -136,7 +137,7 @@ func (h *userHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - []: Could not delete user with id=%s due to error: %s", traceId, id, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
@@ -176,9 +177,9 @@ func (h *userHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not update user with id=%s due to error: %s", traceId, id, err.Error())
-		v1.InternalServerError(w, traceId)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	v1.Send(w, user.ToDto())
+	u.Send(w, user.ToUserResponse())
 }
