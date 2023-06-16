@@ -12,7 +12,7 @@ import (
 )
 
 func StartRestServer(us service.UserService, ucr repository.UsersConfigRepository) {
-	uh := handler.NewUserHandler(us)
+	uh := handler.NewUserHandler(us, ucr)
 	uch := handler.NewUserConfigHandler(ucr)
 	auh := handler.NewAdminUserHandler(us)
 	router := NewRoutes(uh, uch, auh).MountRoutes()

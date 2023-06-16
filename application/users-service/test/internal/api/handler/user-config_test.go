@@ -122,7 +122,8 @@ func TestPatchUserConfigurationWithInternalServerError(t *testing.T) {
 }
 
 type userConfigurationRepositoryMock struct {
-	shouldReturnError bool
+	shouldReturnError          bool
+	notAllowPublicUserCreation bool
 }
 
 func (ucf *userConfigurationRepositoryMock) Find() (usersConfig *model.UserConfiguration, err error) {
@@ -133,7 +134,7 @@ func (ucf *userConfigurationRepositoryMock) Find() (usersConfig *model.UserConfi
 	return &model.UserConfiguration{
 		StorageLimit:            "3G",
 		MinPasswordLength:       8,
-		AllowPublicUserCreation: true,
+		AllowPublicUserCreation: !ucf.notAllowPublicUserCreation,
 		AllowLoginWithEmail:     false,
 		EnforceMfa:              false,
 	}, nil

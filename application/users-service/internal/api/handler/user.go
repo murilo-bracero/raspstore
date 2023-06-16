@@ -13,6 +13,7 @@ import (
 	"raspstore.github.io/users-service/internal"
 	u "raspstore.github.io/users-service/internal/api/utils"
 	"raspstore.github.io/users-service/internal/model"
+	"raspstore.github.io/users-service/internal/repository"
 	"raspstore.github.io/users-service/internal/service"
 	"raspstore.github.io/users-service/internal/validators"
 )
@@ -28,14 +29,34 @@ type UserHandler interface {
 }
 
 type userHandler struct {
-	userService service.UserService
+	userService          service.UserService
+	userConfigRepository repository.UsersConfigRepository
 }
 
-func NewUserHandler(userService service.UserService) UserHandler {
-	return &userHandler{userService: userService}
+func NewUserHandler(userService service.UserService, ucr repository.UsersConfigRepository) UserHandler {
+	return &userHandler{userService: userService, userConfigRepository: ucr}
 }
 
 func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	cfg, err := h.userConfigRepository.Find()
+
+	if err != nil {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		log.Printf("[ERROR] - [%s]: Could not retrieve configs: %s", traceId, err.Error())
+		u.InternalServerError(w, traceId)
+		return
+	}
+
+	if !cfg.AllowPublicUserCreation {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		u.BadRequest(w, v1.ErrorResponse{
+			Code:    "ERR006",
+			Message: "User creation not allowed.",
+			TraceId: traceId,
+		})
+		return
+	}
+
 	var req v1.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
@@ -47,6 +68,16 @@ func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 			Code:    "ERR001",
 			Message: err.Error(),
 			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
+		})
+		return
+	}
+
+	if len(req.Password) < cfg.MinPasswordLength {
+		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+		u.BadRequest(w, v1.ErrorResponse{
+			Code:    "ERR006",
+			Message: fmt.Sprintf("Password must be longer than %d", cfg.MinPasswordLength),
+			TraceId: traceId,
 		})
 		return
 	}
