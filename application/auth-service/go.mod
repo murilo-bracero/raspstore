@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.4.0
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/murilo-bracero/raspstore-protofiles v1.0.1
+	github.com/murilo-bracero/raspstore-protofiles v1.0.4
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/otp v1.3.0

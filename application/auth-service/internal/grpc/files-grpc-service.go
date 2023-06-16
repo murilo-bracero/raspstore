@@ -28,7 +28,7 @@ func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequ
 	if claims, err := a.tokenService.Verify(strings.ReplaceAll(req.Token, "Bearer ", "")); err != nil {
 		return nil, err
 	} else {
-		return &pb.AuthenticateResponse{Uid: claims.Uid}, nil
+		return &pb.AuthenticateResponse{Uid: claims.Uid, Roles: claims.Roles}, nil
 	}
 }
 

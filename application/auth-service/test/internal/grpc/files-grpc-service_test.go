@@ -43,6 +43,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenRes.Uid)
 	assert.Equal(t, user.UserId, tokenRes.Uid)
+	assert.Equal(t, user.Permissions, tokenRes.Roles)
 }
 
 func TestAuthenticateFailWithInvalidToken(t *testing.T) {
