@@ -25,10 +25,10 @@ func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequ
 		return nil, err
 	}
 
-	if uid, err := a.tokenService.Verify(strings.ReplaceAll(req.Token, "Bearer ", "")); err != nil {
+	if claims, err := a.tokenService.Verify(strings.ReplaceAll(req.Token, "Bearer ", "")); err != nil {
 		return nil, err
 	} else {
-		return &pb.AuthenticateResponse{Uid: uid}, nil
+		return &pb.AuthenticateResponse{Uid: claims.Uid}, nil
 	}
 }
 

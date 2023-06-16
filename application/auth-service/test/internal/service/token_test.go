@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"raspstore.github.io/auth-service/internal/model"
 	"raspstore.github.io/auth-service/internal/service"
 )
 
@@ -21,18 +22,22 @@ func init() {
 func TestGenerateToken(t *testing.T) {
 	ts := service.NewTokenService()
 
-	uid := uuid.NewString()
+	user := &model.User{
+		UserId:      uuid.NewString(),
+		Permissions: []string{"admin"},
+	}
 
-	token, err := ts.Generate(uid)
+	token, err := ts.Generate(user)
 
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, token)
 
-	if verified, err := ts.Verify(token); err != nil {
+	if claims, err := ts.Verify(token); err != nil {
 		assert.Fail(t, err.Error())
 	} else {
-		assert.Equal(t, uid, verified)
+		assert.Equal(t, user.Permissions, claims.Roles)
+		assert.Equal(t, user.UserId, claims.Uid)
 	}
 }
 

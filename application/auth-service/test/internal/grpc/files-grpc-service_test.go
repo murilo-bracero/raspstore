@@ -11,6 +11,7 @@ import (
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"github.com/stretchr/testify/assert"
 	"raspstore.github.io/auth-service/internal/grpc"
+	"raspstore.github.io/auth-service/internal/model"
 	"raspstore.github.io/auth-service/internal/service"
 )
 
@@ -26,9 +27,12 @@ func TestAuthenticateSuccess(t *testing.T) {
 	ctx := context.Background()
 	as, tm := bootstrap(ctx)
 
-	id := uuid.NewString()
+	user := &model.User{
+		UserId:      uuid.NewString(),
+		Permissions: []string{},
+	}
 
-	token, err := tm.Generate(id)
+	token, err := tm.Generate(user)
 
 	assert.NoError(t, err)
 
@@ -38,7 +42,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenRes.Uid)
-	assert.Equal(t, id, tokenRes.Uid)
+	assert.Equal(t, user.UserId, tokenRes.Uid)
 }
 
 func TestAuthenticateFailWithInvalidToken(t *testing.T) {

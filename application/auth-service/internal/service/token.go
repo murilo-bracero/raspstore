@@ -10,8 +10,8 @@ import (
 )
 
 type TokenService interface {
-	Verify(rawToken string) (uid string, err error)
-	Generate(uid string) (token string, err error)
+	Verify(rawToken string) (userClaims *model.UserClaims, err error)
+	Generate(user *model.User) (string, error)
 }
 
 type tokenService struct{}
@@ -20,7 +20,7 @@ func NewTokenService() TokenService {
 	return &tokenService{}
 }
 
-func (t *tokenService) Verify(rawToken string) (string, error) {
+func (t *tokenService) Verify(rawToken string) (userClaims *model.UserClaims, err error) {
 
 	parsedToken, err := jwt.ParseWithClaims(rawToken, &model.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -31,19 +31,20 @@ func (t *tokenService) Verify(rawToken string) (string, error) {
 	})
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return parsedToken.Claims.(*model.UserClaims).Uid, nil
+	return parsedToken.Claims.(*model.UserClaims), nil
 }
 
-func (t *tokenService) Generate(uid string) (string, error) {
+func (t *tokenService) Generate(user *model.User) (string, error) {
 
 	claims := model.UserClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Duration(internal.TokenDuration()) * time.Second).Unix(),
 		},
-		Uid: uid,
+		Uid:   user.UserId,
+		Roles: user.Permissions,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

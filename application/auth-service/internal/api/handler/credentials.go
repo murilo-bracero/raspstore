@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	v1 "raspstore.github.io/auth-service/api/v1"
+	u "raspstore.github.io/auth-service/internal/api/utils"
 	"raspstore.github.io/auth-service/internal/service"
 )
 
@@ -27,7 +28,7 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil && err != io.EOF {
 		w.WriteHeader(http.StatusInternalServerError)
-		v1.Send(w, nil)
+		u.Send(w, nil)
 		return
 	}
 
@@ -47,7 +48,7 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	} else {
-		v1.Send(w, v1.LoginResponse{
+		u.Send(w, v1.LoginResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		})

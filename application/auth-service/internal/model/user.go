@@ -10,6 +10,7 @@ type User struct {
 	Username      string             `bson:"username"`
 	Password      string             `bson:"password"`
 	Secret        string             `bson:"secret"`
+	Permissions   []string           `bson:"permissions"`
 	RefreshToken  string             `bson:"refresh_token"`
 	IsMfaEnabled  bool               `bson:"is_mfa_enabled"`
 	IsMfaVerified bool               `bson:"is_mfa_verified"`

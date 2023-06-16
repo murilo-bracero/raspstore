@@ -40,7 +40,7 @@ func (ls *loginService) AuthenticateCredentials(username string, rawPassword str
 		return "", "", err
 	}
 
-	if accessToken, err = ls.tokenService.Generate(usr.UserId); err != nil {
+	if accessToken, err = ls.tokenService.Generate(usr); err != nil {
 		return "", "", err
 	}
 
