@@ -535,6 +535,8 @@ github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/murilo-bracero/raspstore-protofiles v1.0.4 h1:nwsls36cmGZU6sT/yE0mN1l27Jlt9/Pkow7ZtRrAbvs=
 github.com/murilo-bracero/raspstore-protofiles v1.0.4/go.mod h1:3mHq5FpOpuELXQqAyjlADx/WphcKAxGYaW92U1spHng=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c h1:lRs5J0x43v+K9mD5Hz20XCbmyf02K2BC2E7yNZFoZ8c=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c/go.mod h1:O0yb6HraeV21nQZSt3XgMSyHAmNNagdTqS8B83cofis=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

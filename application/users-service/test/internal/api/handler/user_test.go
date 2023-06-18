@@ -13,8 +13,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/commons/pkg/middleware"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	v1 "raspstore.github.io/users-service/api/v1"
@@ -57,7 +58,7 @@ func TestGetUserWithNotFoundError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/users/%s", random), nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -76,7 +77,7 @@ func TestGetUserWithInternalServerError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/users/%s", random), nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -106,7 +107,7 @@ func TestSaveUserWithSuccess(t *testing.T) {
 	  }`, random, random, random))
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -139,7 +140,7 @@ func TestSaveUserWithErrorWhenPublicUserCreationNotAllowed(t *testing.T) {
 	  }`, random, random, random))
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -169,7 +170,7 @@ func TestSaveUserWithInvalidPayload(t *testing.T) {
 	  }`, random, random))
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -199,7 +200,7 @@ func TestSaveUserWithAlreadyExistedEmail(t *testing.T) {
 	  }`, random, random))
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -229,7 +230,7 @@ func TestSaveUserWithInternalServerError(t *testing.T) {
 	  }`, random, random, random))
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -246,6 +247,27 @@ func TestSaveUserWithInternalServerError(t *testing.T) {
 	assert.NotEmpty(t, errRes.TraceId)
 }
 
+func makeRequest(method string, route string, body []byte) *http.Request {
+	var req *http.Request
+
+	if body != nil {
+		req, _ = http.NewRequest(method, route, bytes.NewBuffer(body))
+	} else {
+		req, _ = http.NewRequest(method, route, nil)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	rctx := chi.NewRouteContext()
+
+	if strings.Contains(route, "{id}") {
+		rctx.URLParams.Add("id", uuid.NewString())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	}
+
+	req = req.WithContext(context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id"))
+	return req.WithContext(context.WithValue(req.Context(), middleware.UserIdKey, "requester-id"))
+}
+
 func TestUpdateUserSuccess(t *testing.T) {
 	ur := &userServiceMock{}
 	ucr := &userConfigurationRepositoryMock{}
@@ -256,11 +278,7 @@ func TestUpdateUserSuccess(t *testing.T) {
 		"username": "%s",
 		"email": "updated_%s@test.com"
 	  }`, random, random))
-	req, _ := http.NewRequest("PUT", "/users/{id}", bytes.NewBuffer(reqBody))
-	req.Header.Set("Content-Type", "application/json")
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("id", random)
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	req := makeRequest("PUT", "/users/{id}", reqBody)
 
 	rr := httptest.NewRecorder()
 
@@ -288,7 +306,7 @@ func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 	reqBody := []byte(`{ "email": "existed@test.com"}`)
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -313,7 +331,7 @@ func TestUpdateUserInternalServerError(t *testing.T) {
 	  }`, random, random, random))
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users/%s", random), bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -372,7 +390,7 @@ func TestListUsersWithPagination(t *testing.T) {
 	assert.Equal(t, page, userResponseList.Page)
 	assert.Equal(t, size, userResponseList.Size)
 	assert.Equal(t, totalElements, userResponseList.TotalElements)
-	assert.True(t, strings.HasSuffix(userResponseList.Next, fmt.Sprintf("/users?page=%d&size=%d", page+1, size)))
+	assert.True(t, strings.HasSuffix(userResponseList.Next, fmt.Sprintf("page=%d&size=%d", page+1, size)))
 	assert.Equal(t, size, len(userResponseList.Content))
 }
 
@@ -381,8 +399,7 @@ func TestDeleteSuccess(t *testing.T) {
 	ucr := &userConfigurationRepositoryMock{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
-	random := uuid.NewString()
-	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/users/%s", random), nil)
+	req := makeRequest("DELETE", "/users/{id}", nil)
 	rr := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(ctr.DeleteUser)
@@ -399,7 +416,7 @@ func TestDeleteInternalServerError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/users/%s", random), nil)
 	rr := httptest.NewRecorder()
-	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx := context.WithValue(req.Context(), chiMiddleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
 	handler := http.HandlerFunc(ctr.DeleteUser)

@@ -31,4 +31,7 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
-require github.com/montanaflynn/stats v0.7.0 // indirect
+require (
+	github.com/montanaflynn/stats v0.7.0 // indirect
+	github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c 
+)

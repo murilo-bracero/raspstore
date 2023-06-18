@@ -5,12 +5,19 @@ import (
 	"log"
 
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
+	"github.com/murilo-bracero/raspstore/commons/pkg/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"raspstore.github.io/users-service/internal"
 )
 
-func Authenticate(token string) (authResponse *pb.AuthenticateResponse, err error) {
+type authGrpcService struct{}
+
+func NewAuthService() service.AuthService {
+	return &authGrpcService{}
+}
+
+func (*authGrpcService) Authenticate(token string) (authResponse *pb.AuthenticateResponse, err error) {
 	conn, err := grpc.Dial(internal.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {

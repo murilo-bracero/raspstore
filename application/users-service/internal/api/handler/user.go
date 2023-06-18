@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/murilo-bracero/raspstore/commons/pkg/middleware"
 	v1 "raspstore.github.io/users-service/api/v1"
 	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/api/middleware"
 	u "raspstore.github.io/users-service/internal/api/utils"
 	"raspstore.github.io/users-service/internal/model"
 	"raspstore.github.io/users-service/internal/repository"
