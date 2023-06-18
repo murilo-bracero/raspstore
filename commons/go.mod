@@ -1,4 +1,4 @@
-module raspstore.github.io/commons
+module github.com/murilo-bracero/raspstore/commons
 
 go 1.17
 
