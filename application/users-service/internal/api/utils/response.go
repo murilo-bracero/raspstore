@@ -2,7 +2,9 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	v1 "raspstore.github.io/users-service/api/v1"
 )
@@ -31,4 +33,9 @@ func Send(w http.ResponseWriter, obj interface{}) {
 	if jsonResponse, err := json.Marshal(obj); err == nil {
 		w.Write(jsonResponse)
 	}
+}
+
+func BuildPaginationNextUrl(r *http.Request, actualPage int, actualSize int) (nextUrl string) {
+	resource := strings.Split(r.RequestURI, "?")[0]
+	return fmt.Sprintf("%s%s?page=%d&size=%d", r.Host, resource, actualPage+1, actualSize)
 }
