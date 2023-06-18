@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"raspstore.github.io/commons/pkg/service"
+	"github.com/murilo-bracero/raspstore/commons/pkg/service"
 )
 
 func Authorization(svc service.AuthService) func(h http.Handler) http.Handler {
