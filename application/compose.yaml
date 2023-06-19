@@ -16,7 +16,8 @@ services:
     ports:
       - "3003:9090"
     env_file:
-      - users-service/.env
+      - users-service/.env.docker
+
   file-info-service:
     build: file-info-service
     ports:

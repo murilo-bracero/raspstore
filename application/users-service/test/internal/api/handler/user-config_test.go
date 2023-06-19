@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 	v1 "raspstore.github.io/users-service/api/v1"
+	"raspstore.github.io/users-service/internal"
 	"raspstore.github.io/users-service/internal/api/handler"
 	"raspstore.github.io/users-service/internal/model"
 )
 
 func TestGetUserConfigurationWithSuccess(t *testing.T) {
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	uch := handler.NewUserConfigHandler(ucr)
 
 	req, _ := http.NewRequest("GET", "/config", nil)
@@ -41,7 +42,7 @@ func TestGetUserConfigurationWithSuccess(t *testing.T) {
 }
 
 func TestGetUserConfigurationWithInternalServerError(t *testing.T) {
-	ucr := &userConfigurationRepositoryMock{shouldReturnError: true}
+	ucr := &userConfigurationService{shouldReturnError: true}
 	uch := handler.NewUserConfigHandler(ucr)
 
 	req, _ := http.NewRequest("GET", "/config", nil)
@@ -65,7 +66,7 @@ func TestGetUserConfigurationWithInternalServerError(t *testing.T) {
 }
 
 func TestPatchUserConfigurationWithPartialBodyWithSuccess(t *testing.T) {
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	uch := handler.NewUserConfigHandler(ucr)
 
 	requestBody := []byte(`{
@@ -74,6 +75,8 @@ func TestPatchUserConfigurationWithPartialBodyWithSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("PATCH", "/config", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -94,7 +97,7 @@ func TestPatchUserConfigurationWithPartialBodyWithSuccess(t *testing.T) {
 }
 
 func TestPatchUserConfigurationWithInternalServerError(t *testing.T) {
-	ucr := &userConfigurationRepositoryMock{shouldReturnError: true}
+	ucr := &userConfigurationService{shouldReturnError: true}
 	uch := handler.NewUserConfigHandler(ucr)
 
 	requestBody := []byte(`{
@@ -121,12 +124,13 @@ func TestPatchUserConfigurationWithInternalServerError(t *testing.T) {
 	assert.NotEmpty(t, body.TraceId)
 }
 
-type userConfigurationRepositoryMock struct {
-	shouldReturnError          bool
-	notAllowPublicUserCreation bool
+type userConfigurationService struct {
+	shouldReturnError         bool
+	isNotPasswordLengthEnough bool
+	isNotPublicUserAllowed    bool
 }
 
-func (ucf *userConfigurationRepositoryMock) Find() (usersConfig *model.UserConfiguration, err error) {
+func (ucf *userConfigurationService) GetUserConfig() (usersConfig *model.UserConfiguration, err error) {
 	if ucf.shouldReturnError {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -134,15 +138,28 @@ func (ucf *userConfigurationRepositoryMock) Find() (usersConfig *model.UserConfi
 	return &model.UserConfiguration{
 		StorageLimit:            "3G",
 		MinPasswordLength:       8,
-		AllowPublicUserCreation: !ucf.notAllowPublicUserCreation,
+		AllowPublicUserCreation: true,
 		AllowLoginWithEmail:     false,
 		EnforceMfa:              false,
 	}, nil
 }
 
-func (ucf *userConfigurationRepositoryMock) Update(usersConfig *model.UserConfiguration) error {
+func (ucf *userConfigurationService) UpdateUserConfig(usersConfig *model.UserConfiguration) error {
 	if ucf.shouldReturnError {
 		return mongo.ErrClientDisconnected
+	}
+
+	return nil
+}
+
+func (ucf *userConfigurationService) ValidateUser(user *model.User, isAdminCreation bool) error {
+
+	if ucf.isNotPasswordLengthEnough {
+		return internal.ErrComplexityPassword
+	}
+
+	if ucf.isNotPublicUserAllowed && !isAdminCreation {
+		return internal.ErrPublicUserCreationNotAllowed
 	}
 
 	return nil

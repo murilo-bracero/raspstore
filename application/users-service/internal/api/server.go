@@ -8,14 +8,13 @@ import (
 	"raspstore.github.io/users-service/internal"
 	"raspstore.github.io/users-service/internal/api/handler"
 	"raspstore.github.io/users-service/internal/grpc"
-	"raspstore.github.io/users-service/internal/repository"
 	"raspstore.github.io/users-service/internal/service"
 )
 
-func StartRestServer(us service.UserService, ucr repository.UsersConfigRepository) {
-	uh := handler.NewUserHandler(us, ucr)
-	uch := handler.NewUserConfigHandler(ucr)
-	auh := handler.NewAdminUserHandler(us)
+func StartRestServer(us service.UserService, ucs service.UserConfigService) {
+	uh := handler.NewUserHandler(us, ucs)
+	uch := handler.NewUserConfigHandler(ucs)
+	auh := handler.NewAdminUserHandler(us, ucs)
 	as := grpc.NewAuthService()
 	router := NewRoutes(uh, uch, auh, as).MountRoutes()
 	http.Handle("/", router)

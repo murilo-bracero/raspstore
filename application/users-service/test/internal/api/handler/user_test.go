@@ -26,7 +26,7 @@ import (
 
 func TestGetUserWithSuccess(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -52,7 +52,7 @@ func TestGetUserWithSuccess(t *testing.T) {
 
 func TestGetUserWithNotFoundError(t *testing.T) {
 	ur := &userServiceMock{throwNotFound: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -71,7 +71,7 @@ func TestGetUserWithNotFoundError(t *testing.T) {
 
 func TestGetUserWithInternalServerError(t *testing.T) {
 	ur := &userServiceMock{throwInternalError: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -96,7 +96,7 @@ func TestGetUserWithInternalServerError(t *testing.T) {
 
 func TestSaveUserWithSuccess(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -129,7 +129,7 @@ func TestSaveUserWithSuccess(t *testing.T) {
 
 func TestSaveUserWithErrorWhenPublicUserCreationNotAllowed(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{notAllowPublicUserCreation: true}
+	ucr := &userConfigurationService{isNotPublicUserAllowed: true}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -160,7 +160,7 @@ func TestSaveUserWithErrorWhenPublicUserCreationNotAllowed(t *testing.T) {
 
 func TestSaveUserWithInvalidPayload(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -189,7 +189,7 @@ func TestSaveUserWithInvalidPayload(t *testing.T) {
 
 func TestSaveUserWithAlreadyExistedEmail(t *testing.T) {
 	ur := &userServiceMock{throwAlreadyExists: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -219,7 +219,7 @@ func TestSaveUserWithAlreadyExistedEmail(t *testing.T) {
 
 func TestSaveUserWithInternalServerError(t *testing.T) {
 	ur := &userServiceMock{throwInternalError: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -270,7 +270,7 @@ func makeRequest(method string, route string, body []byte) *http.Request {
 
 func TestUpdateUserSuccess(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -299,7 +299,7 @@ func TestUpdateUserSuccess(t *testing.T) {
 
 func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 	ur := &userServiceMock{throwAlreadyExists: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -319,7 +319,7 @@ func TestUpdateUserWithAlreadyExistedNewEmail(t *testing.T) {
 
 func TestUpdateUserInternalServerError(t *testing.T) {
 	ur := &userServiceMock{throwInternalError: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()
@@ -350,7 +350,7 @@ func TestUpdateUserInternalServerError(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	req, _ := http.NewRequest("GET", "/users", nil)
@@ -370,7 +370,7 @@ func TestListUsers(t *testing.T) {
 func TestListUsersWithPagination(t *testing.T) {
 	totalElements := 10
 	ur := &userServiceMock{totalElements: totalElements}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	size := 2
@@ -396,7 +396,7 @@ func TestListUsersWithPagination(t *testing.T) {
 
 func TestDeleteSuccess(t *testing.T) {
 	ur := &userServiceMock{}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	req := makeRequest("DELETE", "/users/{id}", nil)
@@ -410,7 +410,7 @@ func TestDeleteSuccess(t *testing.T) {
 
 func TestDeleteInternalServerError(t *testing.T) {
 	ur := &userServiceMock{throwInternalError: true}
-	ucr := &userConfigurationRepositoryMock{}
+	ucr := &userConfigurationService{}
 	ctr := handler.NewUserHandler(ur, ucr)
 
 	random := uuid.NewString()

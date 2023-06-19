@@ -19,14 +19,16 @@ type AdminUserHandler interface {
 }
 
 type adminUserHandler struct {
-	userService service.UserService
+	userService       service.UserService
+	userConfigService service.UserConfigService
 }
 
-func NewAdminUserHandler(userService service.UserService) AdminUserHandler {
-	return &adminUserHandler{userService: userService}
+func NewAdminUserHandler(userService service.UserService, userConfigService service.UserConfigService) AdminUserHandler {
+	return &adminUserHandler{userService: userService, userConfigService: userConfigService}
 }
 
 func (h *adminUserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	var req v1.AdminCreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
@@ -34,27 +36,23 @@ func (h *adminUserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validators.ValidateCreateUserRequest(req.CreateUserRequest); err != nil {
-		u.BadRequest(w, v1.ErrorResponse{
-			Code:    "ERR001",
-			Message: err.Error(),
-			TraceId: r.Context().Value(middleware.RequestIDKey).(string),
-		})
+		u.HandleBadRequest(w, "ERR001", err.Error(), traceId)
 		return
 	}
 
 	usr := model.NewUserByAdminCreateUserRequest(req)
 
+	if err := h.userConfigService.ValidateUser(usr, true); err != nil {
+		u.HandleBadRequest(w, "ERR003", err.Error(), traceId)
+		return
+	}
+
 	if err := h.userService.CreateUser(usr); err == internal.ErrUserAlreadyExists {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		u.BadRequest(w, v1.ErrorResponse{
-			Code:    "ERR002",
-			Message: "User with provided email or username already exists",
-			TraceId: traceId,
-		})
+		u.HandleBadRequest(w, "ERR002", "User with provided email or username already exists", traceId)
 		return
 	} else if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error())
 		u.InternalServerError(w, traceId)
 		return

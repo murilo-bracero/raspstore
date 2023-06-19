@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"raspstore.github.io/users-service/internal"
 	u "raspstore.github.io/users-service/internal/api/utils"
 	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/repository"
 	"raspstore.github.io/users-service/internal/service"
 	"raspstore.github.io/users-service/internal/validators"
 )
@@ -30,28 +28,16 @@ type UserHandler interface {
 }
 
 type userHandler struct {
-	userService          service.UserService
-	userConfigRepository repository.UsersConfigRepository
+	userService       service.UserService
+	userConfigService service.UserConfigService
 }
 
-func NewUserHandler(userService service.UserService, ucr repository.UsersConfigRepository) UserHandler {
-	return &userHandler{userService: userService, userConfigRepository: ucr}
+func NewUserHandler(userService service.UserService, userConfigService service.UserConfigService) UserHandler {
+	return &userHandler{userService: userService, userConfigService: userConfigService}
 }
 
 func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	cfg, err := h.userConfigRepository.Find()
-
-	if err != nil {
-		log.Printf("[ERROR] - [%s]: Could not retrieve configs: %s", traceId, err.Error())
-		u.InternalServerError(w, traceId)
-		return
-	}
-
-	if !cfg.AllowPublicUserCreation {
-		handleBadRequest(w, "ERR006", "User creation not allowed", traceId)
-		return
-	}
 
 	var req v1.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -60,20 +46,20 @@ func (h *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validators.ValidateCreateUserRequest(req); err != nil {
-		handleBadRequest(w, "ERR001", err.Error(), traceId)
-		return
-	}
-
-	if len(req.Password) < cfg.MinPasswordLength {
-		handleBadRequest(w, "ERR006", fmt.Sprintf("Password must be longer than %d", cfg.MinPasswordLength), traceId)
+		u.HandleBadRequest(w, "ERR001", err.Error(), traceId)
 		return
 	}
 
 	usr := model.NewUserByCreateUserRequest(req)
 
+	if err := h.userConfigService.ValidateUser(usr, false); err != nil {
+		u.HandleBadRequest(w, "ERR002", err.Error(), traceId)
+		return
+	}
+
 	if err := h.userService.CreateUser(usr); err == internal.ErrUserAlreadyExists {
 		log.Printf("[ERROR] - [%s]: User with [email=%s,username=%s] already exists in database", traceId, req.Email, req.Username)
-		handleBadRequest(w, "ERR002", "User with provided email or username already exists", traceId)
+		u.HandleBadRequest(w, "ERR003", "User with provided email or username already exists", traceId)
 		return
 	} else if err != nil {
 		log.Printf("[ERROR] - [%s]: Could not create user due to error: %s", traceId, err.Error())
@@ -123,24 +109,13 @@ func (h *userHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content := make([]v1.UserResponse, len(userPage.Content))
-	for i, usr := range userPage.Content {
-		content[i] = usr.ToUserResponse()
-	}
-
 	nextUrl := ""
 
-	if len(content) == size {
+	if len(userPage.Content) == size {
 		nextUrl = u.BuildPaginationNextUrl(r, page, size)
 	}
 
-	u.Send(w, v1.UserResponseList{
-		Page:          page,
-		Size:          size,
-		TotalElements: userPage.Count,
-		Next:          nextUrl,
-		Content:       content,
-	})
+	u.Send(w, userPage.ToUserResponseList(page, size, nextUrl))
 }
 
 func (h *userHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -200,12 +175,4 @@ func (h *userHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[ERROR] - [%s]: User updated successfully. userId=%s", traceId, id)
 
 	u.Send(w, user.ToUserResponse())
-}
-
-func handleBadRequest(w http.ResponseWriter, code string, message string, traceId string) {
-	u.BadRequest(w, v1.ErrorResponse{
-		Code:    code,
-		Message: message,
-		TraceId: traceId,
-	})
 }

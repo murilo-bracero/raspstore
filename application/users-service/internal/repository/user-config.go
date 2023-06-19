@@ -33,7 +33,15 @@ func (r *usersConfigRepository) Find() (usersConfig *model.UserConfiguration, er
 	return usersConfig, err
 }
 
-//TODO
 func (r *usersConfigRepository) Update(usersConfig *model.UserConfiguration) error {
-	return nil
+
+	_, err := r.coll.UpdateOne(r.ctx, bson.M{}, bson.M{
+		"$set": bson.M{
+			"storage_limit":              usersConfig.StorageLimit,
+			"min_password_length":        usersConfig.MinPasswordLength,
+			"allow_public_user_creation": usersConfig.AllowPublicUserCreation,
+			"allow_login_with_email":     usersConfig.AllowLoginWithEmail,
+			"enforce_mfa":                usersConfig.EnforceMfa}})
+
+	return err
 }

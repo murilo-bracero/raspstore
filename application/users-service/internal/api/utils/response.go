@@ -39,3 +39,11 @@ func BuildPaginationNextUrl(r *http.Request, actualPage int, actualSize int) (ne
 	resource := strings.Split(r.RequestURI, "?")[0]
 	return fmt.Sprintf("%s%s?page=%d&size=%d", r.Host, resource, actualPage+1, actualSize)
 }
+
+func HandleBadRequest(w http.ResponseWriter, code string, message string, traceId string) {
+	BadRequest(w, v1.ErrorResponse{
+		Code:    code,
+		Message: message,
+		TraceId: traceId,
+	})
+}

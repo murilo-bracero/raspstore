@@ -26,8 +26,9 @@ func main() {
 	configRepository := repository.NewUsersConfigRepository(ctx, conn)
 
 	userService := service.NewUserService(usersRepository, configRepository)
+	userConfigService := service.NewUserConfigService(configRepository)
 
-	api.StartRestServer(userService, configRepository)
+	api.StartRestServer(userService, userConfigService)
 }
 
 func initDatabase(ctx context.Context) database.MongoConnection {

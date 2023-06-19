@@ -6,10 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
-	v1 "raspstore.github.io/users-service/api/v1"
 	u "raspstore.github.io/users-service/internal/api/utils"
-	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/repository"
+	"raspstore.github.io/users-service/internal/service"
 )
 
 type UserConfigHandler interface {
@@ -18,15 +16,15 @@ type UserConfigHandler interface {
 }
 
 type userConfigHandler struct {
-	repository repository.UsersConfigRepository
+	svc service.UserConfigService
 }
 
-func NewUserConfigHandler(repository repository.UsersConfigRepository) UserConfigHandler {
-	return &userConfigHandler{repository: repository}
+func NewUserConfigHandler(svc service.UserConfigService) UserConfigHandler {
+	return &userConfigHandler{svc: svc}
 }
 
 func (h *userConfigHandler) GetUserConfigs(w http.ResponseWriter, r *http.Request) {
-	config, err := h.repository.Find()
+	config, err := h.svc.GetUserConfig()
 
 	if err != nil {
 		traceId := r.Context().Value(middleware.RequestIDKey).(string)
@@ -35,14 +33,14 @@ func (h *userConfigHandler) GetUserConfigs(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	u.Send(w, toUserConfigurationResponse(config))
+	u.Send(w, config.ToUserConfigurationResponse())
 }
 
 func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Request) {
-	config, err := h.repository.Find()
+	traceId := r.Context().Value(middleware.RequestIDKey).(string)
+	config, err := h.svc.GetUserConfig()
 
 	if err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
 		log.Printf("[ERROR] - [%s]: Could not retrieve user configuration: %s", traceId, err.Error())
 		u.InternalServerError(w, traceId)
 		return
@@ -53,22 +51,13 @@ func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := h.repository.Update(config); err != nil {
-		traceId := r.Context().Value(middleware.RequestIDKey).(string)
+	if err := h.svc.UpdateUserConfig(config); err != nil {
 		log.Printf("[ERROR] - [%s]: Could not update user configuration: %s", traceId, err.Error())
 		u.InternalServerError(w, traceId)
 		return
 	}
 
-	u.Send(w, toUserConfigurationResponse(config))
-}
+	log.Println("[INFO] - [%s]: Updated configs successfully", traceId)
 
-func toUserConfigurationResponse(config *model.UserConfiguration) v1.UserConfigurationResponse {
-	return v1.UserConfigurationResponse{
-		StorageLimit:            config.StorageLimit,
-		MinPasswordLength:       config.MinPasswordLength,
-		AllowPublicUserCreation: config.AllowPublicUserCreation,
-		AllowLoginWithEmail:     config.AllowLoginWithEmail,
-		EnforceMfa:              config.EnforceMfa,
-	}
+	u.Send(w, config.ToUserConfigurationResponse())
 }

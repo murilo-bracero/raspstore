@@ -76,3 +76,18 @@ type UserPage struct {
 	Content []*User `bson:"content"`
 	Count   int     `bson:"count"`
 }
+
+func (m *UserPage) ToUserResponseList(page int, size int, nextUrl string) v1.UserResponseList {
+	content := make([]v1.UserResponse, len(m.Content))
+	for i, usr := range m.Content {
+		content[i] = usr.ToUserResponse()
+	}
+
+	return v1.UserResponseList{
+		Page:          page,
+		Size:          size,
+		TotalElements: m.Count,
+		Next:          nextUrl,
+		Content:       content,
+	}
+}
