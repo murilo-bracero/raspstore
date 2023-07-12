@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
-	u "raspstore.github.io/users-service/internal/api/utils"
-	"raspstore.github.io/users-service/internal/service"
+	u "github.com/murilo-bracero/raspstore/users-service/internal/api/utils"
+	"github.com/murilo-bracero/raspstore/users-service/internal/service"
 )
 
 type UserConfigHandler interface {

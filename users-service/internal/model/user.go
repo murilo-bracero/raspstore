@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	v1 "raspstore.github.io/users-service/api/v1"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
 )
 
 const defaultDateFormat = "2006-01-02 15:04:05"

@@ -9,12 +9,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/middleware"
-	v1 "raspstore.github.io/users-service/api/v1"
-	"raspstore.github.io/users-service/internal"
-	u "raspstore.github.io/users-service/internal/api/utils"
-	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/service"
-	"raspstore.github.io/users-service/internal/validators"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	u "github.com/murilo-bracero/raspstore/users-service/internal/api/utils"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
+	"github.com/murilo-bracero/raspstore/users-service/internal/service"
+	"github.com/murilo-bracero/raspstore/users-service/internal/validators"
 )
 
 const maxListSize = 50

@@ -1,8 +1,8 @@
 package validators
 
 import (
-	v1 "raspstore.github.io/users-service/api/v1"
-	"raspstore.github.io/users-service/internal"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
 )
 
 func ValidateCreateUserRequest(req v1.CreateUserRequest) error {

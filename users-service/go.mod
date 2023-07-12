@@ -1,4 +1,4 @@
-module raspstore.github.io/users-service
+module github.com/murilo-bracero/raspstore/users-service
 
 go 1.17
 

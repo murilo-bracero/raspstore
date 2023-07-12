@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/murilo-bracero/raspstore/users-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
+	"github.com/murilo-bracero/raspstore/users-service/proto/v1/users-service/pb"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/users-service/internal/grpc"
-	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/proto/v1/users-service/pb"
 )
 
 func TestGetUserConfiguration(t *testing.T) {

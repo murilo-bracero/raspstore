@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/api/handler"
-	"raspstore.github.io/users-service/internal/grpc"
-	"raspstore.github.io/users-service/internal/service"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/users-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/users-service/internal/service"
 )
 
 func StartRestServer(us service.UserService, ucs service.UserConfigService) {

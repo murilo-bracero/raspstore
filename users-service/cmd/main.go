@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
-	"raspstore.github.io/users-service/internal/api"
-	"raspstore.github.io/users-service/internal/database"
-	"raspstore.github.io/users-service/internal/grpc"
-	"raspstore.github.io/users-service/internal/repository"
-	"raspstore.github.io/users-service/internal/service"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api"
+	"github.com/murilo-bracero/raspstore/users-service/internal/database"
+	"github.com/murilo-bracero/raspstore/users-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/users-service/internal/repository"
+	"github.com/murilo-bracero/raspstore/users-service/internal/service"
 )
 
 func main() {

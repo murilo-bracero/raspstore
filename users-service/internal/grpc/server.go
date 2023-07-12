@@ -5,11 +5,11 @@ import (
 	"log"
 	"net"
 
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/service"
+	"github.com/murilo-bracero/raspstore/users-service/proto/v1/users-service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/service"
-	"raspstore.github.io/users-service/proto/v1/users-service/pb"
 )
 
 func StartGrpcServer(userConfigService service.UserConfigService) {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "raspstore.github.io/users-service/api/v1"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
 )
 
 func BadRequest(w http.ResponseWriter, body v1.ErrorResponse) {

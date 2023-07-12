@@ -1,6 +1,6 @@
 package model
 
-import v1 "raspstore.github.io/users-service/api/v1"
+import v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
 
 type UserConfiguration struct {
 	StorageLimit            string `bson:"storage_limit"`

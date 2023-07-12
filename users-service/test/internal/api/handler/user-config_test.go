@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5/middleware"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
-	v1 "raspstore.github.io/users-service/api/v1"
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/api/handler"
-	"raspstore.github.io/users-service/internal/model"
 )
 
 func TestGetUserConfigurationWithSuccess(t *testing.T) {

@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/repository"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
+	"github.com/murilo-bracero/raspstore/users-service/internal/repository"
 )
 
 type UserConfigService interface {

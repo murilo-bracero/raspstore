@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/database"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/database"
-	"raspstore.github.io/users-service/internal/model"
 )
 
 const usersCollectionName = "users"

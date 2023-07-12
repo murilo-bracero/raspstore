@@ -5,8 +5,8 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/service"
-	"raspstore.github.io/users-service/internal/api/handler"
-	"raspstore.github.io/users-service/internal/api/middleware"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api/middleware"
 )
 
 const serviceBaseRoute = "/users-service/api/v1"

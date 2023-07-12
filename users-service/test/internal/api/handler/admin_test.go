@@ -11,9 +11,9 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	v1 "github.com/murilo-bracero/raspstore/users-service/api/v1"
+	"github.com/murilo-bracero/raspstore/users-service/internal/api/handler"
 	"github.com/stretchr/testify/assert"
-	v1 "raspstore.github.io/users-service/api/v1"
-	"raspstore.github.io/users-service/internal/api/handler"
 )
 
 func TestAdminSaveUserWithSuccess(t *testing.T) {

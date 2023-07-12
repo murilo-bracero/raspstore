@@ -1,11 +1,11 @@
 package service
 
 import (
+	"github.com/murilo-bracero/raspstore/users-service/internal"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
+	"github.com/murilo-bracero/raspstore/users-service/internal/repository"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
-	"raspstore.github.io/users-service/internal"
-	"raspstore.github.io/users-service/internal/model"
-	"raspstore.github.io/users-service/internal/repository"
 )
 
 type UserService interface {

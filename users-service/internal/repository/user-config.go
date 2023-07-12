@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 
+	"github.com/murilo-bracero/raspstore/users-service/internal/database"
+	"github.com/murilo-bracero/raspstore/users-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/users-service/internal/database"
-	"raspstore.github.io/users-service/internal/model"
 )
 
 const usersConfigCollection = "users-config"

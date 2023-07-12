@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
+	"github.com/murilo-bracero/raspstore/users-service/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"raspstore.github.io/users-service/internal"
 )
 
 type MongoConnection interface {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"github.com/murilo-bracero/raspstore/commons/pkg/service"
+	"github.com/murilo-bracero/raspstore/users-service/internal"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"raspstore.github.io/users-service/internal"
 )
 
 type authGrpcService struct{}
