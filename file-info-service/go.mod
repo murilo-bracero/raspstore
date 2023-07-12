@@ -1,4 +1,4 @@
-module raspstore.github.io/file-manager
+module github.com/murilo-bracero/raspstore/file-info-service
 
 go 1.17
 
@@ -24,15 +24,17 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.28.1 
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
+	github.com/montanaflynn/stats v0.7.0 // indirect
 )
 
 require github.com/go-chi/chi/v5 v5.0.8
 
 require github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c
+
+require github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3 

@@ -2,24 +2,23 @@ package service_test
 
 import (
 	"context"
-	"errors"
 	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/server"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	service "raspstore.github.io/file-manager/internal/grpc"
-	"raspstore.github.io/file-manager/internal/model"
 )
 
 func TestCreateFileMetadataSuccess(t *testing.T) {
 	ctx := context.Background()
-	fr := &filesRepositoryMock{}
-	svc := service.NewFileInfoService(fr)
+	uc := &createUseCaseMock{}
+	svc := server.NewFileInfoService(nil, uc)
 
 	filename := uuid.NewString()
 
@@ -40,8 +39,8 @@ func TestCreateFileMetadataSuccess(t *testing.T) {
 
 func TestCreateFileMetadataFail(t *testing.T) {
 	ctx := context.Background()
-	fr := &filesRepositoryMock{shouldReturnErr: true}
-	svc := service.NewFileInfoService(fr)
+	uc := &createUseCaseMock{shouldReturnErr: true}
+	svc := server.NewFileInfoService(nil, uc)
 
 	filename := uuid.NewString()
 
@@ -56,8 +55,8 @@ func TestCreateFileMetadataFail(t *testing.T) {
 
 func TestFindFileMetadataByIdSuccess(t *testing.T) {
 	ctx := context.Background()
-	fr := &filesRepositoryMock{}
-	svc := service.NewFileInfoService(fr)
+	uc := &getFileUseCaseMock{}
+	svc := server.NewFileInfoService(uc, nil)
 
 	id := primitive.NewObjectID().Hex()
 
@@ -73,11 +72,25 @@ func TestFindFileMetadataByIdSuccess(t *testing.T) {
 	assert.NotEmpty(t, res.Path)
 }
 
-type filesRepositoryMock struct {
+func TestFindFileMetadataByIdFail(t *testing.T) {
+	ctx := context.Background()
+	uc := &getFileUseCaseMock{shouldReturnErr: true}
+	svc := server.NewFileInfoService(uc, nil)
+
+	id := primitive.NewObjectID().Hex()
+
+	_, err := svc.FindFileMetadataById(ctx, &pb.FindFileMetadataByIdRequest{
+		FileId: id,
+	})
+
+	assert.Error(t, err)
+}
+
+type createUseCaseMock struct {
 	shouldReturnErr bool
 }
 
-func (f *filesRepositoryMock) Save(file *model.File) error {
+func (f *createUseCaseMock) Execute(file *model.File) (error_ error) {
 	if f.shouldReturnErr {
 		return mongo.ErrClientDisconnected
 	}
@@ -85,34 +98,22 @@ func (f *filesRepositoryMock) Save(file *model.File) error {
 	return nil
 }
 
-func (f *filesRepositoryMock) FindById(userId string, id string) (*model.File, error) {
+type getFileUseCaseMock struct {
+	shouldReturnErr bool
+}
+
+func (f *getFileUseCaseMock) Execute(userId string, fileId string) (file *model.File, error_ error) {
 	if f.shouldReturnErr {
 		return nil, mongo.ErrClientDisconnected
 	}
 
 	return &model.File{
-		FileId:    id,
-		Filename:  id,
-		Path:      uuid.NewString() + "/" + id,
+		FileId:    fileId,
+		Filename:  fileId,
+		Path:      uuid.NewString() + "/" + fileId,
 		Size:      int64(rand.Int()),
 		UpdatedAt: time.Now(),
 		CreatedBy: uuid.NewString(),
 		UpdatedBy: uuid.NewString(),
 	}, nil
-}
-
-func (f *filesRepositoryMock) FindByIdLookup(userId string, id string) (fileMetadata *model.FileMetadataLookup, err error) {
-	return nil, errors.New("Not Implemented!")
-}
-
-func (f *filesRepositoryMock) Delete(userId string, fileId string) error {
-	return errors.New("Not Implemented!")
-}
-
-func (f *filesRepositoryMock) Update(userId string, file *model.File) error {
-	return errors.New("Not Implemented!")
-}
-
-func (f *filesRepositoryMock) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
-	return nil, errors.New("Not Implemented!")
 }

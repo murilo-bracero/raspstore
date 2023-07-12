@@ -15,16 +15,16 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	api "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	apiHandler "github.com/murilo-bracero/raspstore/file-info-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
-	api "raspstore.github.io/file-manager/api/v1"
-	apiHandler "raspstore.github.io/file-manager/internal/api/handler"
-	"raspstore.github.io/file-manager/internal/model"
 )
 
 func TestGetAllFilesSuccess(t *testing.T) {
-	repo := &filesRepositoryMock{}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &listUseCaseMock{}
+	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -40,8 +40,8 @@ func TestGetAllFilesSuccess(t *testing.T) {
 }
 
 func TestGetAllFilesPaginatedSuccess(t *testing.T) {
-	repo := &filesRepositoryMock{}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &listUseCaseMock{}
+	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
 
 	page := 0
 	size := 3
@@ -59,9 +59,29 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
 
+func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
+	uc := &listUseCaseMock{shouldThrowError: true}
+	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
+
+	page := 0
+	size := 3
+
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
+	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(ctr.ListFiles)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+}
+
 func TestDeleteFileSuccess(t *testing.T) {
-	repo := &filesRepositoryMock{}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &deleteUseCaseMock{}
+	ctr := apiHandler.NewFilesHandler(nil, nil, uc)
 
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
@@ -78,8 +98,8 @@ func TestDeleteFileSuccess(t *testing.T) {
 }
 
 func TestDeleteFileInternalServerError(t *testing.T) {
-	repo := &filesRepositoryMock{shouldReturnErr: true}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &deleteUseCaseMock{shouldThrowError: true}
+	ctr := apiHandler.NewFilesHandler(nil, nil, uc)
 
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
@@ -104,8 +124,8 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 }
 
 func TestUpdateFileSuccess(t *testing.T) {
-	repo := &filesRepositoryMock{}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &updateUseCaseMock{}
+	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -143,8 +163,8 @@ func TestUpdateFileSuccess(t *testing.T) {
 }
 
 func TestUpdateFileNotFound(t *testing.T) {
-	repo := &filesRepositoryMock{shouldNotFindFile: true}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &updateUseCaseMock{shouldThrowNotFound: true}
+	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -165,8 +185,8 @@ func TestUpdateFileNotFound(t *testing.T) {
 }
 
 func TestUpdateFileInternalServerError(t *testing.T) {
-	repo := &filesRepositoryMock{shouldReturnErr: true}
-	ctr := apiHandler.NewFilesHandler(repo)
+	uc := &updateUseCaseMock{shouldThrowError: true}
+	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(fmt.Sprintf(`{
@@ -192,83 +212,45 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	assert.Equal(t, "test-trace-id", errRes.TraceId)
 }
 
-type filesRepositoryMock struct {
-	shouldReturnErr   bool
-	shouldNotFindFile bool
-	totalElements     int
+type deleteUseCaseMock struct {
+	shouldThrowError bool
 }
 
-func (f *filesRepositoryMock) Save(file *model.File) error {
-	return errors.New("Not Implemented!")
+func (c *deleteUseCaseMock) Execute(ctx context.Context, fileId string) (error_ error) {
+	if c.shouldThrowError {
+		return errors.New("generic error")
+	}
+
+	return
 }
 
-func (f *filesRepositoryMock) FindById(userId string, id string) (*model.File, error) {
-	if f.shouldReturnErr {
-		return nil, mongo.ErrClientDisconnected
-	}
-
-	if f.shouldNotFindFile {
-		return nil, mongo.ErrNoDocuments
-	}
-
-	return createFileMetadata(id), nil
+type listUseCaseMock struct {
+	shouldThrowError bool
 }
 
-func (f *filesRepositoryMock) FindByIdLookup(userId string, id string) (fileMetadata *model.FileMetadataLookup, err error) {
-	if f.shouldReturnErr {
-		return nil, mongo.ErrClientDisconnected
+func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int) (filesPage *model.FilePage, error_ error) {
+	if c.shouldThrowError {
+		return nil, errors.New("generic error")
 	}
 
-	if f.shouldNotFindFile {
-		return nil, mongo.ErrNoDocuments
-	}
-
-	return createFileMetadataLookup(id), nil
+	return
 }
 
-func (f *filesRepositoryMock) Delete(userId string, fileId string) error {
-	if f.shouldReturnErr {
-		return mongo.ErrClientDisconnected
-	}
-
-	return nil
+type updateUseCaseMock struct {
+	shouldThrowError    bool
+	shouldThrowNotFound bool
 }
 
-func (f *filesRepositoryMock) Update(userId string, file *model.File) error {
-	if f.shouldReturnErr {
-		return mongo.ErrClientDisconnected
+func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (fileMetadata *model.FileMetadataLookup, error_ error) {
+	if c.shouldThrowError {
+		return nil, errors.New("generic error")
 	}
 
-	return nil
-}
-
-func (f *filesRepositoryMock) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
-	files := make([]*model.FileMetadataLookup, 1)
-	for i := 0; i < f.totalElements; i++ {
-		files = append(files, createFileMetadataLookup(""))
+	if c.shouldThrowNotFound {
+		return nil, internal.ErrFileDoesNotExists
 	}
 
-	return &model.FilePage{
-		Content: files,
-		Count:   size,
-	}, nil
-}
-
-func createFileMetadata(id string) *model.File {
-
-	if id == "" {
-		id = uuid.NewString()
-	}
-
-	return &model.File{
-		FileId:    id,
-		Filename:  id,
-		Path:      uuid.NewString() + "/" + id,
-		Size:      int64(rand.Int()),
-		UpdatedAt: time.Now(),
-		CreatedBy: uuid.NewString(),
-		UpdatedBy: uuid.NewString(),
-	}
+	return createFileMetadataLookup(file.FileId), nil
 }
 
 func createFileMetadataLookup(id string) *model.FileMetadataLookup {

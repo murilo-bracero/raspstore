@@ -31,6 +31,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SuccessFileMetadataListResponse'
+        '500':
+          description: Internal Server Error
   /files/{fileId}:
     put:
       tags:
@@ -54,7 +56,7 @@ paths:
         '409':
           description: file with provided info already exists in this folder
         '500':
-          $ref: '#/components/responses/InternalServerErrorResponse'
+          description: Internal Server Error
     delete:
       tags:
         - files
@@ -72,6 +74,8 @@ paths:
           description: Invalid fileId
         '404':
           description: File not found
+        '500':
+          description: Internal Server Error
 components:
   schemas:
     UserInfoRepresentation:
@@ -245,17 +249,6 @@ components:
                     type: array
                     items:
                       $ref: '#/components/schemas/FileMetadataRepresentation'
-    
-    InternalServerErrorResponse:
-      description: internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiErrorException'
-          example:
-            code: "ERR500"
-            message: "An expected error occured"
-            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
             
     FileMetadataNotFoundErrorResponse:
       description: file metadata with provided id not found

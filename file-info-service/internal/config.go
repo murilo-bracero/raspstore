@@ -35,6 +35,10 @@ func AuthServiceUrl() string {
 	return os.Getenv("AUTH_SERVICE_URL")
 }
 
+func UserServiceUrl() string {
+	return os.Getenv("USER_SERVICE_URL")
+}
+
 func RestPort() int {
 	return getIntEnv("REST_PORT")
 }

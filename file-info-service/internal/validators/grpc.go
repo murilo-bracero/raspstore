@@ -1,8 +1,8 @@
 package validators
 
 import (
-	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
-	"raspstore.github.io/file-manager/internal"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
 )
 
 func ValidateCreateFileMetadataRequest(req *pb.CreateFileMetadataRequest) error {

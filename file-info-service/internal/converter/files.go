@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
-	"raspstore.github.io/file-manager/internal/model"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
 )
 
 func ToFile(req *pb.CreateFileMetadataRequest) *model.File {

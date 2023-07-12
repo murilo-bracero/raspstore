@@ -6,10 +6,12 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
-	"raspstore.github.io/file-manager/internal/api"
-	db "raspstore.github.io/file-manager/internal/database"
-	"raspstore.github.io/file-manager/internal/grpc"
-	"raspstore.github.io/file-manager/internal/repository"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/api"
+	db "github.com/murilo-bracero/raspstore/file-info-service/internal/database"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/client"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/repository"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/usecase"
 )
 
 func main() {
@@ -29,11 +31,15 @@ func main() {
 
 	fileRepo := repository.NewFilesRepository(ctx, conn)
 
+	userServiceClient := client.NewUserConfigGrpcService()
+
+	useCases := usecase.InitUseCases(fileRepo, userServiceClient)
+
 	var wg sync.WaitGroup
 
 	wg.Add(2)
-	log.Println("bootstraping servers")
-	go grpc.StartGrpcServer(fileRepo)
-	go api.StartApiServer(fileRepo)
+	log.Println("[INFO] Bootstraping servers")
+	go grpc.StartGrpcServer(useCases.GetFileUseCase, useCases.CreateFileUseCase)
+	go api.StartApiServer(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase)
 	wg.Wait()
 }

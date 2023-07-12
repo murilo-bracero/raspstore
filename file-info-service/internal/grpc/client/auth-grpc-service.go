@@ -1,4 +1,4 @@
-package grpc
+package client
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 
 	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
 	"github.com/murilo-bracero/raspstore/commons/pkg/service"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"raspstore.github.io/file-manager/internal"
 )
 
 type authGrpcService struct{}

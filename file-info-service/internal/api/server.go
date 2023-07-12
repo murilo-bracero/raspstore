@@ -5,16 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	"raspstore.github.io/file-manager/internal"
-	"raspstore.github.io/file-manager/internal/api/handler"
-	"raspstore.github.io/file-manager/internal/grpc"
-	"raspstore.github.io/file-manager/internal/repository"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/client"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/usecase"
 )
 
-func StartApiServer(fileRepository repository.FilesRepository) {
-	filesHandler := handler.NewFilesHandler(fileRepository)
+func StartApiServer(luc usecase.ListFilesUseCase, uuc usecase.UpdateFileUseCase, duc usecase.DeleteFileUseCase) {
+	filesHandler := handler.NewFilesHandler(luc, uuc, duc)
 
-	authService := grpc.NewAuthService()
+	authService := client.NewAuthService()
 
 	router := NewFilesRouter(filesHandler, authService).MountRoutes()
 	http.Handle("/", router)

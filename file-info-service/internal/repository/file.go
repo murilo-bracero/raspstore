@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	db "github.com/murilo-bracero/raspstore/file-info-service/internal/database"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	db "raspstore.github.io/file-manager/internal/database"
-	"raspstore.github.io/file-manager/internal/model"
 )
 
 const filesCollectionName = "files"
@@ -20,7 +21,7 @@ type FilesRepository interface {
 	Save(file *model.File) error
 	FindById(userId string, fileId string) (*model.File, error)
 	FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error)
-	FindUserUsageById(userId string) (usage float64, err error)
+	FindUsageByUserId(userId string) (usage int64, err error)
 	Delete(userId string, fileId string) error
 	Update(userId string, file *model.File) error
 	FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error)
@@ -50,6 +51,10 @@ func (f *filesRepository) Save(file *model.File) error {
 
 func (f *filesRepository) FindById(userId string, fileId string) (file *model.File, err error) {
 	found := f.coll.FindOne(f.ctx, bson.M{"file_id": fileId, "$or": addAnyPermissionFilter(userId)})
+
+	if found.Err() == mongo.ErrNoDocuments {
+		return nil, internal.ErrFileDoesNotExists
+	}
 
 	err = found.Decode(&file)
 
@@ -99,9 +104,13 @@ func (f *filesRepository) Update(userId string, file *model.File) error {
 		"updated_at": time.Now(),
 		"updated_by": file.UpdatedBy}}
 
-	f.coll.UpdateOne(f.ctx, filter, update)
+	result, err := f.coll.UpdateOne(f.ctx, filter, update)
 
-	return nil
+	if result.MatchedCount == 0 {
+		return internal.ErrFileDoesNotExists
+	}
+
+	return err
 }
 
 func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
@@ -135,7 +144,7 @@ func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage 
 	return filesPage, nil
 }
 
-func (f *filesRepository) FindUserUsageById(userId string) (usage float64, err error) {
+func (f *filesRepository) FindUsageByUserId(userId string) (usage int64, err error) {
 	match := bson.D{bson.E{Key: "$match", Value: filterByOwnerId(userId)}}
 
 	project := groupUserUsage()
@@ -156,7 +165,7 @@ func (f *filesRepository) FindUserUsageById(userId string) (usage float64, err e
 		}
 
 		var ok bool
-		if usage, ok = value.DoubleOK(); !ok {
+		if usage, ok = value.Int64OK(); !ok {
 			log.Println("[WARN] Could not convert usage into a valid duble value")
 			return 0, nil
 		}
@@ -170,7 +179,7 @@ func filterByFileId(fileId string) bson.M {
 }
 
 func filterByOwnerId(fileId string) bson.M {
-	return bson.M{"file_id": fileId}
+	return bson.M{"owner_user_id": fileId}
 }
 
 func addAnyPermissionFilter(userId string) []bson.M {

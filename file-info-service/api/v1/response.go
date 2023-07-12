@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"raspstore.github.io/file-manager/internal/model"
+	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
 )
 
-type FileResponse struct {
+type FilePageResponse struct {
 	Size          int                         `json:"size"`
 	TotalElements int                         `json:"totalElements"`
 	Page          int                         `json:"page"`

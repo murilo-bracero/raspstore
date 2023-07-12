@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"raspstore.github.io/file-manager/internal"
 )
 
 type MongoConnection interface {
