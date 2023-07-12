@@ -553,6 +553,10 @@ github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe h1:iruDEfMl2E6f
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/murilo-bracero/raspstore-protofiles v1.0.3 h1:u6UvYC/u0tE2lXPS0TMBsbZDyDuHunOTAzFX3oQ5CgU=
 github.com/murilo-bracero/raspstore-protofiles v1.0.3/go.mod h1:3mHq5FpOpuELXQqAyjlADx/WphcKAxGYaW92U1spHng=
+github.com/murilo-bracero/raspstore-protofiles v1.0.4 h1:nwsls36cmGZU6sT/yE0mN1l27Jlt9/Pkow7ZtRrAbvs=
+github.com/murilo-bracero/raspstore-protofiles v1.0.4/go.mod h1:3mHq5FpOpuELXQqAyjlADx/WphcKAxGYaW92U1spHng=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c h1:lRs5J0x43v+K9mD5Hz20XCbmyf02K2BC2E7yNZFoZ8c=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c/go.mod h1:O0yb6HraeV21nQZSt3XgMSyHAmNNagdTqS8B83cofis=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

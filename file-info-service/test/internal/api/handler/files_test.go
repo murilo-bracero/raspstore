@@ -14,11 +14,11 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 	api "raspstore.github.io/file-manager/api/v1"
 	apiHandler "raspstore.github.io/file-manager/internal/api/handler"
-	md "raspstore.github.io/file-manager/internal/api/middleware"
 	"raspstore.github.io/file-manager/internal/model"
 )
 
@@ -28,7 +28,7 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -84,7 +84,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
 	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
@@ -113,7 +113,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 	  }`, random))
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), md.UserIdKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
 	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
@@ -153,7 +153,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, md.UserIdKey, "random-uuid")
+	ctx = context.WithValue(ctx, rMiddleware.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -175,7 +175,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, md.UserIdKey, "random-uuid")
+	ctx = context.WithValue(ctx, rMiddleware.UserIdKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	v1 "raspstore.github.io/file-manager/api/v1"
-	"raspstore.github.io/file-manager/internal/api/middleware"
 	"raspstore.github.io/file-manager/internal/repository"
 )
 
@@ -39,7 +39,7 @@ func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 		size = maxListSize
 	}
 
-	userId := r.Context().Value(middleware.UserIdKey).(string)
+	userId := r.Context().Value(rMiddleware.UserIdKey).(string)
 
 	filesPage, err := f.repo.FindAll(userId, page, size)
 
@@ -73,7 +73,7 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileId := chi.URLParam(r, "id")
-	userId := r.Context().Value(middleware.UserIdKey).(string)
+	userId := r.Context().Value(rMiddleware.UserIdKey).(string)
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
 	file, err := f.repo.FindById(userId, fileId)
@@ -129,7 +129,7 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "id")
 
-	userId := r.Context().Value(middleware.UserIdKey).(string)
+	userId := r.Context().Value(rMiddleware.UserIdKey).(string)
 
 	if err := f.repo.Delete(userId, fileId); err != nil {
 		traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)

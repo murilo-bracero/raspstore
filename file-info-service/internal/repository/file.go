@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ type FilesRepository interface {
 	Save(file *model.File) error
 	FindById(userId string, fileId string) (*model.File, error)
 	FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error)
+	FindUserUsageById(userId string) (usage float64, err error)
 	Delete(userId string, fileId string) error
 	Update(userId string, file *model.File) error
 	FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error)
@@ -114,7 +116,7 @@ func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage 
 
 	accessControl := aggregateAccessControl(userId)
 	facet := facet(contentField, totalCountField)
-	project := project()
+	project := projectPage()
 
 	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{accessControl, facet, project})
 
@@ -133,12 +135,46 @@ func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage 
 	return filesPage, nil
 }
 
+func (f *filesRepository) FindUserUsageById(userId string) (usage float64, err error) {
+	match := bson.D{bson.E{Key: "$match", Value: filterByOwnerId(userId)}}
+
+	project := groupUserUsage()
+
+	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{match, project})
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer cursor.Close(f.ctx)
+
+	for cursor.Next(f.ctx) {
+		value, err := cursor.Current.LookupErr("totalUsage")
+
+		if err != nil {
+			return 0, nil
+		}
+
+		var ok bool
+		if usage, ok = value.DoubleOK(); !ok {
+			log.Println("[WARN] Could not convert usage into a valid duble value")
+			return 0, nil
+		}
+	}
+
+	return
+}
+
 func filterByFileId(fileId string) bson.M {
 	return bson.M{"file_id": fileId}
 }
 
+func filterByOwnerId(fileId string) bson.M {
+	return bson.M{"file_id": fileId}
+}
+
 func addAnyPermissionFilter(userId string) []bson.M {
-	ownerClause := bson.M{"owner_user_id": userId}
+	ownerClause := filterByOwnerId(userId)
 
 	viewerClause := bson.M{"viewers": userId}
 
@@ -159,7 +195,16 @@ func facet(contentField []primitive.D, totalCountField []primitive.M) bson.D {
 	}
 }
 
-func project() bson.D {
+func groupUserUsage() bson.D {
+	return bson.D{
+		primitive.E{Key: "$group", Value: bson.M{
+			"_id":        "$owner_user_id",
+			"totalUsage": bson.M{"$sum": "$size"},
+		}},
+	}
+}
+
+func projectPage() bson.D {
 	return bson.D{
 		primitive.E{Key: "$project", Value: bson.D{
 			primitive.E{Key: "content", Value: "$content"},

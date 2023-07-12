@@ -8,7 +8,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/murilo-bracero/raspstore-protofiles v1.0.3
+	github.com/murilo-bracero/raspstore-protofiles v1.0.4
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.1
@@ -34,3 +34,5 @@ require (
 )
 
 require github.com/go-chi/chi/v5 v5.0.8
+
+require github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c
