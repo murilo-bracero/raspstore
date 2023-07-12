@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"raspstore.github.io/users-service/internal/api"
 	"raspstore.github.io/users-service/internal/database"
+	"raspstore.github.io/users-service/internal/grpc"
 	"raspstore.github.io/users-service/internal/repository"
 	"raspstore.github.io/users-service/internal/service"
 )
@@ -28,7 +30,13 @@ func main() {
 	userService := service.NewUserService(usersRepository, configRepository)
 	userConfigService := service.NewUserConfigService(configRepository)
 
-	api.StartRestServer(userService, userConfigService)
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	log.Println("bootstraping servers")
+	go grpc.StartGrpcServer(userConfigService)
+	go api.StartRestServer(userService, userConfigService)
+	wg.Wait()
 }
 
 func initDatabase(ctx context.Context) database.MongoConnection {
