@@ -1,25 +1,33 @@
 # RASPSTORAGE
 
+## [DISCLAIMER]
+
+This is a personal project of mine and is also still in-development, so feel free to suggest editions, open issues or make PRs.
+
 ## DESCRIPTION
 
-A cloud-like storage app for PPNs (Personal Private Cloud), with automatic installation, low-maintenance and low-config, with user management, private folders and files, encryption, light and resilient.
+Rasptorage is a cloud-like storage application designed for personal private clouds.<sup>1</sup>
 
-## Goals
+It is built to require minimal maintenance and configuration, ensuring a simple "install-and-use" experience.
 
-- v0.1:
+Rasptorage features a built-in user interface for convenient file upload and download operations. Additionally, it allows users to manage storage settings, both on an individual user level and for the entire server.
+
+## Development Roadmap
+
+- v0.1 (released):
     - Clean Architecture
     - User Authentication
     - Basic user Authorization
     - Shared File Storage
 
 - v0.2:
-    - Per-User File Storage
+    - Storage metadata
+    - Per-user rates and limites
     - Secret Folders
 
 - v0.3:
-    - Encryption
-    - Auto deleted files
-    - Stoage and files metadata
+    - File encryption
+    - Self-deleting files
 
 - v0.4:
     - Audit system
@@ -28,9 +36,7 @@ A cloud-like storage app for PPNs (Personal Private Cloud), with automatic insta
 - v0.5:
     - Backup schedules
     - Auto maintenance windows
-    - File integrity checkup
-    - File integrity report
-    - Environment security
+    - File integrity support
 
 - v0.6:
     - Web Application
@@ -42,7 +48,9 @@ A cloud-like storage app for PPNs (Personal Private Cloud), with automatic insta
     - Plugins
 
 - v0.9:
-    - Auto infrastructure for complex deployment terraform
+    - Monolith deployment support
+    - Desktop installing support
+    - IaaC Support
 
 ## Software Architecture
 
@@ -54,6 +62,8 @@ A cloud-like storage app for PPNs (Personal Private Cloud), with automatic insta
 ## Requirements
 
 - MongoDB database
-- SO: Linux and TBD
+- SO: Linux and MacOS
 - Memory: TBD
 - Space: TBD
+
+Also available for container managers.

@@ -16,7 +16,7 @@ jobs:
 
       - name: Build
         working-directory: ./application/file-info-service
-        run: go build
+        run: go build -o users-service ./cmd
 
       - name: Test
         working-directory: ./application/file-info-service
