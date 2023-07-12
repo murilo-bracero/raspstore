@@ -57,7 +57,7 @@ func (h *userConfigHandler) UpdateUserConfigs(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	log.Println("[INFO] - [%s]: Updated configs successfully", traceId)
+	log.Printf("[INFO] - [%s]: Updated configs successfully", traceId)
 
 	u.Send(w, config.ToUserConfigurationResponse())
 }
