@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	v1 "raspstore.github.io/auth-service/api/v1"
-	u "raspstore.github.io/auth-service/internal/api/utils"
-	"raspstore.github.io/auth-service/internal/service"
+	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
+	u "github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
 )
 
 type CredentialsHandler interface {

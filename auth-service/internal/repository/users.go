@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/murilo-bracero/raspstore/auth-service/internal/database"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"raspstore.github.io/auth-service/internal/database"
-	"raspstore.github.io/auth-service/internal/model"
 )
 
 const usersCollectionName = "users"

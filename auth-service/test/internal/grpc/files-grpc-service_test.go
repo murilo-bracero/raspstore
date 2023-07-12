@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/auth-service/internal/grpc"
-	"raspstore.github.io/auth-service/internal/model"
-	"raspstore.github.io/auth-service/internal/service"
 )
 
 func init() {

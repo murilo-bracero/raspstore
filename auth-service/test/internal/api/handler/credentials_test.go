@@ -11,10 +11,10 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
+	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
 	"github.com/stretchr/testify/assert"
-	v1 "raspstore.github.io/auth-service/api/v1"
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/api/handler"
 )
 
 func init() {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 )
 
 const tokenScheme = "Bearer"

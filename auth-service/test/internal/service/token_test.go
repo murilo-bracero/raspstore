@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/auth-service/internal/model"
-	"raspstore.github.io/auth-service/internal/service"
 )
 
 func init() {

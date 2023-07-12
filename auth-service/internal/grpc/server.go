@@ -5,11 +5,11 @@ import (
 	"log"
 	"net"
 
-	"github.com/murilo-bracero/raspstore-protofiles/auth-service/pb"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/service"
 )
 
 func StartGrpcServer(ts service.TokenService) {

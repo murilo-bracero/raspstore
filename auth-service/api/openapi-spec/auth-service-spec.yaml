@@ -35,7 +35,7 @@ paths:
         '401':
           description: Username, password or mfa token invalid
         '500':
-          $ref: '#/components/responses/InternalServerErrorResponse'
+          description: Internal Server Error
   
   /refresh:
     get:
@@ -52,7 +52,7 @@ paths:
         '401':
           description: Refresh Token is invalid or inexistent
         '500':
-          $ref: '#/components/responses/InternalServerErrorResponse'
+          description: Internal Server Error
         
 components:
   schemas:
@@ -120,17 +120,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenRepresentation'
-    
-    InternalServerErrorResponse:
-      description: internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiErrorException'
-          example:
-            code: "ERR500"
-            message: "An expected error occured"
-            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
   
   securitySchemes:
     loginAuth:

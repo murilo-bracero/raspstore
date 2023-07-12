@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+package pb;
+
+message AuthenticateRequest {
+    string token = 1;
+}
+
+message AuthenticateResponse {
+    string uid = 1;
+    repeated string roles = 2;
+}
+
+service AuthService {
+    rpc authenticate      (AuthenticateRequest)      returns (AuthenticateResponse);
+}

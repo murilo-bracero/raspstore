@@ -14,24 +14,24 @@ services:
   users-service:
     build: users-service
     ports:
-      - "3003:9090"
+      - "3003:9000"
+      - "3004:9090"
     env_file:
       - users-service/.env.docker
 
   file-info-service:
     build: file-info-service
     ports:
-      - "3004:9000"
-      - "3005:9090"
+      - "3005:9000"
+      - "3006:9090"
     env_file:
       - file-info-service/.env
   fs-service:
     build: fs-service
     ports:
-      - "3006:9090"
+      - "3007:9090"
     env_file:
       - fs-service/.env
-      
 networks:
   default:
     external: true
