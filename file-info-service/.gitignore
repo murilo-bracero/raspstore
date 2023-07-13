@@ -1,4 +1,3 @@
-pb/
-.env
+.env*
 tmp/
 .air.*
