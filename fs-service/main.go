@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
-	"raspstore.github.io/fs-service/api"
-	"raspstore.github.io/fs-service/api/controller"
 	"raspstore.github.io/fs-service/internal"
-	"raspstore.github.io/fs-service/usecase"
+	"raspstore.github.io/fs-service/internal/api"
+	"raspstore.github.io/fs-service/internal/grpc/client"
+	"raspstore.github.io/fs-service/internal/usecase"
 )
 
 func main() {
@@ -21,6 +19,18 @@ func main() {
 		log.Println("Could not load .env file. Using system variables instead")
 	}
 
+	checkStoragePath()
+
+	authService := client.NewAuthService(ctx)
+	fileInfoService := client.NewFileInfoService(ctx)
+
+	uploadUseCase := usecase.NewUploadFileUseCase(fileInfoService)
+	downloadUseCase := usecase.NewDownloadFileUseCase(fileInfoService)
+
+	api.StartRestServer(uploadUseCase, downloadUseCase, authService)
+}
+
+func checkStoragePath() {
 	if _, err := os.Stat(internal.StoragePath()); os.IsNotExist(err) {
 		log.Println("[INFO] Base path does not exists, starting creation")
 		err = os.MkdirAll(internal.StoragePath(), 0755)
@@ -29,14 +39,4 @@ func main() {
 			log.Println("[ERROR] Could not create base path: ", err.Error())
 		}
 	}
-
-	fileUseCase := usecase.NewFileInfoUseCase(ctx)
-
-	ctr := controller.NewFileServeController(fileUseCase)
-
-	router := api.NewRoutes(ctr).MountRoutes()
-
-	http.Handle("/", router)
-	log.Printf("File Manager API runing on port %d", internal.RestPort())
-	http.ListenAndServe(fmt.Sprintf(":%d", internal.RestPort()), router)
 }

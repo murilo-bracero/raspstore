@@ -1,4 +1,4 @@
-package controller_test
+package handler_test
 
 import (
 	"bytes"
@@ -19,12 +19,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
+	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
 	"github.com/stretchr/testify/assert"
-	"raspstore.github.io/fs-service/api/controller"
-	"raspstore.github.io/fs-service/api/dto"
-	md "raspstore.github.io/fs-service/api/middleware"
+	v1 "raspstore.github.io/fs-service/api/v1"
 	"raspstore.github.io/fs-service/internal"
+	"raspstore.github.io/fs-service/internal/api/handler"
 )
 
 const testFilename = "test.txt"
@@ -37,7 +37,7 @@ func TestUploadFileSuccess(t *testing.T) {
 
 	path := "/folder1"
 	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId}
-	ctr := controller.NewFileServeController(useCase)
+	ctr := handler.NewFileServeHandler(useCase)
 
 	tempFile, err := createTempFile()
 	assert.NoError(t, err)
@@ -61,7 +61,7 @@ func TestUploadFileSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	req, err := http.NewRequest("POST", "/files", body)
-	ctx := context.WithValue(req.Context(), md.UserIdKey, defaultUserId)
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	assert.NoError(t, err)
 
@@ -73,7 +73,7 @@ func TestUploadFileSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, rr.Code, "Status code must be 201 Created")
 
-	var res dto.UploadSuccessResponse
+	var res v1.UploadSuccessResponse
 	err = json.Unmarshal(rr.Body.Bytes(), &res)
 	assert.NoError(t, err)
 
@@ -90,7 +90,7 @@ func TestUploadFileBadRequestWithNoPath(t *testing.T) {
 	}
 
 	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId}
-	ctr := controller.NewFileServeController(useCase)
+	ctr := handler.NewFileServeHandler(useCase)
 
 	tempFile, err := createTempFile()
 	assert.NoError(t, err)
@@ -114,7 +114,7 @@ func TestUploadFileBadRequestWithNoPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
+	ctx = context.WithValue(ctx, rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
@@ -124,7 +124,7 @@ func TestUploadFileBadRequestWithNoPath(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code, "Status code must be 400 BadRequest")
 
-	var res dto.ErrorResponse
+	var res v1.ErrorResponse
 	err = json.Unmarshal(rr.Body.Bytes(), &res)
 	assert.NoError(t, err)
 
@@ -140,7 +140,7 @@ func TestUploadFileBadRequestWithNoFile(t *testing.T) {
 
 	path := "/folder1"
 	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId}
-	ctr := controller.NewFileServeController(useCase)
+	ctr := handler.NewFileServeHandler(useCase)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -153,7 +153,7 @@ func TestUploadFileBadRequestWithNoFile(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/files", body)
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
+	ctx = context.WithValue(ctx, rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	assert.NoError(t, err)
 
@@ -165,7 +165,7 @@ func TestUploadFileBadRequestWithNoFile(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code, "Status code must be 400 BadRequest")
 
-	var res dto.ErrorResponse
+	var res v1.ErrorResponse
 	err = json.Unmarshal(rr.Body.Bytes(), &res)
 	assert.NoError(t, err)
 
@@ -181,7 +181,7 @@ func TestUploadFileInternalServerError(t *testing.T) {
 
 	path := "/folder1"
 	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId, shouldReturnError: true}
-	ctr := controller.NewFileServeController(useCase)
+	ctr := handler.NewFileServeHandler(useCase)
 
 	tempFile, err := createTempFile()
 	assert.NoError(t, err)
@@ -209,7 +209,7 @@ func TestUploadFileInternalServerError(t *testing.T) {
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, md.UserIdKey, defaultUserId)
+	ctx = context.WithValue(ctx, rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -218,7 +218,7 @@ func TestUploadFileInternalServerError(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code, "Status code must be 500 InternalServerError")
 
-	var res dto.ErrorResponse
+	var res v1.ErrorResponse
 	err = json.Unmarshal(rr.Body.Bytes(), &res)
 	assert.NoError(t, err)
 
@@ -234,7 +234,7 @@ func TestDownloadFileSuccess(t *testing.T) {
 
 	fileId := uuid.NewString()
 	useCase := &fileInfoUseCaseMock{defaultOwnerId: defaultUserId, defaultFileId: fileId}
-	ctr := controller.NewFileServeController(useCase)
+	ctr := handler.NewFileServeHandler(useCase)
 
 	f, err := os.Create(internal.StoragePath() + "/" + fileId)
 	defer os.Remove(internal.StoragePath() + "/" + fileId)
@@ -244,7 +244,7 @@ func TestDownloadFileSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files/%s", fileId), nil)
-	ctx := context.WithValue(req.Context(), md.UserIdKey, defaultUserId)
+	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
