@@ -1,6 +1,6 @@
 version: "3.9"
 services: 
-  auth-service:
+  auth:
     build: auth-service
     ports: 
       - "3001:9000"
@@ -11,7 +11,7 @@ services:
       default:
         aliases:
           - auth-service
-  users-service:
+  users:
     build: users-service
     ports:
       - "3003:9000"
@@ -19,14 +19,14 @@ services:
     env_file:
       - users-service/.env.docker
 
-  file-info-service:
+  file-info:
     build: file-info-service
     ports:
       - "3005:9000"
       - "3006:9090"
     env_file:
       - file-info-service/.env
-  fs-service:
+  fs:
     build: fs-service
     ports:
       - "3007:9090"
