@@ -9,7 +9,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.0
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/murilo-bracero/raspstore-protofiles v1.0.4
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.1
@@ -31,7 +30,9 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
+require github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162256-ecf3deda8c03
+
 require (
 	github.com/montanaflynn/stats v0.7.0 // indirect
-	github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c 
+	github.com/murilo-bracero/raspstore/commons v0.0.0-20230713162647-8cf619728800
 )

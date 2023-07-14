@@ -60,7 +60,7 @@ func (f *fileServeHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	res, err := f.uploadUseCase.Execute(r.Context(), req, file)
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
