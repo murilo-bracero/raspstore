@@ -220,13 +220,6 @@ func TestDownloadFileSuccess(t *testing.T) {
 	useCase := &downloadFileUseCaseMock{}
 	ctr := handler.NewFileServeHandler(nil, useCase)
 
-	f, err := os.Create(internal.StoragePath() + "/" + fileId)
-	defer os.Remove(internal.StoragePath() + "/" + fileId)
-	assert.NoError(t, err)
-
-	_, err = f.WriteString("Test file")
-	assert.NoError(t, err)
-
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files/%s", fileId), nil)
 	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, defaultUserId)
 	req = req.WithContext(ctx)
