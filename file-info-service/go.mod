@@ -8,7 +8,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/murilo-bracero/raspstore-protofiles v1.0.4
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.1
@@ -24,7 +23,7 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.28.1 
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -35,6 +34,8 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
-require github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c
+require github.com/murilo-bracero/raspstore/commons v0.0.0-20230713162647-8cf619728800
 
-require github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3 
+require github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3
+
+require github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162647-8cf619728800

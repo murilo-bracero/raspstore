@@ -1,28 +1,28 @@
-package usecase
+package client
 
 import (
 	"context"
 
-	"github.com/murilo-bracero/raspstore-protofiles/file-info-service/pb"
+	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"raspstore.github.io/fs-service/internal"
 )
 
-type FileInfoUseCase interface {
+type FileInfoService interface {
 	GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error)
 	CreateFileMetadata(req *pb.CreateFileMetadataRequest) (fileMtadata *pb.FileMetadata, err error)
 }
 
-type fileInfoUseCase struct {
+type fileInfoService struct {
 	ctx context.Context
 }
 
-func NewFileInfoUseCase(ctx context.Context) FileInfoUseCase {
-	return &fileInfoUseCase{ctx: ctx}
+func NewFileInfoService(ctx context.Context) FileInfoService {
+	return &fileInfoService{ctx: ctx}
 }
 
-func (f *fileInfoUseCase) GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error) {
+func (f *fileInfoService) GetFileMetadataById(fileId string, userId string) (fileMtadata *pb.FileMetadata, err error) {
 	conn, err := grpc.Dial(internal.FileInfoServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -36,7 +36,7 @@ func (f *fileInfoUseCase) GetFileMetadataById(fileId string, userId string) (fil
 	return client.FindFileMetadataById(f.ctx, &pb.FindFileMetadataByIdRequest{FileId: fileId, RequesterUserId: userId})
 }
 
-func (f *fileInfoUseCase) CreateFileMetadata(req *pb.CreateFileMetadataRequest) (fileMtadata *pb.FileMetadata, err error) {
+func (f *fileInfoService) CreateFileMetadata(req *pb.CreateFileMetadataRequest) (fileMtadata *pb.FileMetadata, err error) {
 	conn, err := grpc.Dial(internal.FileInfoServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {

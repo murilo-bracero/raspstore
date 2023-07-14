@@ -4,11 +4,11 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/repository"
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/model"
-	"raspstore.github.io/auth-service/internal/repository"
 )
 
 type LoginService interface {

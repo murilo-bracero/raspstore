@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/model"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 )
 
 type TokenService interface {

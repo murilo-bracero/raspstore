@@ -1,4 +1,4 @@
-package dto
+package v1
 
 type UploadSuccessResponse struct {
 	FileId   string `json:"fileId,omitempty"`

@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"raspstore.github.io/auth-service/internal/api/handler"
-	"raspstore.github.io/auth-service/internal/api/middleware"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/middleware"
 )
 
 const baseRoute = "/auth-service"

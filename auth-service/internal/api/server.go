@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"raspstore.github.io/auth-service/internal"
-	"raspstore.github.io/auth-service/internal/api/handler"
-	"raspstore.github.io/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
 )
 
 func StartRestServer(ls service.LoginService) {

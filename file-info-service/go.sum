@@ -433,6 +433,7 @@ github.com/go-chi/chi/v5 v5.0.8/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITL
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
+github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/glog v1.0.0/go.mod h1:EWib/APOK0SL3dFbYqvxE3UYd8E6s1ouQ7iEp/0LWV4=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -554,8 +555,12 @@ github.com/montanaflynn/stats v0.7.0 h1:r3y12KyNxj/Sb/iOE46ws+3mS1+MZca1wlHQFPsY
 github.com/montanaflynn/stats v0.7.0/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/murilo-bracero/raspstore-protofiles v1.0.4 h1:nwsls36cmGZU6sT/yE0mN1l27Jlt9/Pkow7ZtRrAbvs=
 github.com/murilo-bracero/raspstore-protofiles v1.0.4/go.mod h1:3mHq5FpOpuELXQqAyjlADx/WphcKAxGYaW92U1spHng=
+github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162647-8cf619728800 h1:Agg5KVPJkSEDS2aoF6/Ztv25OApJkEZdcqOk0MCLu4w=
+github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162647-8cf619728800/go.mod h1:wfdxE5Joij9DLjTbqZ/whGxRkUz70U8Td2VsvuiEI1A=
 github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c h1:lRs5J0x43v+K9mD5Hz20XCbmyf02K2BC2E7yNZFoZ8c=
 github.com/murilo-bracero/raspstore/commons v0.0.0-20230618162505-cc63fb1e3d7c/go.mod h1:O0yb6HraeV21nQZSt3XgMSyHAmNNagdTqS8B83cofis=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230713162647-8cf619728800 h1:HiXqAQYJHdrl87FXS74MWH7r0WFOplfztcJMcxtWMcQ=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230713162647-8cf619728800/go.mod h1:m9JK7hdyQHzBj3QFH8D6UspYT3u4LSJDw1TEL0Hx4to=
 github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3 h1:hQhMKKsHt7TIJ+inI02q6BCaHbsqo64OE3Xm6Ud2ETg=
 github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3/go.mod h1:xGac9sMNdr8zbo1M5kiXC91pZZt1DuoT6g8tVMCkp3s=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
