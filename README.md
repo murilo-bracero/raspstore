@@ -14,43 +14,44 @@ Rasptorage features a built-in user interface for convenient file upload and dow
 
 ## Development Roadmap
 
-- v0.1 (released):
-    - Clean Architecture
-    - User Authentication
-    - Basic user Authorization
-    - Shared File Storage
+- Phase 1:
+    - Clean Architecture ✅
+    - User Authentication ✅
+    - Basic user Authorization ✅
+    - Upload/Download ✅
 
-- v0.2:
-    - Storage metadata
-    - Per-user rates and limites
+- Phase 2:
+    - Storage metadata ✅
+    - Per-user rates and limites ✅
     - Secret Folders
 
-- v0.3:
+- Phase 3:
     - File encryption
     - Self-deleting files
 
-- v0.4:
+- Phase 4:
     - Audit system
     - File sharing between users
 
-- v0.5:
-    - Backup schedules
-    - Auto maintenance windows
+- Phase 5:
     - File integrity support
 
-- v0.6:
+- Phase 6:
     - Web Application
 
-- v0.7:
+- Phase 7:
     - Mobile App
 
-- v0.8:
+- Phase 8:
     - Plugins
 
-- v0.9:
+- Plase 9:
     - Monolith deployment support
     - Desktop installing support
     - IaaC Support
+
+- Phase 10:
+    - official release
 
 ## Software Architecture
 
