@@ -85,7 +85,7 @@ func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMeta
 
 func (f *filesRepository) Delete(userId string, fileId string) error {
 	filter := filterByFileId(fileId)
-	addEditorPermissionFilter(filter, userId)
+	addOwnerPermissionFilter(filter, userId)
 
 	_, err := f.coll.DeleteOne(f.ctx, filter)
 
@@ -178,8 +178,8 @@ func filterByFileId(fileId string) bson.M {
 	return bson.M{"file_id": fileId}
 }
 
-func filterByOwnerId(fileId string) bson.M {
-	return bson.M{"owner_user_id": fileId}
+func filterByOwnerId(userId string) bson.M {
+	return bson.M{"owner_user_id": userId}
 }
 
 func addAnyPermissionFilter(userId string) []bson.M {
@@ -194,6 +194,10 @@ func addAnyPermissionFilter(userId string) []bson.M {
 
 func addEditorPermissionFilter(query bson.M, userId string) {
 	query["editors"] = userId
+}
+
+func addOwnerPermissionFilter(query bson.M, userId string) {
+	query["owner_user_id"] = userId
 }
 
 func facet(contentField []primitive.D, totalCountField []primitive.M) bson.D {
