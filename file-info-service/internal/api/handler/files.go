@@ -90,7 +90,7 @@ func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func buildNextUrl(filesPage *model.FilePage, host string, page int, size int) (nextUrl string) {
 	if len(filesPage.Content) == size {
-		nextUrl = fmt.Sprintf("%s/file-info-service/files?page=%d&size=%d", host, page, size)
+		nextUrl = fmt.Sprintf("%s/file-info-service/files?page=%d&size=%d", host, page+1, size)
 	}
 
 	return
