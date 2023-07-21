@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,7 +40,6 @@ func (f *filesRepository) Save(file *model.File) error {
 	file.UpdatedAt = time.Now()
 
 	if _, err := f.coll.InsertOne(f.ctx, file); err != nil {
-		fmt.Println("could not create file metadata in database ", file, ", with error: ", err.Error())
 		return err
 	}
 
@@ -50,7 +47,16 @@ func (f *filesRepository) Save(file *model.File) error {
 }
 
 func (f *filesRepository) FindById(userId string, fileId string) (file *model.File, err error) {
-	found := f.coll.FindOne(f.ctx, bson.M{"file_id": fileId, "$or": addAnyPermissionFilter(userId)})
+	filter := bson.D{
+		bson.E{Key: "file_id", Value: fileId},
+		bson.E{Key: "$or", Value: bson.A{
+			bson.D{bson.E{Key: "owner_user_id", Value: userId}},
+			bson.D{bson.E{Key: "viewers", Value: userId}},
+			bson.D{bson.E{Key: "editors", Value: userId}},
+		}},
+	}
+
+	found := f.coll.FindOne(f.ctx, filter)
 
 	if found.Err() == mongo.ErrNoDocuments {
 		return nil, internal.ErrFileDoesNotExists
@@ -62,7 +68,11 @@ func (f *filesRepository) FindById(userId string, fileId string) (file *model.Fi
 }
 
 func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error) {
-	match := bson.D{bson.E{Key: "$match", Value: filterByFileId(fileId)}}
+	match := bson.D{
+		bson.E{Key: "$match", Value: bson.D{
+			bson.E{Key: "file_id", Value: fileId},
+		}},
+	}
 
 	pipeline := append([]bson.D{match}, lookupUserFields()...)
 
@@ -84,8 +94,10 @@ func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMeta
 }
 
 func (f *filesRepository) Delete(userId string, fileId string) error {
-	filter := filterByFileId(fileId)
-	addOwnerPermissionFilter(filter, userId)
+	filter := bson.D{
+		bson.E{Key: "file_id", Value: fileId},
+		bson.E{Key: "owner_user_id", Value: userId},
+	}
 
 	_, err := f.coll.DeleteOne(f.ctx, filter)
 
@@ -93,12 +105,14 @@ func (f *filesRepository) Delete(userId string, fileId string) error {
 }
 
 func (f *filesRepository) Update(userId string, file *model.File) error {
-	filter := filterByFileId(file.FileId)
-	addEditorPermissionFilter(filter, userId)
+	filter := bson.D{
+		bson.E{Key: "file_id", Value: file.FileId},
+		bson.E{Key: "editors", Value: userId},
+	}
 
 	update := bson.M{"$set": bson.M{
 		"filename":   file.Filename,
-		"path":       file.Path,
+		"folder":     file.Folder,
 		"editors":    file.Editors,
 		"viewers":    file.Viewers,
 		"updated_at": time.Now(),
@@ -115,17 +129,38 @@ func (f *filesRepository) Update(userId string, file *model.File) error {
 
 func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
 
-	skip := bson.D{bson.E{Key: "$skip", Value: page * size}}
+	contentField := []bson.D{
+		{bson.E{Key: "$skip", Value: page * size}},
+		{bson.E{Key: "$limit", Value: size}},
+	}
 
-	limit := bson.D{bson.E{Key: "$limit", Value: size}}
+	contentField = append(contentField, lookupUserFields()...)
 
-	contentField := append([]bson.D{skip, limit}, lookupUserFields()...)
+	totalCountField := []bson.D{
+		{bson.E{Key: "$group", Value: bson.D{
+			bson.E{Key: "_id", Value: nil},
+			bson.E{Key: "count", Value: bson.D{
+				bson.E{Key: "$sum", Value: 1},
+			}},
+		}}},
+	}
 
-	totalCountField := []bson.M{{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}}}}
+	facet := bson.D{
+		bson.E{Key: "$facet", Value: bson.D{
+			bson.E{Key: "content", Value: contentField},
+			bson.E{Key: "totalCount", Value: totalCountField},
+		}},
+	}
 
 	accessControl := aggregateAccessControl(userId)
-	facet := facet(contentField, totalCountField)
-	project := projectPage()
+
+	project := bson.D{
+		bson.E{Key: "$project", Value: bson.D{
+			bson.E{Key: "content", Value: "$content"},
+			bson.E{Key: "count", Value: bson.D{
+				bson.E{Key: "$arrayElemAt", Value: bson.A{"$totalCount.count", 0}},
+			}}}},
+	}
 
 	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{accessControl, facet, project})
 
@@ -145,9 +180,18 @@ func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage 
 }
 
 func (f *filesRepository) FindUsageByUserId(userId string) (usage int64, err error) {
-	match := bson.D{bson.E{Key: "$match", Value: filterByOwnerId(userId)}}
+	match := bson.D{
+		bson.E{Key: "$match", Value: bson.D{
+			bson.E{Key: "owner_user_id", Value: userId},
+		}},
+	}
 
-	project := groupUserUsage()
+	project := bson.D{
+		primitive.E{Key: "$group", Value: bson.M{
+			"_id":        "$owner_user_id",
+			"totalUsage": bson.M{"$sum": "$size"},
+		}},
+	}
 
 	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{match, project})
 
@@ -166,104 +210,40 @@ func (f *filesRepository) FindUsageByUserId(userId string) (usage int64, err err
 
 		var ok bool
 		if usage, ok = value.Int64OK(); !ok {
-			log.Println("[WARN] Could not convert usage into a valid duble value")
-			return 0, nil
+			return -1, nil
 		}
 	}
 
 	return
 }
 
-func filterByFileId(fileId string) bson.M {
-	return bson.M{"file_id": fileId}
-}
-
-func filterByOwnerId(userId string) bson.M {
-	return bson.M{"owner_user_id": userId}
-}
-
-func addAnyPermissionFilter(userId string) []bson.M {
-	ownerClause := filterByOwnerId(userId)
-
-	viewerClause := bson.M{"viewers": userId}
-
-	editorClause := bson.M{"editors": userId}
-
-	return []bson.M{ownerClause, viewerClause, editorClause}
-}
-
-func addEditorPermissionFilter(query bson.M, userId string) {
-	query["editors"] = userId
-}
-
-func addOwnerPermissionFilter(query bson.M, userId string) {
-	query["owner_user_id"] = userId
-}
-
-func facet(contentField []primitive.D, totalCountField []primitive.M) bson.D {
-	return bson.D{
-		primitive.E{Key: "$facet", Value: bson.D{
-			primitive.E{Key: "content", Value: contentField}, primitive.E{Key: "totalCount", Value: totalCountField},
-		}},
-	}
-}
-
-func groupUserUsage() bson.D {
-	return bson.D{
-		primitive.E{Key: "$group", Value: bson.M{
-			"_id":        "$owner_user_id",
-			"totalUsage": bson.M{"$sum": "$size"},
-		}},
-	}
-}
-
-func projectPage() bson.D {
-	return bson.D{
-		primitive.E{Key: "$project", Value: bson.D{
-			primitive.E{Key: "content", Value: "$content"},
-			primitive.E{Key: "count", Value: bson.D{
-				primitive.E{Key: "$arrayElemAt", Value: []interface{}{"$totalCount.count", 0}}}},
-		}},
-	}
-}
-
 func aggregateAccessControl(userId string) bson.D {
-	orClauses := addAnyPermissionFilter(userId)
-
-	orClause := bson.D{bson.E{Key: "$or", Value: orClauses}}
-
-	return bson.D{bson.E{Key: "$match", Value: orClause}}
+	return bson.D{bson.E{Key: "$match", Value: bson.D{
+		bson.E{Key: "$or", Value: bson.A{
+			bson.D{bson.E{Key: "owner_user_id", Value: userId}},
+			bson.D{bson.E{Key: "viewers", Value: userId}},
+			bson.D{bson.E{Key: "editors", Value: userId}},
+		}}}}}
 }
 
 func lookupUserFields() []bson.D {
-	lookupOwner := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
-		"localField":   "owner_user_id",
-		"foreignField": "user_id",
-		"as":           "owner"}}}
+	return []bson.D{
+		lookup("users", "owner_user_id", "user_id", "owner"),
+		lookup("users", "created_by", "user_id", "created_by"),
+		lookup("users", "updated_by", "user_id", "updated_by"),
+		lookup("users", "viewers", "user_id", "viewers"),
+		lookup("users", "editors", "user_id", "editors"),
+		{bson.E{Key: "$unwind", Value: "$owner"}},
+		{bson.E{Key: "$unwind", Value: "$created_by"}},
+		{bson.E{Key: "$unwind", Value: "$updated_by"}},
+	}
+}
 
-	lookupCreatedBy := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
-		"localField":   "created_by",
-		"foreignField": "user_id",
-		"as":           "created_by"}}}
-
-	lookupUpdatedBy := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
-		"localField":   "updated_by",
-		"foreignField": "user_id",
-		"as":           "updated_by"}}}
-
-	lookupEditors := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
-		"localField":   "editors",
-		"foreignField": "user_id",
-		"as":           "editors"}}}
-
-	lookupViewers := bson.D{bson.E{Key: "$lookup", Value: bson.M{"from": "users",
-		"localField":   "viewers",
-		"foreignField": "user_id",
-		"as":           "viewers"}}}
-
-	unwindOwner := bson.D{bson.E{Key: "$unwind", Value: "$owner"}}
-	unwindCreatedBy := bson.D{bson.E{Key: "$unwind", Value: "$created_by"}}
-	unwindUpdatedBy := bson.D{bson.E{Key: "$unwind", Value: "$updated_by"}}
-
-	return []bson.D{lookupOwner, unwindOwner, lookupCreatedBy, unwindCreatedBy, lookupUpdatedBy, unwindUpdatedBy, lookupEditors, lookupViewers}
+func lookup(from string, lField string, fField string, as string) bson.D {
+	return bson.D{bson.E{Key: "$lookup", Value: bson.D{
+		bson.E{Key: "from", Value: from},
+		bson.E{Key: "localField", Value: lField},
+		bson.E{Key: "foreignField", Value: fField},
+		bson.E{Key: "as", Value: as},
+	}}}
 }

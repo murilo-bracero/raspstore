@@ -2,9 +2,10 @@ package grpc
 
 import (
 	"fmt"
-	"log"
 	"net"
+	"os"
 
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/server"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/usecase"
@@ -16,14 +17,15 @@ import (
 func StartGrpcServer(gfuc usecase.GetFileUseCase, cfuc usecase.CreateFileUseCase) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", internal.GrpcPort()))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Error("failed to listen: %v", err)
+		os.Exit(1)
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterFileInfoServiceServer(grpcServer, server.NewFileInfoService(gfuc, cfuc))
 	reflection.Register(grpcServer)
 
-	log.Printf("File Manager gRPC service running on [::]:%d\n", internal.GrpcPort())
+	logger.Info("File Manager gRPC service running on [::]:%d\n", internal.GrpcPort())
 
 	grpcServer.Serve(lis)
 }

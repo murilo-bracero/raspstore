@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"log"
 
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"github.com/murilo-bracero/raspstore/users-service/proto/v1/users-service/pb"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ func (u *userConfigGrpcService) GetUserConfiguration() (*pb.UserConfiguration, e
 	conn, err := grpc.Dial(internal.UserServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
-		log.Println("[ERROR] Could not stablish connection to user service :", err.Error())
+		logger.Error("Could not stablish connection to user service: %s", err.Error())
 		return nil, err
 	}
 

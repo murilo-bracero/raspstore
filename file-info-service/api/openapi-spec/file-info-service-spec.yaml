@@ -93,9 +93,8 @@ components:
         fileId:
           type: string
           example: 507f1f77bcf86cd799439011
-        path:
-          type: string
-          example: /folder1/folder2/
+        folder:
+          $ref: '#/components/schemas/FolderRepresentation'
         filename:
           type: string
           example: file.txt
@@ -107,7 +106,7 @@ components:
           type: string
           example: 63d14edc2f4ee7bec256515b
           description: |-
-            UserId of the owner of the file. 
+            User representation of the owner of the file. 
             There can exists only one owner per file
         editors:
           type: array
@@ -136,6 +135,15 @@ components:
           format: date
           pattern: YYYY-MM-DD HH:mm:ss
           example: '2022-10-25 19:43:12'
+    FolderRepresentation:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Documents
+        secret:
+          type: boolean
+          example: false
     PageRepresentation:
       type: object
       properties:
@@ -154,9 +162,8 @@ components:
     UpdateFileMetadataRepresentation:
       type: object
       properties:
-        path:
-          type: string
-          example: /folder1/folder2/
+        folder:
+          $ref: '#/components/schemas/FolderRepresentation'
         filename:
           type: string
           example: coolfile.bpm

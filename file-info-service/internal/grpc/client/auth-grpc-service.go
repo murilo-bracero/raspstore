@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	"log"
 
 	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/commons/pkg/service"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"google.golang.org/grpc"
@@ -21,7 +21,7 @@ func (*authGrpcService) Authenticate(token string) (authResponse *pb.Authenticat
 	conn, err := grpc.Dial(internal.AuthServiceUrl(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
-		log.Println("[ERROR] Could not stablish connection to auth service :", err.Error())
+		logger.Error("Could not stablish connection to auth service: %s", err.Error())
 		return nil, err
 	}
 

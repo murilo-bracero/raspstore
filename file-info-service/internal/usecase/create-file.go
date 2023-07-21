@@ -1,8 +1,7 @@
 package usecase
 
 import (
-	"log"
-
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/converter"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/client"
@@ -27,26 +26,26 @@ func (c *createFileUseCase) Execute(file *model.File) (error_ error) {
 	usage, error_ := c.filesRepository.FindUsageByUserId(file.Owner)
 
 	if error_ != nil {
-		log.Printf("[ERROR] Could not find user usage: %s", error_.Error())
+		logger.Error("Could not find user usage: %s", error_.Error())
 		return
 	}
 
 	userConfig, error_ := c.userConfigService.GetUserConfiguration()
 
 	if error_ != nil {
-		log.Printf("[ERROR] Could not get user config: %s", error_.Error())
+		logger.Error("Could not get user config: %s", error_.Error())
 		return
 	}
 
 	available := int64(converter.ToIntBytes(userConfig.StorageLimit)) - usage
 
 	if file.Size > available {
-		log.Printf("[INFO] Could not create file because available storage for user is insufficient: userId=%s, available=%d", file.Owner, available)
+		logger.Info("Could not create file because available storage for user is insufficient: userId=%s, available=%d", file.Owner, available)
 		return internal.ErrNotAvailableSpace
 	}
 
 	if error_ = c.filesRepository.Save(file); error_ != nil {
-		log.Printf("[ERROR] Could not create file: %s", error_.Error())
+		logger.Error("Could not create file: %s", error_.Error())
 		return
 	}
 

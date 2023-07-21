@@ -10,9 +10,12 @@ import (
 
 func ToFile(req *pb.CreateFileMetadataRequest) *model.File {
 	return &model.File{
-		FileId:    uuid.NewString(),
-		Filename:  req.Filename,
-		Path:      req.Path,
+		FileId:   uuid.NewString(),
+		Filename: req.Filename,
+		Folder: model.Folder{
+			Name:     req.Folder.Name,
+			IsSecret: req.Folder.Secret,
+		},
 		Size:      req.Size,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -28,7 +31,10 @@ func ToFileMetadata(file *model.File) *pb.FileMetadata {
 	return &pb.FileMetadata{
 		FileId:   file.FileId,
 		Filename: file.Filename,
-		Path:     file.Path,
-		OwnerId:  file.CreatedBy,
+		Folder: &pb.Folder{
+			Name:   file.Folder.Name,
+			Secret: file.Folder.IsSecret,
+		},
+		OwnerId: file.CreatedBy,
 	}
 }

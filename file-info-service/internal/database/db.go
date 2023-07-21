@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,7 +24,7 @@ func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()))
 
 	if err != nil {
-		log.Fatalln("Could not connect to MongoDB: ", err.Error())
+		logger.Error("Could not connect to MongoDB: %s", err.Error())
 		return nil, err
 	}
 
@@ -36,7 +36,7 @@ func (c *conn) Close(ctx context.Context) {
 	err := c.database.Client().Disconnect(ctx)
 
 	if err != nil {
-		log.Fatalln("Error releasing MongoDB connection: ", err.Error())
+		logger.Error("Error releasing MongoDB connection: %s", err.Error())
 	}
 }
 

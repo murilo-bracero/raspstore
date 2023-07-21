@@ -158,7 +158,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 	assert.NotEmpty(t, res.FileId)
 	assert.NotEmpty(t, res.Filename)
 	assert.NotEmpty(t, res.Owner)
-	assert.NotEmpty(t, res.Path)
+	assert.NotNil(t, res.Folder)
 	assert.NotEqual(t, 0, res.Size)
 }
 
@@ -260,9 +260,12 @@ func createFileMetadataLookup(id string) *model.FileMetadataLookup {
 	}
 
 	return &model.FileMetadataLookup{
-		FileId:    id,
-		Filename:  id,
-		Path:      uuid.NewString() + "/" + id,
+		FileId:   id,
+		Filename: id,
+		Folder: model.Folder{
+			Name:     "/",
+			IsSecret: false,
+		},
 		Size:      int64(rand.Int()),
 		Owner:     model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
 		Editors:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
