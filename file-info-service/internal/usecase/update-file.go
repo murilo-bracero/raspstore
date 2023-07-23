@@ -35,10 +35,16 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *model.File) (file
 
 	logger.Info("[%s]: File with id=%s found", traceId, file.FileId)
 
-	found.Folder = file.Folder
+	found.Secret = file.Secret
 	found.Filename = file.Filename
-	found.Viewers = file.Viewers
-	found.Editors = file.Editors
+
+	if found.Secret {
+		found.Viewers = []string{}
+		found.Editors = []string{}
+	} else {
+		found.Viewers = file.Viewers
+		found.Editors = file.Editors
+	}
 
 	if error_ = c.repo.Update(userId, found); error_ != nil {
 		logger.Error("[%s]: Could not update file with id %s in database: %s", traceId, file.FileId, error_.Error())

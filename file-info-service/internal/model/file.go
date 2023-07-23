@@ -7,8 +7,8 @@ import (
 type File struct {
 	FileId    string `bson:"file_id"`
 	Filename  string
-	Folder    Folder
 	Size      int64
+	Secret    bool   `bson:"is_secret"`
 	Owner     string `bson:"owner_user_id"`
 	Editors   []string
 	Viewers   []string
@@ -18,16 +18,11 @@ type File struct {
 	UpdatedBy string    `bson:"updated_by"`
 }
 
-type Folder struct {
-	Name     string
-	IsSecret bool `bson:"is_secret"`
-}
-
 type FileMetadataLookup struct {
 	FileId    string     `json:"fileId,omitempty" bson:"file_id"`
 	Filename  string     `json:"filename,omitempty"`
-	Folder    Folder     `json:"folder,omitempty"`
 	Size      int64      `json:"size,omitempty"`
+	Secret    bool       `json:"-" bson:"is_secret"`
 	Owner     UserView   `json:"owner,omitempty"`
 	Editors   []UserView `json:"editors"`
 	Viewers   []UserView `json:"viewers"`
@@ -43,6 +38,6 @@ type UserView struct {
 }
 
 type FilePage struct {
-	Content []*File
+	Content []*FileMetadataLookup
 	Count   int
 }

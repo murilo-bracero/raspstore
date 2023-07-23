@@ -18,13 +18,5 @@ func ValidateUpdateFileRequest(req *v1.UpdateFileRequest) error {
 		return internal.ErrFilenameEmpty
 	}
 
-	if req.Folder == (v1.FolderRepresentation{}) {
-		return internal.ErrFolderEmpty
-	}
-
-	if req.Folder.Name == "" {
-		return internal.ErrFolderNameEmpty
-	}
-
 	return nil
 }

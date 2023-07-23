@@ -36,8 +36,12 @@ func NewFilesHandler(listUseCase usecase.ListFilesUseCase, updateUseCase usecase
 func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	filename := r.URL.Query().Get("filename")
+	secretQuery := r.URL.Query().Get("secret")
 
-	filesPage, err := f.listUseCase.Execute(r.Context(), page, size)
+	secret, _ := strconv.ParseBool(secretQuery)
+
+	filesPage, err := f.listUseCase.Execute(r.Context(), page, size, filename, secret)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -66,11 +70,8 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "id")
 
 	file := &model.File{
-		FileId: fileId,
-		Folder: model.Folder{
-			Name:     req.Folder.Name,
-			IsSecret: req.Folder.Secret,
-		},
+		FileId:   fileId,
+		Secret:   req.Secret,
 		Filename: req.Filename,
 		Editors:  req.Editors,
 		Viewers:  req.Viewers,

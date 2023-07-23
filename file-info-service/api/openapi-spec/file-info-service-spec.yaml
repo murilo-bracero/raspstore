@@ -23,11 +23,14 @@ paths:
       description: |- 
         Get all file metadata based on parameters and accessToken provided.
         This can only be done by the logged in user.
+        
+        Secret files will only be sent when the query parameter "secret" is set to true.
       operationId: findAllFileInfoByLoggedUser
       parameters:
         - $ref: '#/components/parameters/PageQueryParameter'
         - $ref: '#/components/parameters/SizeQueryParameter'
         - $ref: '#/components/parameters/FilenameQueryParameter'
+        - $ref: '#/components/parameters/SecretQueryParameter'
       responses:
         '200':
           $ref: '#/components/responses/SuccessFileMetadataListResponse'
@@ -40,7 +43,9 @@ paths:
       summary: Update file metadata
       description: |- 
         Update file metadata. 
-        This action can only be done by the logged in user
+        This action can only be done by the logged in user.
+        
+        If "secret" tag is true, viewers/editors are ignored.
       operationId: updateFileMetadata
       parameters:
         - $ref: '#/components/parameters/FileIdPathParameter'
@@ -54,7 +59,7 @@ paths:
         '404':
           description: file info with provided id not found
         '409':
-          description: file with provided info already exists in this folder
+          description: file with provided info already exists
         '500':
           description: Internal Server Error
     delete:
@@ -63,7 +68,9 @@ paths:
       summary: Delete file
       description: |- 
         Removes file metadata and the file itself from the system.
-        This can only be done by the logged in user and cannot be undone.
+        
+        This can only be done by the logged in user, that should be the owner of
+        the file and cannot be undone.
       operationId: deleteFile
       parameters:
         - $ref: '#/components/parameters/FileIdPathParameter'
@@ -93,8 +100,6 @@ components:
         fileId:
           type: string
           example: 507f1f77bcf86cd799439011
-        folder:
-          $ref: '#/components/schemas/FolderRepresentation'
         filename:
           type: string
           example: file.txt
@@ -102,6 +107,8 @@ components:
           type: number
           format: int64
           example: 1024
+        secret:
+          type: boolean
         owner:
           type: string
           example: 63d14edc2f4ee7bec256515b
@@ -135,15 +142,6 @@ components:
           format: date
           pattern: YYYY-MM-DD HH:mm:ss
           example: '2022-10-25 19:43:12'
-    FolderRepresentation:
-      type: object
-      properties:
-        name:
-          type: string
-          example: Documents
-        secret:
-          type: boolean
-          example: false
     PageRepresentation:
       type: object
       properties:
@@ -162,11 +160,11 @@ components:
     UpdateFileMetadataRepresentation:
       type: object
       properties:
-        folder:
-          $ref: '#/components/schemas/FolderRepresentation'
         filename:
           type: string
           example: coolfile.bpm
+        secret:
+          type: boolean
         editors:
           type: array
           items:
@@ -220,6 +218,11 @@ components:
       schema:
         type: integer
         example: 1
+    SecretQueryParameter:
+      name: secret
+      in: query
+      schema:
+        type: boolean
     FileIdPathParameter:
       name: fileId
       in: path

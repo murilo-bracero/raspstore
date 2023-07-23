@@ -11,7 +11,7 @@ import (
 )
 
 type ListFilesUseCase interface {
-	Execute(ctx context.Context, page int, size int) (filesPage *model.FilePage, error_ error)
+	Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *model.FilePage, error_ error)
 }
 
 const maxListSize = 50
@@ -24,14 +24,14 @@ func NewListFilesUseCase(repo repository.FilesRepository) ListFilesUseCase {
 	return &listFilesUseCase{repo: repo}
 }
 
-func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int) (filesPage *model.FilePage, error_ error) {
+func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *model.FilePage, error_ error) {
 	if size == 0 || size > maxListSize {
 		size = maxListSize
 	}
 
 	userId := ctx.Value(rMiddleware.UserIdKey).(string)
 
-	filesPage, error_ = u.repo.FindAll(userId, page, size)
+	filesPage, error_ = u.repo.FindAll(userId, page, size, filename, secret)
 
 	if error_ != nil {
 		traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)

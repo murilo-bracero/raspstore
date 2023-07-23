@@ -22,7 +22,7 @@ type FilesRepository interface {
 	FindUsageByUserId(userId string) (usage int64, err error)
 	Delete(userId string, fileId string) error
 	Update(userId string, file *model.File) error
-	FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error)
+	FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *model.FilePage, err error)
 }
 
 type filesRepository struct {
@@ -49,11 +49,13 @@ func (f *filesRepository) Save(file *model.File) error {
 func (f *filesRepository) FindById(userId string, fileId string) (file *model.File, err error) {
 	filter := bson.D{
 		bson.E{Key: "file_id", Value: fileId},
-		bson.E{Key: "$or", Value: bson.A{
-			bson.D{bson.E{Key: "owner_user_id", Value: userId}},
-			bson.D{bson.E{Key: "viewers", Value: userId}},
-			bson.D{bson.E{Key: "editors", Value: userId}},
-		}},
+		bson.E{Key: "$or",
+			Value: bson.A{
+				bson.D{bson.E{Key: "owner_user_id", Value: userId}},
+				bson.D{bson.E{Key: "editors", Value: userId}},
+				bson.D{bson.E{Key: "viewers", Value: userId}},
+			},
+		},
 	}
 
 	found := f.coll.FindOne(f.ctx, filter)
@@ -105,14 +107,29 @@ func (f *filesRepository) Delete(userId string, fileId string) error {
 }
 
 func (f *filesRepository) Update(userId string, file *model.File) error {
-	filter := bson.D{
-		bson.E{Key: "file_id", Value: file.FileId},
-		bson.E{Key: "editors", Value: userId},
+
+	var filter bson.D
+
+	if file.Secret {
+		filter = bson.D{
+			bson.E{Key: "file_id", Value: file.FileId},
+			bson.E{Key: "$or",
+				Value: bson.A{
+					bson.D{bson.E{Key: "owner_user_id", Value: userId}},
+					bson.D{bson.E{Key: "editors", Value: userId}},
+				},
+			},
+		}
+	} else {
+		filter = bson.D{
+			bson.E{Key: "file_id", Value: file.FileId},
+			bson.E{Key: "owner_user_id", Value: userId},
+		}
 	}
 
 	update := bson.M{"$set": bson.M{
 		"filename":   file.Filename,
-		"folder":     file.Folder,
+		"is_secret":  file.Secret,
 		"editors":    file.Editors,
 		"viewers":    file.Viewers,
 		"updated_at": time.Now(),
@@ -127,12 +144,28 @@ func (f *filesRepository) Update(userId string, file *model.File) error {
 	return err
 }
 
-func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage *model.FilePage, err error) {
+func (f *filesRepository) FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *model.FilePage, err error) {
+	contentField := []bson.D{}
 
-	contentField := []bson.D{
-		{bson.E{Key: "$skip", Value: page * size}},
-		{bson.E{Key: "$limit", Value: size}},
+	if filename != "" {
+		contentField = append(contentField, bson.D{bson.E{Key: "$match", Value: bson.D{
+			bson.E{Key: "filename", Value: bson.D{
+				bson.E{Key: "$regex", Value: filename},
+			}},
+		}}})
 	}
+
+	var accessControl bson.D
+	if secret {
+		accessControl = bson.D{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "owner_user_id", Value: userId}}}}
+		contentField = append(contentField, bson.D{bson.E{Key: "$match", Value: bson.D{
+			bson.E{Key: "is_secret", Value: true},
+		}}})
+	} else {
+		accessControl = aggregateAccessControl(userId)
+	}
+
+	contentField = append(contentField, bson.D{bson.E{Key: "$skip", Value: page * size}}, bson.D{bson.E{Key: "$limit", Value: size}})
 
 	contentField = append(contentField, lookupUserFields()...)
 
@@ -151,8 +184,6 @@ func (f *filesRepository) FindAll(userId string, page int, size int) (filesPage 
 			bson.E{Key: "totalCount", Value: totalCountField},
 		}},
 	}
-
-	accessControl := aggregateAccessControl(userId)
 
 	project := bson.D{
 		bson.E{Key: "$project", Value: bson.D{

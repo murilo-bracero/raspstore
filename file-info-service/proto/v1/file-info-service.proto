@@ -8,19 +8,13 @@ message FileMetadata {
     string fileId = 1;
     string filename = 2;
     string ownerId = 3;
-    Folder folder = 4;
-}
-
-message Folder {
-    string name = 1;
-    bool secret = 2;
 }
 
 message CreateFileMetadataRequest {
     string ownerId = 1;
     string filename = 2;
     int64 size = 3;
-    Folder folder = 4;
+    bool secret = 4;
 }
 
 message FindFileMetadataByIdRequest {

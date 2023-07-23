@@ -25,10 +25,7 @@ func TestCreateFileMetadataSuccess(t *testing.T) {
 	res, err := svc.CreateFileMetadata(ctx, &pb.CreateFileMetadataRequest{
 		OwnerId:  uuid.NewString(),
 		Filename: filename,
-		Folder: &pb.Folder{
-			Name: "/",
-		},
-		Size: 3214,
+		Size:     3214,
 	})
 
 	assert.NoError(t, err)
@@ -36,7 +33,6 @@ func TestCreateFileMetadataSuccess(t *testing.T) {
 	assert.NotEmpty(t, res.FileId)
 	assert.Equal(t, filename, res.Filename)
 	assert.NotEmpty(t, res.OwnerId)
-	assert.NotEmpty(t, res.Folder)
 }
 
 func TestCreateFileMetadataFail(t *testing.T) {
@@ -49,9 +45,6 @@ func TestCreateFileMetadataFail(t *testing.T) {
 	_, err := svc.CreateFileMetadata(ctx, &pb.CreateFileMetadataRequest{
 		OwnerId:  uuid.NewString(),
 		Filename: filename,
-		Folder: &pb.Folder{
-			Name: "/",
-		},
 	})
 
 	assert.Error(t, err)
@@ -73,7 +66,6 @@ func TestFindFileMetadataByIdSuccess(t *testing.T) {
 	assert.Equal(t, id, res.FileId)
 	assert.NotEmpty(t, res.Filename)
 	assert.NotEmpty(t, res.OwnerId)
-	assert.NotEmpty(t, res.Folder)
 }
 
 func TestFindFileMetadataByIdFail(t *testing.T) {
@@ -112,12 +104,8 @@ func (f *getFileUseCaseMock) Execute(userId string, fileId string) (file *model.
 	}
 
 	return &model.File{
-		FileId:   fileId,
-		Filename: fileId,
-		Folder: model.Folder{
-			Name:     "/",
-			IsSecret: false,
-		},
+		FileId:    fileId,
+		Filename:  fileId,
 		Size:      int64(rand.Int()),
 		UpdatedAt: time.Now(),
 		CreatedBy: uuid.NewString(),
