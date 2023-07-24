@@ -23,7 +23,7 @@ Rasptorage features a built-in user interface for convenient file upload and dow
 - Phase 2:
     - Storage metadata ✅
     - Per-user rates and limites ✅
-    - Secret Folders
+    - Secret Files ✅
 
 - Phase 3:
     - File encryption
