@@ -15,7 +15,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
-	api "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal"
 	apiHandler "github.com/murilo-bracero/raspstore/file-info-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
@@ -114,13 +113,6 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-
-	var errRes api.ErrorResponse
-	json.Unmarshal(rr.Body.Bytes(), &errRes)
-
-	assert.NotEmpty(t, errRes.Code)
-	assert.NotEmpty(t, errRes.Message)
-	assert.Equal(t, "test-trace-id", errRes.TraceId)
 }
 
 func TestUpdateFileSuccess(t *testing.T) {
@@ -128,9 +120,12 @@ func TestUpdateFileSuccess(t *testing.T) {
 	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
-	reqBody := []byte(fmt.Sprintf(`{
-		"filename": "%s"
-	  }`, random))
+	reqBody := []byte(`{
+		"filename": "now_its_secret.docx",
+		  "secret": true, 
+		  "viewers": ["c74d7720-0026-4466-b59f-d1b4a7f6886f"],
+		  "editors": []
+	  }`)
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, "random-uuid")
@@ -158,7 +153,6 @@ func TestUpdateFileSuccess(t *testing.T) {
 	assert.NotEmpty(t, res.FileId)
 	assert.NotEmpty(t, res.Filename)
 	assert.NotEmpty(t, res.Owner)
-	assert.NotEmpty(t, res.Path)
 	assert.NotEqual(t, 0, res.Size)
 }
 
@@ -167,9 +161,12 @@ func TestUpdateFileNotFound(t *testing.T) {
 	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
-	reqBody := []byte(fmt.Sprintf(`{
-		"filename": "%s"
-	  }`, random))
+	reqBody := []byte(`{
+		"filename": "now_its_secret.docx",
+		  "secret": true, 
+		  "viewers": ["c74d7720-0026-4466-b59f-d1b4a7f6886f"],
+		  "editors": []
+	  }`)
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
@@ -189,9 +186,12 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
 
 	random := uuid.NewString()
-	reqBody := []byte(fmt.Sprintf(`{
-		"filename": "%s"
-	  }`, random))
+	reqBody := []byte(`{
+			"filename": "now_its_secret.docx",
+			"secret": true, 
+			"viewers": ["c74d7720-0026-4466-b59f-d1b4a7f6886f"],
+			"editors": []
+	  }`)
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
@@ -204,12 +204,6 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-	var errRes api.ErrorResponse
-	json.Unmarshal(rr.Body.Bytes(), &errRes)
-
-	assert.NotEmpty(t, errRes.Code)
-	assert.NotEmpty(t, errRes.Message)
-	assert.Equal(t, "test-trace-id", errRes.TraceId)
 }
 
 type deleteUseCaseMock struct {
@@ -228,12 +222,15 @@ type listUseCaseMock struct {
 	shouldThrowError bool
 }
 
-func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int) (filesPage *model.FilePage, error_ error) {
+func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *model.FilePage, error_ error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}
 
-	return
+	return &model.FilePage{
+		Content: []*model.FileMetadataLookup{},
+		Count:   0,
+	}, nil
 }
 
 type updateUseCaseMock struct {
@@ -262,7 +259,6 @@ func createFileMetadataLookup(id string) *model.FileMetadataLookup {
 	return &model.FileMetadataLookup{
 		FileId:    id,
 		Filename:  id,
-		Path:      uuid.NewString() + "/" + id,
 		Size:      int64(rand.Int()),
 		Owner:     model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
 		Editors:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},

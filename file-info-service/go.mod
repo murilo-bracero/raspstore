@@ -15,7 +15,7 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.mongodb.org/mongo-driver v1.11.1
+	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/net v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
@@ -34,8 +34,8 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
-require github.com/murilo-bracero/raspstore/commons v0.0.0-20230713162647-8cf619728800
+require github.com/murilo-bracero/raspstore/commons v0.0.0-20230720141651-75f902fbdca2
 
-require github.com/murilo-bracero/raspstore/users-service v0.0.0-20230712143911-f4e25a2262e3
+require github.com/murilo-bracero/raspstore/users-service v0.0.0-20230719135629-c7413e9309ed
 
-require github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162647-8cf619728800
+require github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230719135629-c7413e9309ed

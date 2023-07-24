@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
+	"os"
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/api"
 	db "github.com/murilo-bracero/raspstore/file-info-service/internal/database"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc"
@@ -18,13 +19,14 @@ func main() {
 	ctx := context.Background()
 
 	if err := godotenv.Load(); err != nil {
-		log.Println("Could not load .env file. Using system variables instead")
+		logger.Warn("Could not load .env file. Using system variables instead")
 	}
 
 	conn, err := db.NewMongoConnection(context.Background())
 
 	if err != nil {
-		log.Panicln(err)
+		logger.Error(err.Error())
+		os.Exit(1)
 	}
 
 	defer conn.Close(context.Background())
@@ -38,7 +40,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	wg.Add(2)
-	log.Println("[INFO] Bootstraping servers")
+	logger.Info("Bootstraping servers")
 	go grpc.StartGrpcServer(useCases.GetFileUseCase, useCases.CreateFileUseCase)
 	go api.StartApiServer(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase)
 	wg.Wait()

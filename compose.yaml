@@ -25,7 +25,7 @@ services:
       - "3005:9000"
       - "3006:9090"
     env_file:
-      - file-info-service/.env
+      - file-info-service/.env.docker
   fs:
     build: fs-service
     ports:

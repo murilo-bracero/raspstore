@@ -12,8 +12,8 @@ func ToFile(req *pb.CreateFileMetadataRequest) *model.File {
 	return &model.File{
 		FileId:    uuid.NewString(),
 		Filename:  req.Filename,
-		Path:      req.Path,
 		Size:      req.Size,
+		Secret:    req.Secret,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Viewers:   []string{},
@@ -28,7 +28,6 @@ func ToFileMetadata(file *model.File) *pb.FileMetadata {
 	return &pb.FileMetadata{
 		FileId:   file.FileId,
 		Filename: file.Filename,
-		Path:     file.Path,
 		OwnerId:  file.CreatedBy,
 	}
 }

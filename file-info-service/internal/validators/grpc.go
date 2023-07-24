@@ -14,10 +14,6 @@ func ValidateCreateFileMetadataRequest(req *pb.CreateFileMetadataRequest) error 
 		return internal.ErrOwnerIdEmpty
 	}
 
-	if req.Path == "" {
-		return internal.ErrPathEmpty
-	}
-
 	if req.Size <= 0 {
 		return internal.ErrInvalidSize
 	}

@@ -1,6 +1,6 @@
 module github.com/murilo-bracero/raspstore/commons
 
-go 1.17
+go 1.18
 
 require github.com/murilo-bracero/raspstore/auth-service v0.0.0-20230713162256-ecf3deda8c03
 

@@ -7,15 +7,14 @@ package pb;
 message FileMetadata {
     string fileId = 1;
     string filename = 2;
-    string path = 3;
-    string ownerId = 4;
+    string ownerId = 3;
 }
 
 message CreateFileMetadataRequest {
     string ownerId = 1;
     string filename = 2;
     int64 size = 3;
-    string path = 4;
+    bool secret = 4;
 }
 
 message FindFileMetadataByIdRequest {
