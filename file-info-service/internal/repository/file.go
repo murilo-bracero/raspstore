@@ -169,19 +169,19 @@ func (f *filesRepository) FindAll(userId string, page int, size int, filename st
 
 	contentField = append(contentField, lookupUserFields()...)
 
-	totalCountField := []bson.D{
-		{bson.E{Key: "$group", Value: bson.D{
+	totalCountField := bson.D{
+		bson.E{Key: "$group", Value: bson.D{
 			bson.E{Key: "_id", Value: nil},
 			bson.E{Key: "count", Value: bson.D{
 				bson.E{Key: "$sum", Value: 1},
 			}},
-		}}},
+		}},
 	}
 
 	facet := bson.D{
 		bson.E{Key: "$facet", Value: bson.D{
 			bson.E{Key: "content", Value: contentField},
-			bson.E{Key: "totalCount", Value: totalCountField},
+			bson.E{Key: "totalCount", Value: bson.A{totalCountField}},
 		}},
 	}
 

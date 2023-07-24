@@ -25,7 +25,7 @@ func StartGrpcServer(gfuc usecase.GetFileUseCase, cfuc usecase.CreateFileUseCase
 	pb.RegisterFileInfoServiceServer(grpcServer, server.NewFileInfoService(gfuc, cfuc))
 	reflection.Register(grpcServer)
 
-	logger.Info("File Manager gRPC service running on [::]:%d\n", internal.GrpcPort())
+	logger.Info("File Manager gRPC service running on:%d\n", internal.GrpcPort())
 
 	grpcServer.Serve(lis)
 }
