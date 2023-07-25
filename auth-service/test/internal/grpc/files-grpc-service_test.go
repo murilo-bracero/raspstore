@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/grpc"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,14 +25,14 @@ func init() {
 
 func TestAuthenticateSuccess(t *testing.T) {
 	ctx := context.Background()
-	as, tm := bootstrap(ctx)
+	as := grpc.NewAuthService()
 
 	user := &model.User{
 		UserId:      uuid.NewString(),
 		Permissions: []string{},
 	}
 
-	token, err := tm.Generate(user)
+	token, err := token.Generate(user)
 
 	assert.NoError(t, err)
 
@@ -48,7 +48,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 
 func TestAuthenticateFailWithInvalidToken(t *testing.T) {
 	ctx := context.Background()
-	as, _ := bootstrap(ctx)
+	as := grpc.NewAuthService()
 
 	token := "testffailtokeninvalid"
 
@@ -61,7 +61,7 @@ func TestAuthenticateFailWithInvalidToken(t *testing.T) {
 
 func TestAuthenticateFailWithEmptyToken(t *testing.T) {
 	ctx := context.Background()
-	as, _ := bootstrap(ctx)
+	as := grpc.NewAuthService()
 
 	tokenReq := &pb.AuthenticateRequest{Token: ""}
 
@@ -72,16 +72,11 @@ func TestAuthenticateFailWithEmptyToken(t *testing.T) {
 
 func TestAuthenticateFailWithInsufficientParts(t *testing.T) {
 	ctx := context.Background()
-	as, _ := bootstrap(ctx)
+	as := grpc.NewAuthService()
 
 	tokenReq := &pb.AuthenticateRequest{Token: "Bearer "}
 
 	_, err := as.Authenticate(ctx, tokenReq)
 
 	assert.Error(t, err)
-}
-
-func bootstrap(ctx context.Context) (pb.AuthServiceServer, service.TokenService) {
-	ts := service.NewTokenService()
-	return grpc.NewAuthService(ts), ts
 }

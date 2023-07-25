@@ -1,4 +1,4 @@
-.env
-.air.toml
+.env*
+.air.*
 tmp/
 .vscode

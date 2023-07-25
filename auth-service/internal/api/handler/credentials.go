@@ -1,14 +1,13 @@
 package handler
 
 import (
-	"encoding/json"
-	"io"
-	"log"
 	"net/http"
+	"time"
 
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
 	u "github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
+	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
 
 type CredentialsHandler interface {
@@ -16,23 +15,15 @@ type CredentialsHandler interface {
 }
 
 type credsHandler struct {
-	loginService service.LoginService
+	loginUseCase usecase.LoginUseCase
 }
 
-func NewCredentialsHandler(ls service.LoginService) CredentialsHandler {
-	return &credsHandler{loginService: ls}
+func NewCredentialsHandler(loginUseCase usecase.LoginUseCase) CredentialsHandler {
+	return &credsHandler{loginUseCase: loginUseCase}
 }
 
 func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var lr v1.LoginRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&lr); err != nil && err != io.EOF {
-		w.WriteHeader(http.StatusInternalServerError)
-		u.Send(w, nil)
-		return
-	}
-
-	log.Printf("[INFO] Extracting credentials from header")
+	logger.Info("Extracting credentials from header")
 
 	username, password, ok := r.BasicAuth()
 
@@ -41,16 +32,46 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[INFO] Credentials extracted successfully")
+	logger.Info("Credentials extracted successfully")
 
-	if accessToken, refreshToken, err := c.loginService.AuthenticateCredentials(username, password, lr.MfaToken); err != nil {
-		log.Printf("[ERROR] Error while authenticating user: %s", err.Error())
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	responseType := r.PostForm.Get("response_type")
+
+	tokenCredentials, err := c.loginUseCase.AuthenticateCredentials(username, password, "")
+
+	if err != nil {
+		logger.Error("Error while authenticating user: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
-	} else {
+	}
+
+	if responseType == "code" {
 		u.Send(w, v1.LoginResponse{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
+			AccessToken:  tokenCredentials.AccessToken,
+			RefreshToken: tokenCredentials.RefreshToken,
 		})
+		return
+	}
+
+	if responseType == "token" {
+		accessTokenCookie := createToken("access_token", tokenCredentials.AccessToken, tokenCredentials.ExpirestAt)
+		http.SetCookie(w, accessTokenCookie)
+
+		refreshTokenCookie := createToken("refresh_token", tokenCredentials.RefreshToken, time.Time{})
+		http.SetCookie(w, refreshTokenCookie)
+	}
+}
+
+func createToken(name string, value string, expiresAt time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Expires:  expiresAt,
+		Secure:   true,
+		HttpOnly: true,
 	}
 }

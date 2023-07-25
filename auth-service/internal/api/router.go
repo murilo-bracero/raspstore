@@ -7,8 +7,8 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/middleware"
 )
 
-const baseRoute = "/auth-service"
-const loginRoute = baseRoute + "/login"
+const baseRoute = "/idp"
+const loginRoute = baseRoute + "/v1/login"
 
 type CredentialsRouter interface {
 	MountRoutes() *chi.Mux

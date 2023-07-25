@@ -9,12 +9,12 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9000/auth-service/
+  - url: http://localhost:9000/idp/
 tags:
   - name: auth
     description: Operations about authentication
 paths:
-  /login:
+  /v1/login:
     post:
       security:
         - loginAuth: []
@@ -37,7 +37,7 @@ paths:
         '500':
           description: Internal Server Error
   
-  /refresh:
+  /v1/refresh:
     get:
       security:
         - cookieRefreshToken: []

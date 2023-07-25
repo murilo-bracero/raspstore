@@ -10,7 +10,7 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/database"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/grpc"
 	rp "github.com/murilo-bracero/raspstore/auth-service/internal/repository"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/service"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
 
 func main() {
@@ -24,15 +24,13 @@ func main() {
 
 	userRepository := initRepos(conn)
 
-	tokenService := service.NewTokenService()
-
-	loginService := service.NewLoginService(tokenService, userRepository)
+	loginService := usecase.NewLoginUseCase(userRepository)
 
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	log.Println("bootstraping servers")
-	go grpc.StartGrpcServer(tokenService)
+	go grpc.StartGrpcServer()
 	go api.StartRestServer(loginService)
 	wg.Wait()
 }

@@ -9,11 +9,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/joho/godotenv"
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +28,7 @@ func init() {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	ctr := handler.NewCredentialsHandler(&mockLoginService{})
+	ctr := handler.NewCredentialsHandler(&mockLoginUseCase{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
@@ -54,7 +56,7 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginFail(t *testing.T) {
-	ctr := handler.NewCredentialsHandler(&mockLoginService{})
+	ctr := handler.NewCredentialsHandler(&mockLoginUseCase{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
@@ -78,12 +80,16 @@ func basic(username string, password string) string {
 	return base64.StdEncoding.EncodeToString([]byte(header))
 }
 
-type mockLoginService struct{}
+type mockLoginUseCase struct{}
 
-func (m *mockLoginService) AuthenticateCredentials(username string, rawPassword string, mfaToken string) (accessToken string, refreshToken string, err error) {
+func (m *mockLoginUseCase) AuthenticateCredentials(username string, rawPassword string, mfaToken string) (tokenCredentials *model.TokenCredentials, err error) {
 	if strings.HasSuffix(username, "_ok") {
-		return "mock_access_token", "mock_refresh_token", nil
+		return &model.TokenCredentials{
+			AccessToken:  "mock_access_token",
+			RefreshToken: "mock_refresh_token",
+			ExpirestAt:   time.Now().Add(24 * time.Hour),
+		}, nil
 	}
 
-	return "", "", internal.ErrIncorrectCredentials
+	return nil, internal.ErrIncorrectCredentials
 }

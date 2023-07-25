@@ -3,7 +3,6 @@ module github.com/murilo-bracero/raspstore/auth-service
 go 1.17
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.4.0
@@ -15,6 +14,8 @@ require (
 	google.golang.org/protobuf v1.28.1
 )
 
+require github.com/golang-jwt/jwt/v4 v4.5.0
+
 require (
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/murilo-bracero/raspstore/commons v0.0.0-20230724131118-18a79c2a97f3
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
