@@ -10,19 +10,19 @@ import (
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
 
-type CredentialsHandler interface {
+type LoginHandler interface {
 	Login(w http.ResponseWriter, r *http.Request)
 }
 
-type credsHandler struct {
+type loginHandler struct {
 	loginUseCase usecase.LoginUseCase
 }
 
-func NewCredentialsHandler(loginUseCase usecase.LoginUseCase) CredentialsHandler {
-	return &credsHandler{loginUseCase: loginUseCase}
+func NewLoginHandler(loginUseCase usecase.LoginUseCase) LoginHandler {
+	return &loginHandler{loginUseCase: loginUseCase}
 }
 
-func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (c *loginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Extracting credentials from header")
 
 	username, password, ok := r.BasicAuth()
@@ -58,15 +58,15 @@ func (c *credsHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if responseType == "token" {
-		accessTokenCookie := createToken("access_token", tokenCredentials.AccessToken, tokenCredentials.ExpirestAt)
+		accessTokenCookie := createCookie("access_token", "Bearer "+tokenCredentials.AccessToken, tokenCredentials.ExpirestAt)
 		http.SetCookie(w, accessTokenCookie)
 
-		refreshTokenCookie := createToken("refresh_token", tokenCredentials.RefreshToken, time.Time{})
+		refreshTokenCookie := createCookie("refresh_token", tokenCredentials.RefreshToken, time.Time{})
 		http.SetCookie(w, refreshTokenCookie)
 	}
 }
 
-func createToken(name string, value string, expiresAt time.Time) *http.Cookie {
+func createCookie(name string, value string, expiresAt time.Time) *http.Cookie {
 	return &http.Cookie{
 		Name:     name,
 		Value:    value,

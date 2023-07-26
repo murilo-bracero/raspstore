@@ -9,17 +9,19 @@ import (
 
 const baseRoute = "/idp"
 const loginRoute = baseRoute + "/v1/login"
+const profileRoute = baseRoute + "/v1/profile"
 
 type CredentialsRouter interface {
 	MountRoutes() *chi.Mux
 }
 
 type credentialsRouter struct {
-	credentialsHandler handler.CredentialsHandler
+	loginHandler   handler.LoginHandler
+	profileHandler handler.ProfileHandler
 }
 
-func NewRoutes(h handler.CredentialsHandler) CredentialsRouter {
-	return &credentialsRouter{credentialsHandler: h}
+func NewRoutes(lh handler.LoginHandler, ph handler.ProfileHandler) CredentialsRouter {
+	return &credentialsRouter{loginHandler: lh, profileHandler: ph}
 }
 
 func (cr *credentialsRouter) MountRoutes() *chi.Mux {
@@ -31,7 +33,11 @@ func (cr *credentialsRouter) MountRoutes() *chi.Mux {
 	router.Use(chiMiddleware.Logger)
 
 	router.Route(loginRoute, func(r chi.Router) {
-		r.Post("/", cr.credentialsHandler.Login)
+		r.Post("/", cr.loginHandler.Login)
+	})
+
+	router.Route(profileRoute, func(r chi.Router) {
+		r.Get("/", cr.profileHandler.GetProfile)
 	})
 
 	return router

@@ -28,7 +28,7 @@ func init() {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	ctr := handler.NewCredentialsHandler(&mockLoginUseCase{})
+	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
@@ -56,7 +56,7 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginFail(t *testing.T) {
-	ctr := handler.NewCredentialsHandler(&mockLoginUseCase{})
+	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
 	reqBody := []byte(`{"mfaToken": ""}`)
 	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))

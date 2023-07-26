@@ -15,6 +15,7 @@ const usersCollectionName = "users"
 type UsersRepository interface {
 	Update(usr *model.User) error
 	FindByUsername(username string) (usr *model.User, err error)
+	FindByUserId(userId string) (user *model.User, err error)
 }
 
 type usersRespository struct {
@@ -24,6 +25,13 @@ type usersRespository struct {
 
 func NewUsersRepository(ctx context.Context, conn database.MongoConnection) UsersRepository {
 	return &usersRespository{coll: conn.Collection(usersCollectionName), ctx: ctx}
+}
+
+func (r *usersRespository) FindByUserId(userId string) (user *model.User, err error) {
+	res := r.coll.FindOne(r.ctx, bson.D{{Key: "user_id", Value: userId}})
+
+	err = res.Decode(&user)
+	return
 }
 
 func (r *usersRespository) FindByUsername(username string) (usr *model.User, err error) {

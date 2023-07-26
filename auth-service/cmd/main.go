@@ -31,7 +31,7 @@ func main() {
 	wg.Add(2)
 	log.Println("bootstraping servers")
 	go grpc.StartGrpcServer()
-	go api.StartRestServer(loginService)
+	go api.StartRestServer(loginService, userRepository)
 	wg.Wait()
 }
 
