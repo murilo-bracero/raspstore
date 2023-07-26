@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -27,15 +28,16 @@ func init() {
 	}
 }
 
-func TestLoginSuccess(t *testing.T) {
+func TestLoginSuccessWithCodeResponseType(t *testing.T) {
 	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
-	reqBody := []byte(`{"mfaToken": ""}`)
-	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
+	data := url.Values{}
+	data.Set("response_type", "code")
+	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBufferString(data.Encode()))
 
 	assert.NoError(t, err)
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", "Basic "+basic("testuser_ok", "testpassword"))
 
 	rr := httptest.NewRecorder()
@@ -55,15 +57,45 @@ func TestLoginSuccess(t *testing.T) {
 	assert.NotEmpty(t, res.RefreshToken)
 }
 
-func TestLoginFail(t *testing.T) {
+func TestLoginSuccessWithTokenResponseType(t *testing.T) {
 	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
-	reqBody := []byte(`{"mfaToken": ""}`)
-	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBuffer(reqBody))
+	data := url.Values{}
+	data.Set("response_type", "token")
+	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBufferString(data.Encode()))
 
 	assert.NoError(t, err)
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Basic "+basic("testuser_ok", "testpassword"))
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(ctr.Login)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	accessTokenCookie := findCookieByName(rr.Result().Cookies(), "access_token")
+	assert.NotNil(t, accessTokenCookie)
+
+	refreshTokenCookie := findCookieByName(rr.Result().Cookies(), "refresh_token")
+	assert.NotNil(t, refreshTokenCookie)
+
+	assert.NotEmpty(t, accessTokenCookie)
+	assert.NotEmpty(t, refreshTokenCookie)
+}
+
+func TestLoginFail(t *testing.T) {
+	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
+
+	data := url.Values{}
+	data.Set("response_type", "code")
+	req, err := http.NewRequest("POST", "/auth-service/login", bytes.NewBufferString(data.Encode()))
+
+	assert.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", "Basic "+basic("testuser", "testpassword"))
 
 	rr := httptest.NewRecorder()
@@ -78,6 +110,16 @@ func basic(username string, password string) string {
 	header := username + ":" + password
 
 	return base64.StdEncoding.EncodeToString([]byte(header))
+}
+
+func findCookieByName(cookies []*http.Cookie, name string) *http.Cookie {
+	for _, cookie := range cookies {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+
+	return nil
 }
 
 type mockLoginUseCase struct{}

@@ -7,14 +7,13 @@ import (
 
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/repository"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
 
-func StartRestServer(ls usecase.LoginUseCase, ur repository.UsersRepository) {
+func StartRestServer(ls usecase.LoginUseCase, puc usecase.GetProfileUseCase) {
 	loginHandler := handler.NewLoginHandler(ls)
 
-	profileHandler := handler.NewProfileHandler(ur)
+	profileHandler := handler.NewProfileHandler(puc)
 
 	router := NewRoutes(loginHandler, profileHandler).MountRoutes()
 	http.Handle("/", router)

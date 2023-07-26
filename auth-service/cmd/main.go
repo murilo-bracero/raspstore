@@ -24,14 +24,15 @@ func main() {
 
 	userRepository := initRepos(conn)
 
-	loginService := usecase.NewLoginUseCase(userRepository)
+	loginUseCase := usecase.NewLoginUseCase(userRepository)
+	getProfileUseCase := usecase.NewGetProfileUseCase(userRepository)
 
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	log.Println("bootstraping servers")
 	go grpc.StartGrpcServer()
-	go api.StartRestServer(loginService, userRepository)
+	go api.StartRestServer(loginUseCase, getProfileUseCase)
 	wg.Wait()
 }
 

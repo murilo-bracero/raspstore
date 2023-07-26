@@ -4,14 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	u "github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/converter"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/repository"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
 
 type ProfileHandler interface {
@@ -19,16 +17,14 @@ type ProfileHandler interface {
 }
 
 type profileHandler struct {
-	userRepository repository.UsersRepository
+	profileUseCase usecase.GetProfileUseCase
 }
 
-func NewProfileHandler(userRepository repository.UsersRepository) ProfileHandler {
-	return &profileHandler{userRepository: userRepository}
+func NewProfileHandler(profileUseCase usecase.GetProfileUseCase) ProfileHandler {
+	return &profileHandler{profileUseCase: profileUseCase}
 }
 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	traceId := r.Context().Value(middleware.RequestIDKey).(string)
-
 	claims, err := getClaimsForRequest(r)
 
 	if err != nil {
@@ -36,10 +32,9 @@ func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepository.FindByUserId(claims.Subject)
+	user, err := h.profileUseCase.Execute(r.Context(), claims.Subject)
 
 	if err != nil {
-		logger.Error("[%s] Could not search for user: userId=%s : %s", traceId, claims.Subject, err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
