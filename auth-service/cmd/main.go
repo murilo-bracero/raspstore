@@ -25,7 +25,7 @@ func main() {
 	userRepository := initRepos(conn)
 
 	loginUseCase := usecase.NewLoginUseCase(userRepository)
-	getProfileUseCase := usecase.NewGetProfileUseCase(userRepository)
+	getProfileUseCase := usecase.NewGetUserUseCase(userRepository)
 
 	var wg sync.WaitGroup
 

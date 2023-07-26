@@ -17,11 +17,11 @@ type ProfileHandler interface {
 }
 
 type profileHandler struct {
-	profileUseCase usecase.GetProfileUseCase
+	getProfileUseCase usecase.GetUserUseCase
 }
 
-func NewProfileHandler(profileUseCase usecase.GetProfileUseCase) ProfileHandler {
-	return &profileHandler{profileUseCase: profileUseCase}
+func NewProfileHandler(profileUseCase usecase.GetUserUseCase) ProfileHandler {
+	return &profileHandler{getProfileUseCase: profileUseCase}
 }
 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.profileUseCase.Execute(r.Context(), claims.Subject)
+	user, err := h.getProfileUseCase.Execute(r.Context(), claims.Subject)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

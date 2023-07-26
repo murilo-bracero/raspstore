@@ -10,7 +10,7 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
 
-func StartRestServer(ls usecase.LoginUseCase, puc usecase.GetProfileUseCase) {
+func StartRestServer(ls usecase.LoginUseCase, puc usecase.GetUserUseCase) {
 	loginHandler := handler.NewLoginHandler(ls)
 
 	profileHandler := handler.NewProfileHandler(puc)

@@ -9,7 +9,7 @@ import (
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
 
-type GetProfileUseCase interface {
+type GetUserUseCase interface {
 	Execute(ctx context.Context, userId string) (user *model.User, error_ error)
 }
 
@@ -17,7 +17,7 @@ type getProfileUseCase struct {
 	userRepository repository.UsersRepository
 }
 
-func NewGetProfileUseCase(userRepository repository.UsersRepository) GetProfileUseCase {
+func NewGetUserUseCase(userRepository repository.UsersRepository) GetUserUseCase {
 	return &getProfileUseCase{userRepository: userRepository}
 }
 
