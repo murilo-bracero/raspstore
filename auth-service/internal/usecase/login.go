@@ -33,6 +33,10 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 		return nil, err
 	}
 
+	if !usr.IsEnabled {
+		return nil, internal.ErrInactiveAccount
+	}
+
 	if !isValidPassword(rawPassword, usr.Password) {
 		return nil, internal.ErrIncorrectCredentials
 	}

@@ -27,11 +27,6 @@ func (u *updateUserUseCase) Execute(ctx context.Context, user *model.User) error
 
 	found, err := u.userRepository.FindByUserId(user.UserId)
 
-	if !found.IsEnabled {
-		logger.Warn("[%s] User account is inactive: userId=%s", traceId, user.UserId)
-		return internal.ErrInactiveAccount
-	}
-
 	if err != nil {
 		logger.Error("[%s] Could not search for user: userId=%s: %s", traceId, user.UserId, err.Error())
 		return err

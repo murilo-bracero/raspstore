@@ -72,7 +72,7 @@ paths:
         '401':
           description: JWT token is invalid, expired or inexistent
         '403':
-          description: account is inactive
+          description: User account is inactive
         '500':
           description: Internal Server Error
     put:
@@ -93,10 +93,31 @@ paths:
           $ref: '#/components/responses/BadRequestCreateUserResponse'
         '401':
           description: JWT token is invalid, expired or inexistent
+        '403':
+          description: User account is inactive
         '409':
           description: user with provided info already exists in database
+        '500':
+          description: Internal Server Error
+    delete:
+      security:
+        - cookieAccessToken: []
+        - headerAccessToken: []
+      tags:
+        - user
+      summary: Delete user profile
+      description: |-
+        Delete user profile based on provided JWT on either Authorization header or access_token cookie.
+
+        This action is irreversible
+      operationId: deleteProfile
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: JWT token is invalid, expired or inexistent
         '403':
-          description: account is inactive
+          description: User account is inactive
         '500':
           description: Internal Server Error
         
@@ -156,6 +177,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+  
   requestBodies:
     UpdateProfileRequest:
       description: User request object required to update a existing user

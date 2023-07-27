@@ -18,6 +18,7 @@ type UsersRepository interface {
 	FindByUsername(username string) (usr *model.User, err error)
 	FindByUserId(userId string) (user *model.User, err error)
 	ExistsByUsername(username string) (bool, error)
+	Delete(userId string) error
 }
 
 type usersRespository struct {
@@ -79,4 +80,12 @@ func (r *usersRespository) ExistsByUsername(username string) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+func (r *usersRespository) Delete(userId string) error {
+	filter := bson.D{{Key: "user_id", Value: userId}}
+
+	_, err := r.coll.DeleteOne(r.ctx, filter)
+
+	return err
 }

@@ -21,6 +21,10 @@ func BadRequest(w http.ResponseWriter, body v1.ErrorResponse) {
 	Send(w, body)
 }
 
+func NoContent(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func Send(w http.ResponseWriter, obj interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(obj)
