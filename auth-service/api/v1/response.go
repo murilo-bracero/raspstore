@@ -12,10 +12,14 @@ type LoginResponse struct {
 type UserRepresentation struct {
 	UserID        string    `json:"userId"`
 	Username      string    `json:"username"`
-	Email         string    `json:"email"`
-	PhoneNumber   string    `json:"phoneNumber"`
 	IsMfaEnabled  bool      `json:"isMfaEnabled"`
 	IsMfaVerified bool      `json:"isMfaVerified"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message,omitempty"`
+	TraceId string `json:"traceId,omitempty"`
+	Code    string `json:"code,omitempty"`
 }

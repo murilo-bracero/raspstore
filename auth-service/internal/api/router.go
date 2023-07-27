@@ -38,6 +38,7 @@ func (cr *credentialsRouter) MountRoutes() *chi.Mux {
 
 	router.Route(profileRoute, func(r chi.Router) {
 		r.Get("/", cr.profileHandler.GetProfile)
+		r.Put("/", cr.profileHandler.UpdateProfile)
 	})
 
 	return router

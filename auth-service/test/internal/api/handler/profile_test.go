@@ -1,176 +1,272 @@
 package handler_test
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5/middleware"
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestGetProfileSuccessWithTokenInHeader(t *testing.T) {
+func TestGetProfile(t *testing.T) {
+	createJsonRequest := func() (*http.Request, error) {
+		req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
+		assert.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		return req, nil
+	}
 
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{})
+	t.Run("should return token user profile successfull when token is valid in header", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
 
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	assert.NoError(t, err)
+		req.Header.Set("Authorization", generateToken(id, permissions))
 
-	id := "10950f72-29ec-49a8-92bc-53003d7237a3"
-	permissions := []string{"admin"}
+		rr := httptest.NewRecorder()
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", generateToken(id, permissions))
+		ph := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil)
+		handler := http.HandlerFunc(ph.GetProfile)
+		handler.ServeHTTP(rr, req)
 
-	rr := httptest.NewRecorder()
+		assert.Equal(t, http.StatusOK, rr.Code)
 
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
+		var res v1.UserRepresentation
+		err = utils.ParseBody(rr.Body, &res)
+		assert.NoError(t, err)
+		assert.Equal(t, "c223a9f5-7174-4102-aacc-73f03954dde8", res.UserID)
+		assert.Equal(t, "cool_username", res.Username)
+		assert.Equal(t, true, res.IsMfaEnabled)
+		assert.Equal(t, false, res.IsMfaVerified)
+		assert.NotEmpty(t, res.CreatedAt)
+		assert.NotEmpty(t, res.UpdatedAt)
+	})
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+	t.Run("should return token user profile successfull when token is valid in token", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
 
-	var res v1.UserRepresentation
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	err = json.NewDecoder(rr.Body).Decode(&res)
+		req.AddCookie(createAccessTokenCookie(id, permissions))
 
-	assert.NoError(t, err)
+		rr := httptest.NewRecorder()
 
-	assert.Equal(t, "c223a9f5-7174-4102-aacc-73f03954dde8", res.UserID)
-	assert.Equal(t, "cool_username", res.Username)
-	assert.Equal(t, "cool.email@email.com", res.Email)
-	assert.Equal(t, "123-555-456", res.PhoneNumber)
-	assert.Equal(t, true, res.IsMfaEnabled)
-	assert.Equal(t, false, res.IsMfaVerified)
+		ph := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil)
+		handler := http.HandlerFunc(ph.GetProfile)
+		handler.ServeHTTP(rr, req)
 
-	assert.NotEmpty(t, res.CreatedAt)
-	assert.NotEmpty(t, res.UpdatedAt)
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var res v1.UserRepresentation
+		err = utils.ParseBody(rr.Body, &res)
+		assert.NoError(t, err)
+		assert.Equal(t, "c223a9f5-7174-4102-aacc-73f03954dde8", res.UserID)
+		assert.Equal(t, "cool_username", res.Username)
+		assert.Equal(t, true, res.IsMfaEnabled)
+		assert.Equal(t, false, res.IsMfaVerified)
+		assert.NotEmpty(t, res.CreatedAt)
+		assert.NotEmpty(t, res.UpdatedAt)
+	})
+
+	t.Run("should return unauthorized when no token", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
+
+		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil)
+
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(ctr.GetProfile)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("should return unauthorized when token is malformed in cookie", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
+
+		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil)
+
+		req.AddCookie(createBadTokenCookie())
+
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(ctr.GetProfile)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("should return unauthorized when token is malformed in header", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
+
+		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil)
+
+		req.Header.Set("Authorization", "Bearer badToken")
+
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(ctr.GetProfile)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("should return internal server error when usecase throws error", func(t *testing.T) {
+		req, err := createJsonRequest()
+		assert.NoError(t, err)
+
+		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{shouldReturnError: true}, nil)
+
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
+
+		req.Header.Set("Authorization", generateToken(id, permissions))
+
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(ctr.GetProfile)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }
 
-func TestGetProfileSuccessWithTokenInCookie(t *testing.T) {
+func TestUpdateProfile(t *testing.T) {
+	createJsonRequest := func(body string) *http.Request {
+		reqBody := []byte(body)
+		req, err := http.NewRequest("PUT", "/idp/v1/profile", bytes.NewBuffer(reqBody))
+		assert.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+		req = req.WithContext(ctx)
+		return req
+	}
 
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{})
+	t.Run("shoudl return OK when payload and token are valid", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
 
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	assert.NoError(t, err)
+		req.Header.Set("Authorization", generateToken(id, permissions))
 
-	id := "10950f72-29ec-49a8-92bc-53003d7237a3"
-	permissions := []string{"admin"}
+		rr := httptest.NewRecorder()
 
-	req.AddCookie(createAccessTokenCookie(id, permissions))
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	req.Header.Set("Content-Type", "application/json")
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
 
-	rr := httptest.NewRecorder()
+	t.Run("should return BAD REQUEST when payload is invalid", func(t *testing.T) {
+		req := createJsonRequest(`{
+		  }`)
 
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+		req.Header.Set("Authorization", generateToken(id, permissions))
 
-	var res v1.UserRepresentation
+		rr := httptest.NewRecorder()
 
-	err = json.NewDecoder(rr.Body).Decode(&res)
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
 
-	assert.Equal(t, "c223a9f5-7174-4102-aacc-73f03954dde8", res.UserID)
-	assert.Equal(t, "cool_username", res.Username)
-	assert.Equal(t, "cool.email@email.com", res.Email)
-	assert.Equal(t, "123-555-456", res.PhoneNumber)
-	assert.Equal(t, true, res.IsMfaEnabled)
-	assert.Equal(t, false, res.IsMfaVerified)
+	t.Run("should return UNAUTHORIZED when token is invalid in header", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
 
-	assert.NotEmpty(t, res.CreatedAt)
-	assert.NotEmpty(t, res.UpdatedAt)
-}
+		req.Header.Set("Authorization", "Bad token")
 
-func TestGetProfileSuccessWithoutToken(t *testing.T) {
+		rr := httptest.NewRecorder()
 
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
 
-	assert.NoError(t, err)
+	t.Run("should return UNAUTHORIZED when token is invalid in cookie", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
 
-	req.Header.Set("Content-Type", "application/json")
+		req.AddCookie(createBadTokenCookie())
 
-	rr := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-}
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
 
-func TestGetProfileUnauthorizedWithMalformedTokenInCookie(t *testing.T) {
+	t.Run("should return CONFLICT when usecase return ErrConflict", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
 
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{})
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
+		req.AddCookie(createAccessTokenCookie(id, permissions))
 
-	assert.NoError(t, err)
+		rr := httptest.NewRecorder()
 
-	req.AddCookie(createBadTokenCookie())
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnConflictError: true})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	req.Header.Set("Content-Type", "application/json")
+		assert.Equal(t, http.StatusConflict, rr.Code)
+	})
 
-	rr := httptest.NewRecorder()
+	t.Run("should return INTERNAL SERVER ERROR when usecase return unexpected error", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
 
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
 
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-}
+		req.AddCookie(createAccessTokenCookie(id, permissions))
 
-func TestGetProfileUnauthorizedWithMalformedTokenInHeader(t *testing.T) {
+		rr := httptest.NewRecorder()
 
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: true})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
 
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
-
-	assert.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer badToken")
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-}
-
-func TestGetProfileInternalServerError(t *testing.T) {
-
-	ctr := handler.NewProfileHandler(&mockGetProfileUseCase{shouldReturnError: true})
-
-	req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
-
-	assert.NoError(t, err)
-
-	id := "10950f72-29ec-49a8-92bc-53003d7237a3"
-	permissions := []string{"admin"}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", generateToken(id, permissions))
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(ctr.GetProfile)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }
 
 func generateToken(id string, permissions []string) string {
@@ -216,9 +312,7 @@ func (u *mockGetProfileUseCase) Execute(ctx context.Context, userId string) (use
 		Id:            primitive.NewObjectID(),
 		UserId:        "c223a9f5-7174-4102-aacc-73f03954dde8",
 		Username:      "cool_username",
-		Email:         "cool.email@email.com",
 		IsEnabled:     true,
-		PhoneNumber:   "123-555-456",
 		Password:      "hashed_password",
 		Secret:        "user_secret",
 		Permissions:   []string{"read", "write"},
@@ -228,4 +322,21 @@ func (u *mockGetProfileUseCase) Execute(ctx context.Context, userId string) (use
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}, nil
+}
+
+type mockUpdateUserUseCase struct {
+	shouldReturnError         bool
+	shouldReturnConflictError bool
+}
+
+func (u *mockUpdateUserUseCase) Execute(ctx context.Context, user *model.User) error {
+	if u.shouldReturnError {
+		return errors.New("generic error")
+	}
+
+	if u.shouldReturnConflictError {
+		return internal.ErrConflict
+	}
+
+	return nil
 }

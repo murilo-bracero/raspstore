@@ -75,9 +75,39 @@ paths:
           description: account is inactive
         '500':
           description: Internal Server Error
+    put:
+      security:
+        - cookieAccessToken: []
+        - headerAccessToken: []
+      tags:
+        - user
+      summary: Update user profile
+      description: Update user profile based on provided JWT on either Authorization header or access_token cookie
+      operationId: updateProfile
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateProfileRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUserProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '401':
+          description: JWT token is invalid, expired or inexistent
+        '409':
+          description: user with provided info already exists in database
+        '403':
+          description: account is inactive
+        '500':
+          description: Internal Server Error
         
 components:
   schemas:
+    UpdateProfileRepresentation:
+      type: object
+      properties:
+        username:
+          type: string
+          example: coolusername
     TokenRepresentation:
       type: object
       properties:
@@ -103,7 +133,7 @@ components:
           example: 'ERR010'
         message:
           type: string
-          example: 'Field email must not be null or empty'
+          example: 'Field username must not be null or empty'
         traceId:
           type: string
           example: 'df438c36-9aa4-11ed-a8fc-0242ac120002'
@@ -116,12 +146,6 @@ components:
         username:
           type: string
           example: cool_username
-        email:
-          type: string
-          example: cool.email@email.com
-        phoneNumber:
-          type: string
-          example: 123-555-456
         isMfaEnabled:
           type: boolean
         isMfaVerified:
@@ -133,6 +157,12 @@ components:
           type: string
           format: date-time
   requestBodies:
+    UpdateProfileRequest:
+      description: User request object required to update a existing user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateProfileRepresentation'
     LoginRequest:
       description: login request body
       content:
@@ -168,6 +198,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UserRepresentation'
+
+    BadRequestCreateUserResponse:
+      description: payload invalid or malformed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
   
   securitySchemes:
     loginAuth:

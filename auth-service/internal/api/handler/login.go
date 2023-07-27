@@ -40,8 +40,9 @@ func (c *loginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseType := r.PostForm.Get("response_type")
+	mfaToken := r.PostForm.Get("mfa_token")
 
-	tokenCredentials, err := c.loginUseCase.AuthenticateCredentials(username, password, "")
+	tokenCredentials, err := c.loginUseCase.AuthenticateCredentials(username, password, mfaToken)
 
 	if err != nil {
 		logger.Error("Error while authenticating user: %s", err.Error())

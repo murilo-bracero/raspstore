@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"time"
 
+	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/database"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,6 +17,7 @@ type UsersRepository interface {
 	Update(usr *model.User) error
 	FindByUsername(username string) (usr *model.User, err error)
 	FindByUserId(userId string) (user *model.User, err error)
+	ExistsByUsername(username string) (bool, error)
 }
 
 type usersRespository struct {
@@ -38,27 +40,43 @@ func (r *usersRespository) FindByUsername(username string) (usr *model.User, err
 	res := r.coll.FindOne(r.ctx, bson.M{"username": username})
 
 	err = res.Decode(&usr)
+
+	if err == mongo.ErrNoDocuments {
+		return nil, internal.ErrUserNotFound
+	}
+
 	return usr, err
 }
 
 func (r *usersRespository) Update(usr *model.User) error {
+	usr.UpdatedAt = time.Now()
 
 	filter := bson.D{{Key: "user_id", Value: usr.UserId}}
 
 	update := bson.D{{Key: "$set",
 		Value: bson.D{
+			{Key: "username", Value: usr.Username},
 			{Key: "is_mfa_enabled", Value: usr.IsMfaEnabled},
 			{Key: "is_mfa_verified", Value: usr.IsMfaVerified},
 			{Key: "secret", Value: usr.Secret},
 			{Key: "refresh_token", Value: usr.RefreshToken},
+			{Key: "updated_at", Value: usr.UpdatedAt},
 		},
 	}}
 
-	res, err := r.coll.UpdateOne(r.ctx, filter, update)
-
-	if err == nil && (res.MatchedCount == 0 || res.ModifiedCount == 0) {
-		return errors.New("credential could not be updated")
-	}
+	_, err := r.coll.UpdateOne(r.ctx, filter, update)
 
 	return err
+}
+
+func (r *usersRespository) ExistsByUsername(username string) (bool, error) {
+	filter := bson.M{"username": username}
+
+	count, err := r.coll.CountDocuments(r.ctx, filter)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }

@@ -1,5 +1,5 @@
 package v1
 
-type LoginRequest struct {
-	MfaToken string `json:"mfaToken"`
+type UpdateProfileRepresentation struct {
+	Username string `json:"username,omitempty"`
 }

@@ -10,9 +10,7 @@ type User struct {
 	Id            primitive.ObjectID `bson:"_id"`
 	UserId        string             `bson:"user_id"`
 	Username      string
-	Email         string
-	IsEnabled     bool   `bson:"is_enabled"`
-	PhoneNumber   string `bson:"phone_number"`
+	IsEnabled     bool `bson:"is_enabled"`
 	Password      string
 	Secret        string
 	Permissions   []string

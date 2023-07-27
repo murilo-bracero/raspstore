@@ -10,10 +10,10 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
 
-func StartRestServer(ls usecase.LoginUseCase, puc usecase.GetUserUseCase) {
+func StartRestServer(ls usecase.LoginUseCase, getUc usecase.GetUserUseCase, updateUc usecase.UpdateUserUseCase) {
 	loginHandler := handler.NewLoginHandler(ls)
 
-	profileHandler := handler.NewProfileHandler(puc)
+	profileHandler := handler.NewProfileHandler(getUc, updateUc)
 
 	router := NewRoutes(loginHandler, profileHandler).MountRoutes()
 	http.Handle("/", router)

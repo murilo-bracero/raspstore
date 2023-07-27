@@ -3,7 +3,6 @@ package handler_test
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +15,7 @@ import (
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,8 +49,7 @@ func TestLoginSuccessWithCodeResponseType(t *testing.T) {
 
 	var res v1.LoginResponse
 
-	err = json.NewDecoder(rr.Body).Decode(&res)
-
+	err = utils.ParseBody(rr.Body, &res)
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, res.AccessToken)
