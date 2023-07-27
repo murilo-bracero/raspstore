@@ -173,7 +173,7 @@ func TestUpdateProfile(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ph.UpdateProfile)
 		handler.ServeHTTP(rr, req)
 
@@ -191,7 +191,7 @@ func TestUpdateProfile(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ph.UpdateProfile)
 		handler.ServeHTTP(rr, req)
 
@@ -207,7 +207,7 @@ func TestUpdateProfile(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ph.UpdateProfile)
 		handler.ServeHTTP(rr, req)
 
@@ -223,11 +223,30 @@ func TestUpdateProfile(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnError: false})
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ph.UpdateProfile)
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("should return FORBIDDEN when user is inactive", func(t *testing.T) {
+		req := createJsonRequest(`{
+			"username": "coolusername"
+		  }`)
+
+		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
+		permissions := []string{"admin"}
+
+		req.AddCookie(createAccessTokenCookie(id, permissions))
+
+		rr := httptest.NewRecorder()
+
+		ph := handler.NewProfileHandler(nil, &mockUpdateUserUseCase{shouldReturnInactiveAccountError: true})
+		handler := http.HandlerFunc(ph.UpdateProfile)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusForbidden, rr.Code)
 	})
 
 	t.Run("should return CONFLICT when usecase return ErrConflict", func(t *testing.T) {
@@ -325,8 +344,9 @@ func (u *mockGetProfileUseCase) Execute(ctx context.Context, userId string) (use
 }
 
 type mockUpdateUserUseCase struct {
-	shouldReturnError         bool
-	shouldReturnConflictError bool
+	shouldReturnError                bool
+	shouldReturnConflictError        bool
+	shouldReturnInactiveAccountError bool
 }
 
 func (u *mockUpdateUserUseCase) Execute(ctx context.Context, user *model.User) error {
@@ -336,6 +356,10 @@ func (u *mockUpdateUserUseCase) Execute(ctx context.Context, user *model.User) e
 
 	if u.shouldReturnConflictError {
 		return internal.ErrConflict
+	}
+
+	if u.shouldReturnInactiveAccountError {
+		return internal.ErrInactiveAccount
 	}
 
 	return nil

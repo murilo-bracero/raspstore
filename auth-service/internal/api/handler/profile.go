@@ -73,18 +73,8 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	err = h.updateUserUseCase.Execute(r.Context(), user)
 
-	if err == internal.ErrUserNotFound {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	if err == internal.ErrConflict {
-		http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
-		return
-	}
-
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		handleUpdateUserError(w, err)
 		return
 	}
 
@@ -123,4 +113,20 @@ func checkTokenInHeader(r *http.Request) (*model.UserClaims, error) {
 	accessToken := strings.ReplaceAll(header, "Bearer ", "")
 
 	return token.Verify(accessToken)
+}
+
+func handleUpdateUserError(w http.ResponseWriter, err error) {
+	if err == internal.ErrUserNotFound {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	if err == internal.ErrInactiveAccount {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+	}
+
+	if err == internal.ErrConflict {
+		http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
+	}
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }

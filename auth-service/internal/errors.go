@@ -8,4 +8,5 @@ var (
 	ErrInvalidBasicAuth     = errors.New("invalid basic authorization header")
 	ErrEmptyToken           = errors.New("token must not be empty")
 	ErrConflict             = errors.New("username has already in use by another user")
+	ErrInactiveAccount      = errors.New("account is inactive")
 )
