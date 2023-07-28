@@ -4,29 +4,42 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi/v5/middleware"
+	cm "github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func init() {
+	err := godotenv.Load("../../.env.test")
+
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+}
+
 func TestGetProfile(t *testing.T) {
 	createJsonRequest := func() (*http.Request, error) {
 		req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
+		ctx := context.WithValue(req.Context(), middleware.UserClaimsCtxKey, &model.UserClaims{})
+		req = req.WithContext(ctx)
 		return req, nil
 	}
 
-	t.Run("should return token user profile successfull when token is valid in header", func(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
 		req, err := createJsonRequest()
 		assert.NoError(t, err)
 
@@ -42,70 +55,6 @@ func TestGetProfile(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-	})
-
-	t.Run("should return token user profile successfull when token is valid in token", func(t *testing.T) {
-		req, err := createJsonRequest()
-		assert.NoError(t, err)
-
-		id := "10950f72-29ec-49a8-92bc-53003d7237a3"
-		permissions := []string{"admin"}
-
-		req.AddCookie(createAccessTokenCookie(id, permissions))
-
-		rr := httptest.NewRecorder()
-
-		ph := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil, nil)
-		handler := http.HandlerFunc(ph.GetProfile)
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusOK, rr.Code)
-	})
-
-	t.Run("should return unauthorized when no token", func(t *testing.T) {
-		req, err := createJsonRequest()
-		assert.NoError(t, err)
-
-		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil, nil)
-
-		rr := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(ctr.GetProfile)
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusUnauthorized, rr.Code)
-	})
-
-	t.Run("should return unauthorized when token is malformed in cookie", func(t *testing.T) {
-		req, err := createJsonRequest()
-		assert.NoError(t, err)
-
-		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil, nil)
-
-		req.AddCookie(createBadTokenCookie())
-
-		rr := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(ctr.GetProfile)
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusUnauthorized, rr.Code)
-	})
-
-	t.Run("should return unauthorized when token is malformed in header", func(t *testing.T) {
-		req, err := createJsonRequest()
-		assert.NoError(t, err)
-
-		ctr := handler.NewProfileHandler(&mockGetProfileUseCase{}, nil, nil)
-
-		req.Header.Set("Authorization", "Bearer badToken")
-
-		rr := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(ctr.GetProfile)
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusUnauthorized, rr.Code)
 	})
 
 	t.Run("should return FORBIDDEN when user account is not active", func(t *testing.T) {
@@ -153,7 +102,7 @@ func TestUpdateProfile(t *testing.T) {
 		req, err := http.NewRequest("PUT", "/idp/v1/profile", bytes.NewBuffer(reqBody))
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
 		req = req.WithContext(ctx)
 		return req
 	}
@@ -290,7 +239,7 @@ func TestDeleteProfile(t *testing.T) {
 		req, err := http.NewRequest("DELETE", "/idp/v1/profile", nil)
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
 		req = req.WithContext(ctx)
 		return req
 	}

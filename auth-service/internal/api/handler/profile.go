@@ -3,15 +3,14 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strings"
 
-	"github.com/go-chi/chi/v5/middleware"
+	cm "github.com/go-chi/chi/v5/middleware"
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/api/middleware"
 	u "github.com/murilo-bracero/raspstore/auth-service/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/converter"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
-	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
@@ -33,12 +32,7 @@ func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase 
 }
 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	claims, err := getClaimsForRequest(r)
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
 	user, err := h.getUserUseCase.Execute(r.Context(), claims.Subject)
 	if err != nil {
@@ -55,13 +49,8 @@ func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	traceId := r.Context().Value(middleware.RequestIDKey).(string)
-	claims, err := getClaimsForRequest(r)
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	traceId := r.Context().Value(cm.RequestIDKey).(string)
+	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
 	if res, err := h.isAccountInactive(r.Context(), claims.Subject); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -87,9 +76,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		Username: req.Username,
 	}
 
-	err = h.updateUserUseCase.Execute(r.Context(), user)
-
-	if err != nil {
+	if err := h.updateUserUseCase.Execute(r.Context(), user); err != nil {
 		handleUpdateUserError(w, err)
 		return
 	}
@@ -98,12 +85,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
-	claims, err := getClaimsForRequest(r)
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
 	if res, err := h.isAccountInactive(r.Context(), claims.Subject); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -122,7 +104,7 @@ func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *profileHandler) isAccountInactive(ctx context.Context, userId string) (bool, error) {
-	traceId := ctx.Value(middleware.RequestIDKey).(string)
+	traceId := ctx.Value(cm.RequestIDKey).(string)
 	usr, err := h.getUserUseCase.Execute(ctx, userId)
 
 	if err != nil {
@@ -131,40 +113,6 @@ func (h *profileHandler) isAccountInactive(ctx context.Context, userId string) (
 	}
 
 	return !usr.IsEnabled, nil
-}
-
-func getClaimsForRequest(r *http.Request) (*model.UserClaims, error) {
-	claims, err := checkTokenInCookie(r)
-
-	if err == nil {
-		return claims, nil
-	}
-
-	return checkTokenInHeader(r)
-}
-
-func checkTokenInCookie(r *http.Request) (*model.UserClaims, error) {
-	accessCookie, err := r.Cookie("access_token")
-
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken := strings.ReplaceAll(accessCookie.Value, "Bearer ", "")
-
-	return token.Verify(accessToken)
-}
-
-func checkTokenInHeader(r *http.Request) (*model.UserClaims, error) {
-	header := r.Header.Get("Authorization")
-
-	if header == "" {
-		return nil, internal.ErrEmptyToken
-	}
-
-	accessToken := strings.ReplaceAll(header, "Bearer ", "")
-
-	return token.Verify(accessToken)
 }
 
 func handleUpdateUserError(w http.ResponseWriter, err error) {

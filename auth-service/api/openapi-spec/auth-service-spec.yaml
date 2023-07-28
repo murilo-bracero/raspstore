@@ -15,6 +15,8 @@ tags:
     description: Operations about authentication
   - name: user
     description: Operations about user
+  - name: admin
+    description: Admin operations 
 paths:
   /v1/login:
     post:
@@ -120,6 +122,124 @@ paths:
           description: User account is inactive
         '500':
           description: Internal Server Error
+  /v1/admin/users:
+    post:
+      security: 
+        - cookieAccessToken: []
+        - headerAccessToken: []
+      tags:
+        - admin
+      summary: Create new user
+      description: Creates a new user
+      operationId: createUser
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUserRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/SuccessCreateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '422':
+          description: Unprocessable Entity
+        '500':
+          description: Internal Server Error
+    get:
+      security:
+        - cookieAccessToken: []
+        - headerAccessToken: []
+      tags:
+        - admin
+      summary: List users
+      description: List and paginate users
+      operationId: listUsers
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParameter'
+        - $ref: '#/components/parameters/SizeQueryParameter'
+        - $ref: '#/components/parameters/UsernameQueryParameter'
+        - $ref: '#/components/parameters/EmailQueryParameter'
+        - $ref: '#/components/parameters/EnableQueryParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUsersListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '422':
+          description: Unprocessable Entity
+        '500':
+          description: Internal Server Error
+  
+  /v1/admin/users/{userId}:
+    get:
+      tags:
+        - admin
+      summary: Get user by user id
+      description: ''
+      operationId: getUserById
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUserProfileResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+    put:
+      tags:
+        - admin
+      summary: Update user
+      description: Updates user data
+      operationId: updateUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateUserRequest'
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequestCreateUserResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '409':
+          description: Conflict
+        '422':
+          description: Unprocessable Entity
+        '500':
+          description: Internal Server Error
+    delete:
+      tags:
+        - admin
+      summary: Delete user
+      description: Delete user
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParameter'
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal Server Error
         
 components:
   schemas:
@@ -177,7 +297,88 @@ components:
         updatedAt:
           type: string
           format: date-time
+    CreateUserRepresentation:
+      type: object
+      properties:
+        username:
+          type: string
+          example: johndoe
+        password:
+          type: string
+          example: super-secret-password
+        roles:
+          type: array
+          items:
+            type: string
+          example: ['admin', 'admin/user-creation']
+    PageRepresentation:
+      type: object
+      properties:
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        next:
+          type: string
+          example: 'http://localhost:9000/users?page=2&size=10'
+    UpdateUserRepresentation:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        username:
+          type: string
+          example: new-username
   
+  parameters:
+    UsernameQueryParameter:
+      name: username
+      in: query
+      schema:
+        type: string
+        example: johndoe
+    EmailQueryParameter:
+      name: email
+      in: query
+      schema:
+        type: string
+        example: john.doe@mail.com
+    EnableQueryParameter:
+      name: enabled
+      in: query
+      schema:
+        type: boolean
+        example: true
+    PageQueryParameter:
+      name: page
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    SizeQueryParameter:
+      name: size
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    UserIdPathParameter:
+      name: userId
+      in: path
+      description: 'The userId that needs to be fetched.'
+      required: true
+      schema:
+        type: string
+        example: 507f1f77bcf86cd799439011
+          
   requestBodies:
     UpdateProfileRequest:
       description: User request object required to update a existing user
@@ -191,6 +392,18 @@ components:
         application/x-www-form-urlencoded:
           schema:
             $ref: '#/components/schemas/LoginRepresentation'
+    CreateUserRequest:
+      description: User request object required to create a new user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserRepresentation'
+    UpdateUserRequest:
+      description: Update user request object
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserRepresentation'
   
   responses:
     SuccessLoginResponse:
@@ -227,6 +440,27 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorException'
+    
+    SuccessCreateUserResponse:
+      description: successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserRepresentation'
+    
+    SuccessUsersListResponse:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PageRepresentation'
+              - type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserRepresentation'
   
   securitySchemes:
     loginAuth:

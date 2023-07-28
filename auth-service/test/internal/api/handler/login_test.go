@@ -3,7 +3,6 @@ package handler_test
 import (
 	"bytes"
 	"encoding/base64"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
 	v1 "github.com/murilo-bracero/raspstore/auth-service/api/v1"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api/handler"
@@ -19,14 +17,6 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	err := godotenv.Load("../../../.env.test")
-
-	if err != nil {
-		log.Panicln(err.Error())
-	}
-}
 
 func TestLoginSuccessWithCodeResponseType(t *testing.T) {
 	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
