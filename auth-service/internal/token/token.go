@@ -1,44 +1,58 @@
 package token
 
 import (
-	"fmt"
+	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 )
 
 func Generate(config *infra.Config, user *model.User) (string, error) {
-	claims := model.UserClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
-			IssuedAt:  &jwt.NumericDate{Time: time.Now()},
-			Audience:  jwt.ClaimStrings{"account"},
-			Subject:   user.UserId,
-			NotBefore: &jwt.NumericDate{Time: time.Now()},
-			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Duration(config.TokenDuration) * time.Second)},
-		},
-		Roles: user.Permissions,
+	token := paseto.NewToken()
+
+	token.SetJti(uuid.NewString())
+	token.SetIssuedAt(time.Now())
+	token.SetNotBefore(time.Now())
+	token.SetExpiration(time.Now().Add((time.Duration(config.TokenDuration) * time.Hour)))
+	token.SetSubject(user.UserId)
+	token.SetAudience("account")
+	token.SetString("roles", strings.Join(user.Permissions, ","))
+
+	key, err := paseto.V4SymmetricKeyFromHex(config.TokenSecret)
+
+	if err != nil {
+		return "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte(config.TokenSecret))
+	return token.V4Encrypt(key, nil), nil
 }
 
-func Verify(config *infra.Config, token string) (userClaims *model.UserClaims, err error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &model.UserClaims{}, func(jt *jwt.Token) (interface{}, error) {
-		if _, ok := jt.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("error reading jwt: wrong signing method: %v", jt.Header["alg"])
-		}
-		return []byte(config.TokenSecret), nil
-	})
+func Verify(config *infra.Config, token string) (claims *model.UserClaims, err error) {
+	parser := paseto.NewParser()
+
+	parser.AddRule(paseto.ForAudience("account"))
+	parser.AddRule(paseto.NotExpired())
+	parser.AddRule(paseto.ValidAt(time.Now()))
+
+	key, err := paseto.V4SymmetricKeyFromHex(config.TokenSecret)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return parsedToken.Claims.(*model.UserClaims), nil
+	decrypted, err := parser.ParseV4Local(key, token, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedMap := decrypted.Claims()
+
+	return &model.UserClaims{
+		Uid:   decryptedMap["sub"].(string),
+		Roles: strings.Split(decryptedMap["roles"].(string), ","),
+	}, nil
 }

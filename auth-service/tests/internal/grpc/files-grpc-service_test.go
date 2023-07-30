@@ -34,7 +34,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 
 	user := &model.User{
 		UserId:      uuid.NewString(),
-		Permissions: []string{},
+		Permissions: []string{"admin"},
 	}
 
 	token, err := token.Generate(config, user)

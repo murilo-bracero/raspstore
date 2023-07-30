@@ -40,7 +40,7 @@ func TestGenerateToken(t *testing.T) {
 		assert.Fail(t, err.Error())
 	} else {
 		assert.Equal(t, user.Permissions, claims.Roles)
-		assert.Equal(t, user.UserId, claims.Subject)
+		assert.Equal(t, user.UserId, claims.Uid)
 	}
 }
 

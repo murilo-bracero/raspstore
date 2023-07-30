@@ -34,7 +34,7 @@ func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
-	user, err := h.getUserUseCase.Execute(r.Context(), claims.Subject)
+	user, err := h.getUserUseCase.Execute(r.Context(), claims.Uid)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -52,7 +52,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(cm.RequestIDKey).(string)
 	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
-	if res, err := h.isAccountInactive(r.Context(), claims.Subject); res {
+	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	} else if err != nil {
@@ -72,7 +72,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &model.User{
-		UserId:   claims.Subject,
+		UserId:   claims.Uid,
 		Username: req.Username,
 	}
 
@@ -87,7 +87,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
 
-	if res, err := h.isAccountInactive(r.Context(), claims.Subject); res {
+	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	} else if err != nil {
@@ -95,7 +95,7 @@ func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.deleteUseCase.Execute(r.Context(), claims.Subject); err != nil {
+	if err := h.deleteUseCase.Execute(r.Context(), claims.Uid); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

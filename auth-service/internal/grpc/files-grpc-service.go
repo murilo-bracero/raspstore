@@ -26,11 +26,13 @@ func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequ
 		return nil, err
 	}
 
-	if claims, err := token.Verify(a.config, strings.ReplaceAll(req.Token, tokenScheme+" ", "")); err != nil {
+	claims, err := token.Verify(a.config, strings.ReplaceAll(req.Token, tokenScheme+" ", ""))
+
+	if err != nil {
 		return nil, err
-	} else {
-		return &pb.AuthenticateResponse{Uid: claims.Subject, Roles: claims.Roles}, nil
 	}
+
+	return &pb.AuthenticateResponse{Uid: claims.Uid, Roles: claims.Roles}, nil
 }
 
 func validateAuthenticateRequest(req *pb.AuthenticateRequest) error {
