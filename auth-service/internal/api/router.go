@@ -50,13 +50,12 @@ func (cr *credentialsRouter) MountRoutes() *chi.Mux {
 	})
 
 	router.Route(adminRoute, func(r chi.Router) {
-		//TODO:applu authentication
 		r.Use(authorization)
-		r.Post("/", cr.adminHandler.CreateUser)
-		r.Get("/", cr.adminHandler.ListUsers)
-		r.Get("/{userId}", cr.adminHandler.GetUserById)
-		r.Put("/{userId}", cr.adminHandler.UpdateUserById)
-		r.Delete("/{userId}", cr.adminHandler.DeleteUser)
+		r.With(middleware.Authentication("admin", "admin/create-user")).Post("/", cr.adminHandler.CreateUser)
+		r.With(middleware.Authentication("admin", "admin/list-user", "admin/get-user")).Get("/", cr.adminHandler.ListUsers)
+		r.With(middleware.Authentication("admin", "admin/list-user", "admin/get-user")).Get("/{userId}", cr.adminHandler.GetUserById)
+		r.With(middleware.Authentication("admin", "admin/update-user")).Put("/{userId}", cr.adminHandler.UpdateUserById)
+		r.With(middleware.Authentication("admin", "admin/delete-user")).Delete("/{userId}", cr.adminHandler.DeleteUser)
 	})
 
 	return router
