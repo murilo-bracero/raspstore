@@ -9,19 +9,19 @@ import (
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
 
-type UpdateUserUseCase interface {
+type UpdateProfileUseCase interface {
 	Execute(ctx context.Context, user *model.User) error
 }
 
-type updateUserUseCase struct {
+type updateProfileUseCase struct {
 	userRepository repository.UsersRepository
 }
 
-func NewUpdateUserUseCase(userRepository repository.UsersRepository) UpdateUserUseCase {
-	return &updateUserUseCase{userRepository: userRepository}
+func NewUpdateProfileUseCase(userRepository repository.UsersRepository) UpdateProfileUseCase {
+	return &updateProfileUseCase{userRepository: userRepository}
 }
 
-func (u *updateUserUseCase) Execute(ctx context.Context, user *model.User) error {
+func (u *updateProfileUseCase) Execute(ctx context.Context, user *model.User) error {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
 	found, err := u.userRepository.FindByUserId(user.UserId)
@@ -32,16 +32,6 @@ func (u *updateUserUseCase) Execute(ctx context.Context, user *model.User) error
 	}
 
 	found.Username = user.Username
-	found.IsEnabled = user.IsEnabled
-	found.Permissions = user.Permissions
-
-	if !user.IsMfaEnabled {
-		found.IsMfaEnabled = false
-		found.IsMfaVerified = false
-		found.Secret = ""
-		found.RefreshToken = ""
-	}
-
 	*user = *found
 
 	if err := u.userRepository.Update(user); err != nil {

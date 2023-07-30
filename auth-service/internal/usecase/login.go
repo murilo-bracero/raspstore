@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/repository"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
@@ -19,10 +20,11 @@ type LoginUseCase interface {
 
 type loginUseCase struct {
 	usersRespository repository.UsersRepository
+	config           *infra.Config
 }
 
-func NewLoginUseCase(ur repository.UsersRepository) LoginUseCase {
-	return &loginUseCase{usersRespository: ur}
+func NewLoginUseCase(config *infra.Config, ur repository.UsersRepository) LoginUseCase {
+	return &loginUseCase{usersRespository: ur, config: config}
 }
 
 func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword string, mfaToken string) (tokenCredentials *model.TokenCredentials, err error) {
@@ -47,7 +49,7 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 
 	tokenCredentials = &model.TokenCredentials{}
 
-	if tokenCredentials.AccessToken, err = token.Generate(usr); err != nil {
+	if tokenCredentials.AccessToken, err = token.Generate(ls.config, usr); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +63,7 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 		return nil, err
 	}
 
-	tokenCredentials.ExpirestAt = time.Now().Add(time.Duration(internal.TokenDuration()) * time.Second)
+	tokenCredentials.ExpirestAt = time.Now().Add(time.Duration(ls.config.TokenDuration) * time.Second)
 
 	return tokenCredentials, nil
 }

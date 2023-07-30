@@ -9,11 +9,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 	"github.com/stretchr/testify/assert"
 )
+
+var config *infra.Config
 
 func init() {
 	err := godotenv.Load("../../.env.test")
@@ -21,18 +24,20 @@ func init() {
 	if err != nil {
 		log.Panicln(err.Error())
 	}
+
+	config = infra.NewConfig()
 }
 
 func TestAuthenticateSuccess(t *testing.T) {
 	ctx := context.Background()
-	as := grpc.NewAuthService()
+	as := grpc.NewAuthService(config)
 
 	user := &model.User{
 		UserId:      uuid.NewString(),
 		Permissions: []string{},
 	}
 
-	token, err := token.Generate(user)
+	token, err := token.Generate(config, user)
 
 	assert.NoError(t, err)
 
@@ -48,7 +53,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 
 func TestAuthenticateFailWithInvalidToken(t *testing.T) {
 	ctx := context.Background()
-	as := grpc.NewAuthService()
+	as := grpc.NewAuthService(config)
 
 	token := "testffailtokeninvalid"
 
@@ -61,7 +66,7 @@ func TestAuthenticateFailWithInvalidToken(t *testing.T) {
 
 func TestAuthenticateFailWithEmptyToken(t *testing.T) {
 	ctx := context.Background()
-	as := grpc.NewAuthService()
+	as := grpc.NewAuthService(config)
 
 	tokenReq := &pb.AuthenticateRequest{Token: ""}
 
@@ -72,7 +77,7 @@ func TestAuthenticateFailWithEmptyToken(t *testing.T) {
 
 func TestAuthenticateFailWithInsufficientParts(t *testing.T) {
 	ctx := context.Background()
-	as := grpc.NewAuthService()
+	as := grpc.NewAuthService(config)
 
 	tokenReq := &pb.AuthenticateRequest{Token: "Bearer "}
 

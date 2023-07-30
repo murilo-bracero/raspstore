@@ -6,11 +6,11 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/model"
 )
 
-func Generate(user *model.User) (string, error) {
+func Generate(config *infra.Config, user *model.User) (string, error) {
 	claims := model.UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
@@ -18,22 +18,22 @@ func Generate(user *model.User) (string, error) {
 			Audience:  jwt.ClaimStrings{"account"},
 			Subject:   user.UserId,
 			NotBefore: &jwt.NumericDate{Time: time.Now()},
-			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Duration(internal.TokenDuration()) * time.Second)},
+			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Duration(config.TokenDuration) * time.Second)},
 		},
 		Roles: user.Permissions,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(internal.TokenSecret()))
+	return token.SignedString([]byte(config.TokenSecret))
 }
 
-func Verify(token string) (userClaims *model.UserClaims, err error) {
+func Verify(config *infra.Config, token string) (userClaims *model.UserClaims, err error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &model.UserClaims{}, func(jt *jwt.Token) (interface{}, error) {
 		if _, ok := jt.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("error reading jwt: wrong signing method: %v", jt.Header["alg"])
 		}
-		return []byte(internal.TokenSecret()), nil
+		return []byte(config.TokenSecret), nil
 	})
 
 	if err != nil {

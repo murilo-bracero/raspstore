@@ -9,6 +9,7 @@ import (
 	"github.com/murilo-bracero/raspstore/auth-service/internal/api"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/database"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/grpc"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	rp "github.com/murilo-bracero/raspstore/auth-service/internal/repository"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/usecase"
 )
@@ -18,28 +19,33 @@ func main() {
 		log.Println("Could not load .env file. Using system variables instead")
 	}
 
-	conn := initDatabase()
+	config := infra.NewConfig()
+
+	conn := initDatabase(config)
 
 	defer conn.Close(context.Background())
 
 	userRepository := initRepos(conn)
 
-	loginUseCase := usecase.NewLoginUseCase(userRepository)
+	loginUseCase := usecase.NewLoginUseCase(config, userRepository)
 	getUserUseCase := usecase.NewGetUserUseCase(userRepository)
-	updateUseCase := usecase.NewUpdateUserUseCase(userRepository)
+	updateProfileUseCase := usecase.NewUpdateProfileUseCase(userRepository)
+	updateUserUseCase := usecase.NewUpdateUserUseCase(userRepository)
 	deleteUseCase := usecase.NewDeleteUserUseCase(userRepository)
+	createUseCase := usecase.NewCreateUserUseCase(userRepository)
+	listUseCase := usecase.NewListUsersUseCase(userRepository)
 
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	log.Println("bootstraping servers")
-	go grpc.StartGrpcServer()
-	go api.StartRestServer(loginUseCase, getUserUseCase, updateUseCase, deleteUseCase)
+	go grpc.StartGrpcServer(config)
+	go api.StartRestServer(config, loginUseCase, getUserUseCase, updateProfileUseCase, updateUserUseCase, deleteUseCase, createUseCase, listUseCase)
 	wg.Wait()
 }
 
-func initDatabase() database.MongoConnection {
-	conn, err := database.NewMongoConnection(context.Background())
+func initDatabase(config *infra.Config) database.MongoConnection {
+	conn, err := database.NewMongoConnection(context.Background(), config)
 
 	if err != nil {
 		log.Panicln(err)

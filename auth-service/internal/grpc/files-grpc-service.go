@@ -5,18 +5,20 @@ import (
 	"strings"
 
 	"github.com/murilo-bracero/raspstore/auth-service/internal"
+	"github.com/murilo-bracero/raspstore/auth-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/auth-service/internal/token"
 	"github.com/murilo-bracero/raspstore/auth-service/proto/v1/auth-service/pb"
 )
 
-const tokenScheme = "Bearer "
+const tokenScheme = "Bearer"
 
 type authService struct {
+	config *infra.Config
 	pb.UnimplementedAuthServiceServer
 }
 
-func NewAuthService() pb.AuthServiceServer {
-	return &authService{}
+func NewAuthService(config *infra.Config) pb.AuthServiceServer {
+	return &authService{config: config}
 }
 
 func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
@@ -24,7 +26,7 @@ func (a *authService) Authenticate(ctx context.Context, req *pb.AuthenticateRequ
 		return nil, err
 	}
 
-	if claims, err := token.Verify(strings.ReplaceAll(req.Token, tokenScheme, "")); err != nil {
+	if claims, err := token.Verify(a.config, strings.ReplaceAll(req.Token, tokenScheme+" ", "")); err != nil {
 		return nil, err
 	} else {
 		return &pb.AuthenticateResponse{Uid: claims.Subject, Roles: claims.Roles}, nil

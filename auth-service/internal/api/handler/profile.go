@@ -23,11 +23,11 @@ type ProfileHandler interface {
 
 type profileHandler struct {
 	getUserUseCase    usecase.GetUserUseCase
-	updateUserUseCase usecase.UpdateUserUseCase
+	updateUserUseCase usecase.UpdateProfileUseCase
 	deleteUseCase     usecase.DeleteUserUseCase
 }
 
-func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase usecase.UpdateUserUseCase, deleteUseCase usecase.DeleteUserUseCase) ProfileHandler {
+func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase usecase.UpdateProfileUseCase, deleteUseCase usecase.DeleteUserUseCase) ProfileHandler {
 	return &profileHandler{getUserUseCase: profileUseCase, updateUserUseCase: updateUserUseCase, deleteUseCase: deleteUseCase}
 }
 
