@@ -12,4 +12,5 @@ var (
 	ErrInvalidUsername      = errors.New("username should not be null or empty")
 	ErrInvalidPassword      = errors.New("password should not be null or empty")
 	ErrInvalidRoles         = errors.New("roles should not be null or empty")
+	ErrPasswordLen          = errors.New("password lenght not meeting requirements")
 )

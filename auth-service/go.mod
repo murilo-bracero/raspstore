@@ -14,6 +14,8 @@ require (
 	google.golang.org/protobuf v1.28.1
 )
 
+require gopkg.in/yaml.v3 v3.0.1 // indirect
+
 require (
 	aidanwoods.dev/go-paseto v1.5.0
 	aidanwoods.dev/go-result v0.1.0 // indirect
@@ -38,5 +40,4 @@ require (
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20211115160612-a5da7257a6f7 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
