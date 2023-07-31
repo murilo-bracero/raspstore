@@ -44,6 +44,10 @@ func RestPort() int {
 	return getIntEnv("REST_PORT")
 }
 
+func StorageLimit() string {
+	return os.Getenv("STORAGE_LIMIT")
+}
+
 func getIntEnv(key string) int {
 	value, err := strconv.Atoi(os.Getenv(key))
 
