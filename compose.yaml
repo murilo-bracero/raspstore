@@ -1,24 +1,16 @@
 version: "3.9"
 services: 
   auth:
-    build: auth-service
+    build: idp
     ports: 
       - "3001:9000"
       - "3002:9090"
     env_file:
-      - auth-service/.env
+      - idp/.env.docker
     networks:
       default:
         aliases:
-          - auth-service
-  users:
-    build: users-service
-    ports:
-      - "3003:9000"
-      - "3004:9090"
-    env_file:
-      - users-service/.env.docker
-
+          - idp
   file-info:
     build: file-info-service
     ports:

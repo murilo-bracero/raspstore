@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/grpc/client"
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/repository"
 )
 
@@ -13,9 +12,9 @@ type useCases struct {
 	GetFileUseCase    GetFileUseCase
 }
 
-func InitUseCases(repo repository.FilesRepository, ucs client.UserConfigGrpcService) *useCases {
+func InitUseCases(repo repository.FilesRepository) *useCases {
 	return &useCases{
-		CreateFileUseCase: NewCreateFileUseCase(repo, ucs),
+		CreateFileUseCase: NewCreateFileUseCase(repo),
 		DeleteFileUseCase: NewDeleteFileUseCase(repo),
 		ListFilesUseCase:  NewListFilesUseCase(repo),
 		UpdateFileUseCase: NewUpdateFileUseCase(repo),
