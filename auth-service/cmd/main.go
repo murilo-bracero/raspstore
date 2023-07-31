@@ -32,7 +32,7 @@ func main() {
 	updateProfileUseCase := usecase.NewUpdateProfileUseCase(userRepository)
 	updateUserUseCase := usecase.NewUpdateUserUseCase(userRepository)
 	deleteUseCase := usecase.NewDeleteUserUseCase(userRepository)
-	createUseCase := usecase.NewCreateUserUseCase(userRepository)
+	createUseCase := usecase.NewCreateUserUseCase(userRepository, config)
 	listUseCase := usecase.NewListUsersUseCase(userRepository)
 
 	var wg sync.WaitGroup
