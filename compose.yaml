@@ -11,19 +11,13 @@ services:
       default:
         aliases:
           - idp
-  file-info:
+  file:
     build: file-info-service
     ports:
       - "3005:9000"
       - "3006:9090"
     env_file:
       - file-info-service/.env.docker
-  fs:
-    build: fs-service
-    ports:
-      - "3007:9090"
-    env_file:
-      - fs-service/.env
 networks:
   default:
     external: true
