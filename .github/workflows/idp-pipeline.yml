@@ -2,7 +2,7 @@ name: Go package
 on:
   push:
     paths:
-    - 'application/auth-service/**'
+    - 'idp/**'
 jobs: 
   auth-service-pipeline:
     runs-on: ubuntu-latest
@@ -14,10 +14,6 @@ jobs:
         with:
           go-version: '1.17'
 
-      - name: Build
-        working-directory: ./application/auth-service
-        run: go build -o users-service ./cmd
-
       - name: Test
-        working-directory: ./application/auth-service
-        run: go test ./test/...
+        working-directory: ./idp/**
+        run: go test -v ./tests/...
