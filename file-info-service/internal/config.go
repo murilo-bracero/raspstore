@@ -48,6 +48,10 @@ func StorageLimit() string {
 	return os.Getenv("STORAGE_LIMIT")
 }
 
+func StoragePath() string {
+	return os.Getenv("STORAGE_PATH")
+}
+
 func getIntEnv(key string) int {
 	value, err := strconv.Atoi(os.Getenv(key))
 

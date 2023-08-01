@@ -15,3 +15,9 @@ type ErrorResponse struct {
 	TraceId string `json:"traceId,omitempty"`
 	Code    string `json:"code,omitempty"`
 }
+
+type UploadSuccessResponse struct {
+	FileId   string `json:"fileId,omitempty"`
+	Filename string `json:"filename,omitempty"`
+	OwnerId  string `json:"ownerId,omitempty"`
+}

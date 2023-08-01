@@ -9,20 +9,22 @@ import (
 	"github.com/murilo-bracero/raspstore/file-info-service/internal/api/middleware"
 )
 
-const serviceBaseRoute = "/file-info-service"
-const fileBaseRoute = serviceBaseRoute + "/files"
+const serviceBaseRoute = "/file-service"
+const fileBaseRoute = serviceBaseRoute + "/v1/files"
+const uploadRoute = serviceBaseRoute + "/v1/uploads"
 
 type FilesRouter interface {
 	MountRoutes() *chi.Mux
 }
 
 type filesRouter struct {
-	filesHandler handler.FilesHandler
-	authService  service.AuthService
+	filesHandler  handler.FilesHandler
+	uploadHandler handler.UploadHandler
+	authService   service.AuthService
 }
 
-func NewFilesRouter(filesHandler handler.FilesHandler, as service.AuthService) FilesRouter {
-	return &filesRouter{filesHandler: filesHandler, authService: as}
+func NewFilesRouter(filesHandler handler.FilesHandler, uploadHandler handler.UploadHandler, as service.AuthService) FilesRouter {
+	return &filesRouter{filesHandler: filesHandler, authService: as, uploadHandler: uploadHandler}
 }
 
 func (fr *filesRouter) MountRoutes() *chi.Mux {
@@ -38,6 +40,10 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 		r.With(authorizationMiddleware).Get("/", fr.filesHandler.ListFiles)
 		r.With(authorizationMiddleware).Put("/{id}", fr.filesHandler.Update)
 		r.With(authorizationMiddleware).Delete("/{id}", fr.filesHandler.Delete)
+	})
+
+	router.Route(uploadRoute, func(r chi.Router) {
+		r.With(authorizationMiddleware).Post("/", fr.uploadHandler.Upload)
 	})
 
 	return router

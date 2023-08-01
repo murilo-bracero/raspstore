@@ -21,11 +21,8 @@ type conn struct {
 
 func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
 	fmt.Println("Connecting to MongoDB...")
-	loggerOptions := options.
-		Logger().
-		SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()).SetLoggerOptions(loggerOptions))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()))
 
 	if err != nil {
 		logger.Error("Could not connect to MongoDB: %s", err.Error())

@@ -39,6 +39,6 @@ func main() {
 	wg.Add(2)
 	logger.Info("Bootstraping servers")
 	go grpc.StartGrpcServer(useCases.GetFileUseCase, useCases.CreateFileUseCase)
-	go api.StartApiServer(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase)
+	go api.StartApiServer(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase, useCases.UploadUseCase, useCases.CreateFileUseCase)
 	wg.Wait()
 }

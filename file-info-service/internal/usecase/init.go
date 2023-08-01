@@ -10,6 +10,7 @@ type useCases struct {
 	ListFilesUseCase  ListFilesUseCase
 	UpdateFileUseCase UpdateFileUseCase
 	GetFileUseCase    GetFileUseCase
+	UploadUseCase     UploadFileUseCase
 }
 
 func InitUseCases(repo repository.FilesRepository) *useCases {
@@ -19,5 +20,6 @@ func InitUseCases(repo repository.FilesRepository) *useCases {
 		ListFilesUseCase:  NewListFilesUseCase(repo),
 		UpdateFileUseCase: NewUpdateFileUseCase(repo),
 		GetFileUseCase:    NewGetFileUseCase(repo),
+		UploadUseCase:     NewUploadFileUseCase(),
 	}
 }

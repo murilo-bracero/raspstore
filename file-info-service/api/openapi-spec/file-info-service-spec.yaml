@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Raspstore File Metadata Service
-  description: Microservice REST specification of file-info-service endpoints.
+  title: Raspstore File Service
+  description: Microservice REST specification of file-service endpoints.
   contact:
     email: soon@todo.com
   license:
@@ -9,13 +9,17 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:9090/file-info-service
+  - url: http://localhost:9090/file-service
 tags:
   - name: files
     description: File Metadata workflow
+  - name: upload
+    description: Upload a file
+  - name: download
+    description: Download a file
 
 paths:
-  /files:
+  /v1/files:
     get:
       tags:
         - files
@@ -36,7 +40,7 @@ paths:
           $ref: '#/components/responses/SuccessFileMetadataListResponse'
         '500':
           description: Internal Server Error
-  /files/{fileId}:
+  /v1/files/{fileId}:
     put:
       tags:
         - files
@@ -83,8 +87,55 @@ paths:
           description: File not found
         '500':
           description: Internal Server Error
+  /v1/uploads:
+    post:
+      tags:
+        - upload
+      summary: Upload File
+      description: |-
+        Upload file to server. This can only be done by the logged in user.
+      operationId: fileUpload
+      requestBody:
+        $ref: '#/components/requestBodies/UploadFileRequest'
+      responses:
+        '204':
+          description: 'File uploaded successfully'
+        '400':
+          $ref: '#/components/responses/BadRequestFileUpload'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+        '500':
+          description: Internal Server Error
+  /v1/downloads/{fileId}:
+    get:
+      tags:
+        - download
+      summary: Download file
+      description: |-
+        Download file that logged in user has access.
+        This action can only be done by the logged in user.
+      operationId: downloadFile
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessFileResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: file info with provided id not found
+        '500':
+          description: Internal Server Error
 components:
   schemas:
+    UploadFileRepresentation:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
     UserInfoRepresentation:
       type: object
       properties:
@@ -135,13 +186,9 @@ components:
         createdAt:
           type: string
           format: date
-          pattern: YYYY-MM-DD HH:mm:ss
-          example: '2022-10-25 19:43:12'
         updatedAt:
           type: string
           format: date
-          pattern: YYYY-MM-DD HH:mm:ss
-          example: '2022-10-25 19:43:12'
     PageRepresentation:
       type: object
       properties:
@@ -190,6 +237,11 @@ components:
           type: string
           example: 'df438c36-9aa4-11ed-a8fc-0242ac120002'
   requestBodies:
+    UploadFileRequest:
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/components/schemas/UploadFileRepresentation'
     UpdateFileMetadataRequest:
       description: |- 
         File Metadata request object required to update a existing file info
@@ -232,13 +284,25 @@ components:
         example: 63d14dfdec04b7ba9c2372f5
     
   responses:
+    BadRequestFileUpload:
+      description: payload invalid or malformed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+    SuccessFileResponse:
+      description: File retrieved successfully
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            example: file binary
     SuccessUpdateFileMetadataResponse:
       description: File metadata updated successfully
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FileMetadataRepresentation'
-    
     BadRequestUpdateFileMetadataResponse:
       description: payload invalid or malformed
       content:
@@ -259,17 +323,6 @@ components:
                     type: array
                     items:
                       $ref: '#/components/schemas/FileMetadataRepresentation'
-            
-    FileMetadataNotFoundErrorResponse:
-      description: file metadata with provided id not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiErrorException'
-          example:
-            code: "ERR404"
-            message: "File not found"
-            traceId: "c1611200-9aa5-11ed-a8fc-0242ac120002"
   
   securitySchemes:
     bearerAuth:
