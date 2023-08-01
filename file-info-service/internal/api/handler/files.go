@@ -8,13 +8,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	v1 "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
-	u "github.com/murilo-bracero/raspstore/file-info-service/internal/api/utils"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/converter"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/usecase"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/validators"
+	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	u "github.com/murilo-bracero/raspstore/file-service/internal/api/utils"
+	"github.com/murilo-bracero/raspstore/file-service/internal/converter"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/validators"
 )
 
 type FilesHandler interface {
@@ -104,7 +104,7 @@ func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func buildNextUrl(filesPage *model.FilePage, host string, page int, size int) (nextUrl string) {
 	if len(filesPage.Content) == size {
-		nextUrl = fmt.Sprintf("%s/file-info-service/files?page=%d&size=%d", host, page+1, size)
+		nextUrl = fmt.Sprintf("%s/file-service/files?page=%d&size=%d", host, page+1, size)
 	}
 
 	return

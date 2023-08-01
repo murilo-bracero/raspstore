@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 )
 
 type UploadFileUseCase interface {

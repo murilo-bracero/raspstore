@@ -1,4 +1,4 @@
-package controller_test
+package handler_test
 
 import (
 	"bytes"
@@ -15,9 +15,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
-	apiHandler "github.com/murilo-bracero/raspstore/file-info-service/internal/api/handler"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 

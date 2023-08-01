@@ -203,7 +203,7 @@ components:
           example: 1
         next:
           type: string
-          example: 'http://localhost:9000/file-info-service/files?page=2&size=10'
+          example: 'http://localhost:9000/file-service/files?page=2&size=10'
     UpdateFileMetadataRepresentation:
       type: object
       properties:

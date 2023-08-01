@@ -4,30 +4,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
-	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 )
 
-func ToFile(req *pb.CreateFileMetadataRequest) *model.File {
+func CreateFile(filename string, size int64, secret bool, ownerId string) *model.File {
 	return &model.File{
 		FileId:    uuid.NewString(),
-		Filename:  req.Filename,
-		Size:      req.Size,
-		Secret:    req.Secret,
+		Filename:  filename,
+		Size:      size,
+		Secret:    secret,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Viewers:   []string{},
 		Editors:   []string{},
-		CreatedBy: req.OwnerId,
-		UpdatedBy: req.OwnerId,
-		Owner:     req.OwnerId,
-	}
-}
-
-func ToFileMetadata(file *model.File) *pb.FileMetadata {
-	return &pb.FileMetadata{
-		FileId:   file.FileId,
-		Filename: file.Filename,
-		OwnerId:  file.CreatedBy,
+		CreatedBy: ownerId,
+		UpdatedBy: ownerId,
+		Owner:     ownerId,
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	v1 "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
+	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
 )
 
 func HandleBadRequest(w http.ResponseWriter, traceId string, code string, message string) {

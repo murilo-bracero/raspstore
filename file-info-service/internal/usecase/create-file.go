@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/converter"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/repository"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal/converter"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
 
 type CreateFileUseCase interface {

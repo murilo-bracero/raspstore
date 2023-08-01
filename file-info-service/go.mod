@@ -1,4 +1,4 @@
-module github.com/murilo-bracero/raspstore/file-info-service
+module github.com/murilo-bracero/raspstore/file-service
 
 go 1.17
 

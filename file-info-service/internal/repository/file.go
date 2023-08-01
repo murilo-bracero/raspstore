@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
-	db "github.com/murilo-bracero/raspstore/file-info-service/internal/database"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	db "github.com/murilo-bracero/raspstore/file-service/internal/database"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,7 +34,6 @@ func NewFilesRepository(ctx context.Context, conn db.MongoConnection) FilesRepos
 }
 
 func (f *filesRepository) Save(file *model.File) error {
-	file.FileId = uuid.NewString()
 	file.CreatedAt = time.Now()
 	file.UpdatedAt = time.Now()
 

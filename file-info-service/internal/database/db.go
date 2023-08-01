@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

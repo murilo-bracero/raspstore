@@ -3,14 +3,16 @@ package handler
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
 	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
-	v1 "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
-	u "github.com/murilo-bracero/raspstore/file-info-service/internal/api/utils"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/converter"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal/usecase"
-	"github.com/murilo-bracero/raspstore/file-info-service/proto/v1/file-info-service/pb"
+	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
+	u "github.com/murilo-bracero/raspstore/file-service/internal/api/utils"
+	"github.com/murilo-bracero/raspstore/file-service/internal/converter"
+	"github.com/murilo-bracero/raspstore/file-service/internal/model"
+	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
 )
 
 type UploadHandler interface {
@@ -41,11 +43,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	fm := converter.ToFile(&pb.CreateFileMetadataRequest{
-		OwnerId:  userId,
-		Filename: header.Filename,
-		Size:     header.Size,
-	})
+	fm := converter.CreateFile(header.Filename, header.Size, false, userId)
 
 	if err := h.uploadUseCase.Execute(r.Context(), fm, file); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -53,7 +51,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.createFileUseCase.Execute(fm); err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		handleCreateUseCaseError(w, fm)
 		return
 	}
 
@@ -62,4 +60,12 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,
 	})
+}
+
+func handleCreateUseCaseError(w http.ResponseWriter, file *model.File) {
+	if err := os.Remove(internal.StoragePath() + "/" + file.FileId); err != nil {
+		log.Printf("[ERROR] - Could not remove file from fs, need to do it manually: fileId=%s", file.FileId)
+	}
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }

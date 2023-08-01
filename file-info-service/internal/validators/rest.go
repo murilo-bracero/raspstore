@@ -1,8 +1,8 @@
 package validators
 
 import (
-	v1 "github.com/murilo-bracero/raspstore/file-info-service/api/v1"
-	"github.com/murilo-bracero/raspstore/file-info-service/internal"
+	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
 )
 
 func ValidateUpdateFileRequest(req *v1.UpdateFileRequest) error {
