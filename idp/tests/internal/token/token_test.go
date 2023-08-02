@@ -1,11 +1,10 @@
 package token_test
 
 import (
-	"log"
 	"testing"
 
+	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/murilo-bracero/raspstore/idp/internal/token"
@@ -15,13 +14,13 @@ import (
 var config *infra.Config
 
 func init() {
-	err := godotenv.Load("../../.env.test")
+	k := paseto.NewV4AsymmetricSecretKey()
 
-	if err != nil {
-		log.Panicln(err.Error())
+	config = &infra.Config{
+		TokenDuration:   12500,
+		TokenPrivateKey: k.ExportHex(),
+		TokenPublicKey:  k.Public().ExportHex(),
 	}
-
-	config = infra.NewConfig()
 }
 
 func TestGenerateToken(t *testing.T) {

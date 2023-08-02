@@ -6,9 +6,9 @@ import (
 
 	cm "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	v1 "github.com/murilo-bracero/raspstore/idp/api/v1"
 	"github.com/murilo-bracero/raspstore/idp/internal"
-	"github.com/murilo-bracero/raspstore/idp/internal/api/middleware"
 	u "github.com/murilo-bracero/raspstore/idp/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/idp/internal/converter"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
@@ -32,7 +32,7 @@ func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase 
 }
 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
 
 	user, err := h.getUserUseCase.Execute(r.Context(), claims.Uid)
 	if err != nil {
@@ -50,7 +50,7 @@ func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(cm.RequestIDKey).(string)
-	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
 
 	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -85,7 +85,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
 
 	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)

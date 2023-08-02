@@ -3,13 +3,13 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore/idp/internal/model"
+	"github.com/murilo-bracero/raspstore/commons/pkg/object"
 )
 
 func Authentication(requiredPermissions ...string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims := r.Context().Value(UserClaimsCtxKey).(*model.UserClaims)
+			claims := r.Context().Value(UserClaimsCtxKey).(*object.Claims)
 
 			if len(claims.Roles) == 0 {
 				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

@@ -21,13 +21,13 @@ func Generate(config *infra.Config, user *model.User) (string, error) {
 	token.SetAudience("account")
 	token.SetString("roles", strings.Join(user.Permissions, ","))
 
-	key, err := paseto.V4SymmetricKeyFromHex(config.TokenSecret)
+	key, err := paseto.NewV4AsymmetricSecretKeyFromHex(config.TokenPrivateKey)
 
 	if err != nil {
 		return "", err
 	}
 
-	return token.V4Encrypt(key, nil), nil
+	return token.V4Sign(key, nil), nil
 }
 
 func Verify(config *infra.Config, token string) (claims *model.UserClaims, err error) {
@@ -37,13 +37,13 @@ func Verify(config *infra.Config, token string) (claims *model.UserClaims, err e
 	parser.AddRule(paseto.NotExpired())
 	parser.AddRule(paseto.ValidAt(time.Now()))
 
-	key, err := paseto.V4SymmetricKeyFromHex(config.TokenSecret)
+	key, err := paseto.NewV4AsymmetricPublicKeyFromHex(config.TokenPublicKey)
 
 	if err != nil {
 		return nil, err
 	}
 
-	decrypted, err := parser.ParseV4Local(key, token, nil)
+	decrypted, err := parser.ParseV4Public(key, token, nil)
 
 	if err != nil {
 		return nil, err

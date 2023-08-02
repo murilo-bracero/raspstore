@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	cm "github.com/go-chi/chi/v5/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	"github.com/murilo-bracero/raspstore/idp/internal/api/handler"
-	"github.com/murilo-bracero/raspstore/idp/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +23,7 @@ func TestCreateUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -102,7 +102,7 @@ func TestListUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -140,7 +140,7 @@ func TestGetUserById(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -192,7 +192,7 @@ func TestUpdateUserById(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -293,7 +293,7 @@ func TestDeleteUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}

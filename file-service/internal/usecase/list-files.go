@@ -5,7 +5,7 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
@@ -29,7 +29,7 @@ func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, file
 		size = maxListSize
 	}
 
-	userId := ctx.Value(rMiddleware.UserIdKey).(string)
+	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
 
 	filesPage, error_ = u.repo.FindAll(userId, page, size, filename, secret)
 

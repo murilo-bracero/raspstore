@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	u "github.com/murilo-bracero/raspstore/file-service/internal/api/utils"
@@ -29,7 +29,7 @@ func NewUploadHandler(uploadUseCase usecase.UploadFileUseCase, createFileUseCase
 }
 
 func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
-	userId := r.Context().Value(rMiddleware.UserIdKey).(string)
+	userId := r.Context().Value(rmd.UserClaimsCtxKey).(string)
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	r.ParseMultipartForm(32 << 20)
 

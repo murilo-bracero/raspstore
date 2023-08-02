@@ -4,40 +4,25 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	cm "github.com/go-chi/chi/v5/middleware"
-	"github.com/joho/godotenv"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	"github.com/murilo-bracero/raspstore/idp/internal/api/handler"
-	"github.com/murilo-bracero/raspstore/idp/internal/api/middleware"
-	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/stretchr/testify/assert"
 )
-
-var config *infra.Config
-
-func init() {
-	err := godotenv.Load("../../../.env.test")
-
-	if err != nil {
-		log.Panicln(err.Error())
-	}
-
-	config = infra.NewConfig()
-}
 
 func TestGetProfile(t *testing.T) {
 	createJsonRequest := func() (*http.Request, error) {
 		req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -91,7 +76,7 @@ func TestUpdateProfile(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req
 	}
@@ -172,7 +157,7 @@ func TestDeleteProfile(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, middleware.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
 		req = req.WithContext(ctx)
 		return req
 	}

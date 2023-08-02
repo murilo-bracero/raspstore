@@ -7,7 +7,6 @@ import (
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
-	"github.com/murilo-bracero/raspstore/file-service/internal/grpc/client"
 	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
 )
 
@@ -24,9 +23,7 @@ func StartApiServer(luc usecase.ListFilesUseCase,
 
 	downloadHandler := handler.NewDownloadHandler(downloadUc, getFileUc)
 
-	authService := client.NewAuthService()
-
-	router := NewFilesRouter(filesHandler, uploadHanler, downloadHandler, authService).MountRoutes()
+	router := NewFilesRouter(filesHandler, uploadHanler, downloadHandler).MountRoutes()
 	http.Handle("/", router)
 	logger.Info("File Manager REST API runing on port %d", internal.RestPort())
 	http.ListenAndServe(fmt.Sprintf(":%d", internal.RestPort()), router)

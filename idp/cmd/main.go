@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/idp/internal/api"
 	"github.com/murilo-bracero/raspstore/idp/internal/database"
-	"github.com/murilo-bracero/raspstore/idp/internal/grpc"
 	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	rp "github.com/murilo-bracero/raspstore/idp/internal/repository"
 	"github.com/murilo-bracero/raspstore/idp/internal/usecase"
@@ -35,13 +33,7 @@ func main() {
 	createUseCase := usecase.NewCreateUserUseCase(userRepository, config)
 	listUseCase := usecase.NewListUsersUseCase(userRepository)
 
-	var wg sync.WaitGroup
-
-	wg.Add(2)
-	log.Println("bootstraping servers")
-	go grpc.StartGrpcServer(config)
-	go api.StartRestServer(config, loginUseCase, getUserUseCase, updateProfileUseCase, updateUserUseCase, deleteUseCase, createUseCase, listUseCase)
-	wg.Wait()
+	api.StartRestServer(config, loginUseCase, getUserUseCase, updateProfileUseCase, updateUserUseCase, deleteUseCase, createUseCase, listUseCase)
 }
 
 func initDatabase(config *infra.Config) database.MongoConnection {
