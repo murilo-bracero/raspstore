@@ -1,20 +1,23 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/murilo-bracero/raspstore/commons/pkg/object"
+)
 
 func Authentication(requiredPermissions ...string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims := r.Context().Value(UserClaimsCtxKey).(*object.Claims)
 
-			requesterRoles := r.Context().Value(UserRolesKey).([]string)
-
-			if requesterRoles == nil {
+			if len(claims.Roles) == 0 {
 				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 				return
 			}
 
-			for rp := range requiredPermissions {
-				for p := range requesterRoles {
+			for _, rp := range requiredPermissions {
+				for _, p := range claims.Roles {
 					if rp == p {
 						h.ServeHTTP(w, r)
 						return
