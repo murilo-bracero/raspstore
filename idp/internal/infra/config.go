@@ -11,7 +11,8 @@ type Config struct {
 	Database          string
 	GrpcPort          int
 	RestPort          int
-	TokenSecret       string
+	TokenPrivateKey   string
+	TokenPublicKey    string
 	TokenDuration     int
 	MinPasswordLength int
 	EnforceMfa        bool
@@ -23,7 +24,8 @@ func NewConfig() *Config {
 		Database:          os.Getenv("MONGO_DATABASE_NAME"),
 		GrpcPort:          getIntEnv("GRPC_PORT"),
 		RestPort:          getIntEnv("REST_PORT"),
-		TokenSecret:       os.Getenv("JWT_SECRET"),
+		TokenPrivateKey:   os.Getenv("PRIVATE_KEY"),
+		TokenPublicKey:    os.Getenv("PUBLIC_KEY"),
 		TokenDuration:     getIntEnv("TOKEN_DURATION"),
 		MinPasswordLength: getIntEnv("MIN_PASS_LEN"),
 		EnforceMfa:        getBoolEnv("ENFORCE_MFA"),

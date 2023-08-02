@@ -111,6 +111,8 @@ github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kN
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/murilo-bracero/raspstore/commons v0.0.0-20230724131118-18a79c2a97f3 h1:Cq/UxLFcMkFx8nDiJcIlLosnC8j/dRJIeiZAj3hhkhs=
 github.com/murilo-bracero/raspstore/commons v0.0.0-20230724131118-18a79c2a97f3/go.mod h1:aucsQTcGo/RPKz24lbK6Ajz3OaqGsiYxLCjqawxleKg=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230802164026-335f921f4268 h1:V2l1S3npo9L/6BT4KxwwJNrfiQmhHp9zbhAK3nfDnas=
+github.com/murilo-bracero/raspstore/commons v0.0.0-20230802164026-335f921f4268/go.mod h1:8QxB3uhzW13Ayf9l2sxIKI+gb3wz29BuMqvSTs5bINA=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

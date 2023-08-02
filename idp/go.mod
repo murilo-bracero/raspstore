@@ -28,7 +28,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/murilo-bracero/raspstore/commons v0.0.0-20230724131118-18a79c2a97f3
+	github.com/murilo-bracero/raspstore/commons v0.0.0-20230802164026-335f921f4268
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
