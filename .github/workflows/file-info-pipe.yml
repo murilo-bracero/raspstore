@@ -15,5 +15,5 @@ jobs:
           go-version: '1.17'
 
       - name: Test
-        working-directory: ./file-service/**
+        working-directory: file-service
         run: go test ./test/...
