@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
-	"github.com/murilo-bracero/raspstore/commons/pkg/service"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 )
@@ -22,11 +22,10 @@ type filesRouter struct {
 	filesHandler    handler.FilesHandler
 	uploadHandler   handler.UploadHandler
 	downloadHandler handler.DownloadHandler
-	authService     service.AuthService
 }
 
-func NewFilesRouter(filesHandler handler.FilesHandler, uploadHandler handler.UploadHandler, downloadHandler handler.DownloadHandler, as service.AuthService) FilesRouter {
-	return &filesRouter{filesHandler: filesHandler, authService: as, uploadHandler: uploadHandler, downloadHandler: downloadHandler}
+func NewFilesRouter(filesHandler handler.FilesHandler, uploadHandler handler.UploadHandler, downloadHandler handler.DownloadHandler) FilesRouter {
+	return &filesRouter{filesHandler: filesHandler, uploadHandler: uploadHandler, downloadHandler: downloadHandler}
 }
 
 func (fr *filesRouter) MountRoutes() *chi.Mux {
@@ -36,16 +35,16 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 	router.Use(chiMiddleware.RequestID)
 	router.Use(chiMiddleware.Logger)
 
-	authorizationMiddleware := rMiddleware.Authorization(fr.authService)
+	authMiddleware := rmd.Authorization(internal.PublicKey())
 
 	router.Route(fileBaseRoute, func(r chi.Router) {
-		r.With(authorizationMiddleware).Get("/", fr.filesHandler.ListFiles)
-		r.With(authorizationMiddleware).Put("/{id}", fr.filesHandler.Update)
-		r.With(authorizationMiddleware).Delete("/{id}", fr.filesHandler.Delete)
+		r.With(authMiddleware).Get("/", fr.filesHandler.ListFiles)
+		r.With(authMiddleware).Put("/{id}", fr.filesHandler.Update)
+		r.With(authMiddleware).Delete("/{id}", fr.filesHandler.Delete)
 	})
 
-	router.With(authorizationMiddleware).Post(uploadRoute, fr.uploadHandler.Upload)
-	router.With(authorizationMiddleware).Get(downloadRoute, fr.downloadHandler.Download)
+	router.With(authMiddleware).Post(uploadRoute, fr.uploadHandler.Upload)
+	router.With(authMiddleware).Get(downloadRoute, fr.downloadHandler.Download)
 
 	return router
 }

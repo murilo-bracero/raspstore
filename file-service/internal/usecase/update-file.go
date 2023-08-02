@@ -5,7 +5,7 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
@@ -23,7 +23,7 @@ func NewUpdateFileUseCase(repo repository.FilesRepository) UpdateFileUseCase {
 }
 
 func (c *updateFileUseCase) Execute(ctx context.Context, file *model.File) (fileMetadata *model.FileMetadataLookup, error_ error) {
-	userId := ctx.Value(rMiddleware.UserIdKey).(string)
+	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
 	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
 
 	found, error_ := c.repo.FindById(userId, file.FileId)

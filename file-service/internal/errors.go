@@ -15,4 +15,5 @@ var (
 	ErrViewersNil        = errors.New("viewers field must be an array")
 	ErrNotAvailableSpace = errors.New("file is greather than the space available for your user")
 	ErrFileDoesNotExists = errors.New("file with provided ID does not exists")
+	ErrEmptyToken        = errors.New("token must not be empty")
 )

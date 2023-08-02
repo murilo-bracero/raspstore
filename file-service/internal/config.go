@@ -52,6 +52,10 @@ func StoragePath() string {
 	return os.Getenv("STORAGE_PATH")
 }
 
+func PublicKey() string {
+	return os.Getenv("PUBLIC_KEY")
+}
+
 func getIntEnv(key string) int {
 	value, err := strconv.Atoi(os.Getenv(key))
 

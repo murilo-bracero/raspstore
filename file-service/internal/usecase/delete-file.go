@@ -5,7 +5,7 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
 
@@ -23,7 +23,7 @@ func NewDeleteFileUseCase(repo repository.FilesRepository) DeleteFileUseCase {
 
 func (u *deleteFileUseCase) Execute(ctx context.Context, fileId string) (error_ error) {
 	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-	userId := ctx.Value(rMiddleware.UserIdKey).(string)
+	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
 
 	if err := u.repo.Delete(userId, fileId); err != nil {
 		logger.Error("[%s]: Could not delete file in database: fileId=%s, %s", traceId, fileId, err.Error())

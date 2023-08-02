@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	rMiddleware "github.com/murilo-bracero/raspstore/commons/pkg/middleware"
+	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
@@ -28,7 +28,7 @@ func TestDownload(t *testing.T) {
 
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
-		ctx := context.WithValue(req.Context(), rMiddleware.UserIdKey, defaultUserId)
+		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, defaultUserId)
 		return req.WithContext(ctx)
 	}
 
