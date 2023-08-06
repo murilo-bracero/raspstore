@@ -29,30 +29,3 @@ func Generate(config *infra.Config, user *model.User) (string, error) {
 
 	return token.V4Sign(key, nil), nil
 }
-
-func Verify(config *infra.Config, token string) (claims *model.UserClaims, err error) {
-	parser := paseto.NewParser()
-
-	parser.AddRule(paseto.ForAudience("account"))
-	parser.AddRule(paseto.NotExpired())
-	parser.AddRule(paseto.ValidAt(time.Now()))
-
-	key, err := paseto.NewV4AsymmetricPublicKeyFromHex(config.TokenPublicKey)
-
-	if err != nil {
-		return nil, err
-	}
-
-	decrypted, err := parser.ParseV4Public(key, token, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	decryptedMap := decrypted.Claims()
-
-	return &model.UserClaims{
-		Uid:   decryptedMap["sub"].(string),
-		Roles: strings.Split(decryptedMap["roles"].(string), ","),
-	}, nil
-}

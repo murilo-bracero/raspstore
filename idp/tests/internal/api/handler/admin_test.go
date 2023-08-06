@@ -9,12 +9,23 @@ import (
 	"testing"
 
 	cm "github.com/go-chi/chi/v5/middleware"
+	"github.com/murilo-bracero/raspstore/commons/pkg/object"
 	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	"github.com/murilo-bracero/raspstore/idp/internal/api/handler"
+	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/stretchr/testify/assert"
 )
+
+var config *infra.Config
+
+func init() {
+	config = &infra.Config{
+		MinPasswordLength: 8,
+		EnforceMfa:        false,
+	}
+}
 
 func TestCreateUser(t *testing.T) {
 	createJsonRequest := func(body string) (*http.Request, error) {
@@ -23,7 +34,7 @@ func TestCreateUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -38,7 +49,7 @@ func TestCreateUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(&mockCreateUserUseCase{}, nil, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, &mockCreateUserUseCase{}, nil, nil, nil, nil)
 		handler := http.HandlerFunc(ah.CreateUser)
 		handler.ServeHTTP(rr, req)
 
@@ -54,7 +65,7 @@ func TestCreateUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(&mockCreateUserUseCase{}, nil, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, &mockCreateUserUseCase{}, nil, nil, nil, nil)
 		handler := http.HandlerFunc(ah.CreateUser)
 		handler.ServeHTTP(rr, req)
 
@@ -71,7 +82,7 @@ func TestCreateUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(&mockCreateUserUseCase{shouldReturnConflict: true}, nil, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, &mockCreateUserUseCase{shouldReturnConflict: true}, nil, nil, nil, nil)
 		handler := http.HandlerFunc(ah.CreateUser)
 		handler.ServeHTTP(rr, req)
 
@@ -88,7 +99,7 @@ func TestCreateUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(&mockCreateUserUseCase{shouldReturnErr: true}, nil, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, &mockCreateUserUseCase{shouldReturnErr: true}, nil, nil, nil, nil)
 		handler := http.HandlerFunc(ah.CreateUser)
 		handler.ServeHTTP(rr, req)
 
@@ -102,7 +113,7 @@ func TestListUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -113,7 +124,7 @@ func TestListUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, &mockListUsersUseCase{}, nil)
+		ah := handler.NewAdminHandler(config, nil, nil, nil, &mockListUsersUseCase{}, nil)
 		handler := http.HandlerFunc(ah.ListUsers)
 		handler.ServeHTTP(rr, req)
 
@@ -126,7 +137,7 @@ func TestListUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, &mockListUsersUseCase{shouldReturnErr: true}, nil)
+		ah := handler.NewAdminHandler(config, nil, nil, nil, &mockListUsersUseCase{shouldReturnErr: true}, nil)
 		handler := http.HandlerFunc(ah.ListUsers)
 		handler.ServeHTTP(rr, req)
 
@@ -140,7 +151,7 @@ func TestGetUserById(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -151,7 +162,7 @@ func TestGetUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, &mockGetUserUseCase{}, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, nil, &mockGetUserUseCase{}, nil, nil, nil)
 		handler := http.HandlerFunc(ah.GetUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -164,7 +175,7 @@ func TestGetUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, &mockGetUserUseCase{shouldReturnNotFound: true}, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, nil, &mockGetUserUseCase{shouldReturnNotFound: true}, nil, nil, nil)
 		handler := http.HandlerFunc(ah.GetUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -177,7 +188,7 @@ func TestGetUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, &mockGetUserUseCase{shouldReturnErr: true}, nil, nil, nil)
+		ah := handler.NewAdminHandler(config, nil, &mockGetUserUseCase{shouldReturnErr: true}, nil, nil, nil)
 		handler := http.HandlerFunc(ah.GetUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -192,7 +203,7 @@ func TestUpdateUserById(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -208,7 +219,7 @@ func TestUpdateUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, nil, &mockUpdateUserUseCase{})
+		ah := handler.NewAdminHandler(config, nil, nil, nil, nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ah.UpdateUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -225,7 +236,7 @@ func TestUpdateUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, nil, &mockUpdateUserUseCase{})
+		ah := handler.NewAdminHandler(config, nil, nil, nil, nil, &mockUpdateUserUseCase{})
 		handler := http.HandlerFunc(ah.UpdateUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -243,7 +254,7 @@ func TestUpdateUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnNotFound: true})
+		ah := handler.NewAdminHandler(config, nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnNotFound: true})
 		handler := http.HandlerFunc(ah.UpdateUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -261,7 +272,7 @@ func TestUpdateUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnConflict: true})
+		ah := handler.NewAdminHandler(config, nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnConflict: true})
 		handler := http.HandlerFunc(ah.UpdateUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -279,7 +290,7 @@ func TestUpdateUserById(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnErr: true})
+		ah := handler.NewAdminHandler(config, nil, nil, nil, nil, &mockUpdateUserUseCase{shouldReturnErr: true})
 		handler := http.HandlerFunc(ah.UpdateUserById)
 		handler.ServeHTTP(rr, req)
 
@@ -293,7 +304,7 @@ func TestDeleteUser(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -304,7 +315,7 @@ func TestDeleteUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, &mockDeleteUserUseCase{}, nil, nil)
+		ah := handler.NewAdminHandler(config, nil, nil, &mockDeleteUserUseCase{}, nil, nil)
 		handler := http.HandlerFunc(ah.DeleteUser)
 		handler.ServeHTTP(rr, req)
 
@@ -317,7 +328,7 @@ func TestDeleteUser(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		ah := handler.NewAdminHandler(nil, nil, &mockDeleteUserUseCase{shouldReturnError: true}, nil, nil)
+		ah := handler.NewAdminHandler(config, nil, nil, &mockDeleteUserUseCase{shouldReturnError: true}, nil, nil)
 		handler := http.HandlerFunc(ah.DeleteUser)
 		handler.ServeHTTP(rr, req)
 

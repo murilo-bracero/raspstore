@@ -3,15 +3,12 @@ package usecase
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/murilo-bracero/raspstore/idp/internal/repository"
 	"github.com/murilo-bracero/raspstore/idp/internal/token"
-	"github.com/pquerna/otp/totp"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginUseCase interface {
@@ -39,11 +36,11 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 		return nil, internal.ErrInactiveAccount
 	}
 
-	if !isValidPassword(rawPassword, usr.Password) {
+	if !usr.Authenticate(rawPassword) {
 		return nil, internal.ErrIncorrectCredentials
 	}
 
-	if err := isValidMfa(usr, mfaToken); err != nil {
+	if err := usr.ValidateTotpToken(mfaToken); err != nil {
 		return nil, err
 	}
 
@@ -53,11 +50,11 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 		return nil, err
 	}
 
-	if tokenCredentials.RefreshToken, err = generateRefreshToken(); err != nil {
+	if err = usr.GenerateRefreshToken(); err != nil {
 		return nil, err
 	}
 
-	usr.RefreshToken = tokenCredentials.RefreshToken
+	tokenCredentials.RefreshToken = usr.RefreshToken
 
 	if err = ls.usersRespository.Update(usr); err != nil {
 		return nil, err
@@ -66,28 +63,4 @@ func (ls *loginUseCase) AuthenticateCredentials(username string, rawPassword str
 	tokenCredentials.ExpirestAt = time.Now().Add(time.Duration(ls.config.TokenDuration) * time.Second)
 
 	return tokenCredentials, nil
-}
-
-func isValidPassword(rawPass string, hashPass string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashPass), []byte(rawPass)) == nil
-}
-
-func isValidMfa(usr *model.User, mfaToken string) error {
-	if usr.IsMfaEnabled && usr.IsMfaVerified && !totp.Validate(mfaToken, usr.Secret) {
-		return internal.ErrIncorrectCredentials
-	}
-
-	return nil
-}
-
-func generateRefreshToken() (refreshToken string, err error) {
-	seed := uuid.NewString()
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(seed), bcrypt.DefaultCost)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(hash), nil
 }
