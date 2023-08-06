@@ -24,7 +24,7 @@ func StartRestServer(
 
 	profileHandler := handler.NewProfileHandler(getUc, updateProfileUc, deleteUc)
 
-	adminHandler := handler.NewAdminHandler(createUc, getUc, deleteUc, listUs, updateUserUc)
+	adminHandler := handler.NewAdminHandler(config, createUc, getUc, deleteUc, listUs, updateUserUc)
 
 	router := NewRoutes(loginHandler, profileHandler, adminHandler, config).MountRoutes()
 	http.Handle("/", router)

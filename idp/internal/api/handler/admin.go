@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,7 @@ import (
 	v1 "github.com/murilo-bracero/raspstore/idp/api/v1"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	u "github.com/murilo-bracero/raspstore/idp/internal/api/utils"
-	"github.com/murilo-bracero/raspstore/idp/internal/converter"
+	"github.com/murilo-bracero/raspstore/idp/internal/infra"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/murilo-bracero/raspstore/idp/internal/usecase"
 )
@@ -24,6 +25,7 @@ type AdminHandler interface {
 }
 
 type adminHandler struct {
+	config        *infra.Config
 	createUseCase usecase.CreateUserUseCase
 	getUseCase    usecase.GetUserUseCase
 	deleteUseCase usecase.DeleteUserUseCase
@@ -31,12 +33,14 @@ type adminHandler struct {
 	updateUseCase usecase.UpdateUserUseCase
 }
 
-func NewAdminHandler(createUseCase usecase.CreateUserUseCase,
+func NewAdminHandler(config *infra.Config,
+	createUseCase usecase.CreateUserUseCase,
 	getUseCase usecase.GetUserUseCase,
 	deleteUseCase usecase.DeleteUserUseCase,
 	listUseCase usecase.ListUsersUseCase,
 	updateUseCase usecase.UpdateUserUseCase) AdminHandler {
-	return &adminHandler{createUseCase: createUseCase,
+	return &adminHandler{config: config,
+		createUseCase: createUseCase,
 		getUseCase:    getUseCase,
 		deleteUseCase: deleteUseCase,
 		listUseCase:   listUseCase,
@@ -56,17 +60,22 @@ func (h *adminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := converter.ToUser(&req)
+	if len(req.Password) < h.config.MinPasswordLength {
+		u.HandleBadRequest(w, "ERR002", fmt.Sprintf("Password must have at least %d characters", h.config.MinPasswordLength), traceId)
+		return
+	}
+
+	usr := model.NewUser(&req)
 
 	if err := h.createUseCase.Execute(r.Context(), usr); err == internal.ErrConflict {
-		u.HandleBadRequest(w, "ERR002", "User with provided email or username already exists", traceId)
+		u.HandleBadRequest(w, "ERR003", "User with provided email or username already exists", traceId)
 		return
 	} else if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	u.Created(w, converter.ToUserRepresentation(usr))
+	u.Created(w, usr.ToUserRepresentation())
 }
 
 func validateCreateUserRequest(req *v1.CreateUserRepresentation) error {
@@ -109,7 +118,7 @@ func (h *adminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		nextUrl = u.BuildPaginationNextUrl(r, page, size)
 	}
 
-	u.Send(w, converter.ToPageRepresentation(userPage, page, size, nextUrl))
+	u.Send(w, userPage.ToPageRepresentation(page, size, nextUrl))
 }
 
 func (h *adminHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +136,7 @@ func (h *adminHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Send(w, converter.ToUserRepresentation(user))
+	u.Send(w, user.ToUserRepresentation())
 }
 
 func (h *adminHandler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
@@ -158,7 +167,7 @@ func (h *adminHandler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Send(w, converter.ToUserRepresentation(user))
+	u.Send(w, user.ToUserRepresentation())
 }
 
 func validateUpdateUserRepresentation(req *v1.UpdateUserRepresentation) error {

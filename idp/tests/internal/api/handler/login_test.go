@@ -18,81 +18,71 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoginSuccessWithCodeResponseType(t *testing.T) {
-	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
+func TestLogin(t *testing.T) {
+	createReq := func(responseType string, username string, password string) *http.Request {
+		data := url.Values{}
+		data.Set("response_type", responseType)
+		req, err := http.NewRequest("POST", "/idp/login", bytes.NewBufferString(data.Encode()))
 
-	data := url.Values{}
-	data.Set("response_type", "code")
-	req, err := http.NewRequest("POST", "/idp/login", bytes.NewBufferString(data.Encode()))
+		assert.NoError(t, err)
 
-	assert.NoError(t, err)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Authorization", "Basic "+basic(username, password))
+		return req
+	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Authorization", "Basic "+basic("testuser_ok", "testpassword"))
+	t.Run("Should return success with json tokens when username/password is correct and response_type is code", func(t *testing.T) {
+		ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
-	rr := httptest.NewRecorder()
+		req := createReq("code", "testuser_ok", "password123")
+		rr := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(ctr.Login)
-	handler.ServeHTTP(rr, req)
+		handler := http.HandlerFunc(ctr.Login)
+		handler.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, http.StatusOK, rr.Code)
 
-	var res v1.LoginResponse
+		var res v1.LoginResponse
 
-	err = utils.ParseBody(rr.Body, &res)
-	assert.NoError(t, err)
+		err := utils.ParseBody(rr.Body, &res)
+		assert.NoError(t, err)
 
-	assert.NotEmpty(t, res.AccessToken)
-	assert.NotEmpty(t, res.RefreshToken)
-}
+		assert.NotEmpty(t, res.AccessToken)
+		assert.NotEmpty(t, res.RefreshToken)
+	})
 
-func TestLoginSuccessWithTokenResponseType(t *testing.T) {
-	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
+	t.Run("Should return success with cookie tokens when username/password is correct and response_type is token", func(t *testing.T) {
+		ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
-	data := url.Values{}
-	data.Set("response_type", "token")
-	req, err := http.NewRequest("POST", "/idp/login", bytes.NewBufferString(data.Encode()))
+		req := createReq("token", "testuser_ok", "password123")
+		rr := httptest.NewRecorder()
 
-	assert.NoError(t, err)
+		handler := http.HandlerFunc(ctr.Login)
+		handler.ServeHTTP(rr, req)
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Authorization", "Basic "+basic("testuser_ok", "testpassword"))
+		assert.Equal(t, http.StatusOK, rr.Code)
 
-	rr := httptest.NewRecorder()
+		accessTokenCookie := findCookieByName(rr.Result().Cookies(), "access_token")
+		assert.NotNil(t, accessTokenCookie)
 
-	handler := http.HandlerFunc(ctr.Login)
-	handler.ServeHTTP(rr, req)
+		refreshTokenCookie := findCookieByName(rr.Result().Cookies(), "refresh_token")
+		assert.NotNil(t, refreshTokenCookie)
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+		assert.NotEmpty(t, accessTokenCookie)
+		assert.NotEmpty(t, refreshTokenCookie)
+	})
 
-	accessTokenCookie := findCookieByName(rr.Result().Cookies(), "access_token")
-	assert.NotNil(t, accessTokenCookie)
+	t.Run("Should return UNAUTHORIZED when username/password is wrong", func(t *testing.T) {
+		ctr := handler.NewLoginHandler(&mockLoginUseCase{})
 
-	refreshTokenCookie := findCookieByName(rr.Result().Cookies(), "refresh_token")
-	assert.NotNil(t, refreshTokenCookie)
+		req := createReq("token", "testuser", "password123")
+		rr := httptest.NewRecorder()
 
-	assert.NotEmpty(t, accessTokenCookie)
-	assert.NotEmpty(t, refreshTokenCookie)
-}
+		handler := http.HandlerFunc(ctr.Login)
+		handler.ServeHTTP(rr, req)
 
-func TestLoginFail(t *testing.T) {
-	ctr := handler.NewLoginHandler(&mockLoginUseCase{})
-
-	data := url.Values{}
-	data.Set("response_type", "code")
-	req, err := http.NewRequest("POST", "/idp/login", bytes.NewBufferString(data.Encode()))
-
-	assert.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Authorization", "Basic "+basic("testuser", "testpassword"))
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(ctr.Login)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
 }
 
 func basic(username string, password string) string {

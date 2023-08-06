@@ -6,11 +6,11 @@ import (
 
 	cm "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
+	"github.com/murilo-bracero/raspstore/commons/pkg/object"
 	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	v1 "github.com/murilo-bracero/raspstore/idp/api/v1"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	u "github.com/murilo-bracero/raspstore/idp/internal/api/utils"
-	"github.com/murilo-bracero/raspstore/idp/internal/converter"
 	"github.com/murilo-bracero/raspstore/idp/internal/model"
 	"github.com/murilo-bracero/raspstore/idp/internal/usecase"
 )
@@ -32,9 +32,9 @@ func NewProfileHandler(profileUseCase usecase.GetUserUseCase, updateUserUseCase 
 }
 
 func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*object.Claims)
 
-	user, err := h.getUserUseCase.Execute(r.Context(), claims.Uid)
+	user, err := h.getUserUseCase.Execute(r.Context(), claims.UserId)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -45,14 +45,14 @@ func (h *profileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Send(w, converter.ToUserRepresentation(user))
+	u.Send(w, user.ToUserRepresentation())
 }
 
 func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(cm.RequestIDKey).(string)
-	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*object.Claims)
 
-	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
+	if res, err := h.isAccountInactive(r.Context(), claims.UserId); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	} else if err != nil {
@@ -72,7 +72,7 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &model.User{
-		UserId:   claims.Uid,
+		UserId:   claims.UserId,
 		Username: req.Username,
 	}
 
@@ -81,13 +81,13 @@ func (h *profileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Send(w, converter.ToUserRepresentation(user))
+	u.Send(w, user.ToUserRepresentation())
 }
 
 func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*model.UserClaims)
+	claims := r.Context().Value(rmd.UserClaimsCtxKey).(*object.Claims)
 
-	if res, err := h.isAccountInactive(r.Context(), claims.Uid); res {
+	if res, err := h.isAccountInactive(r.Context(), claims.UserId); res {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	} else if err != nil {
@@ -95,7 +95,7 @@ func (h *profileHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.deleteUseCase.Execute(r.Context(), claims.Uid); err != nil {
+	if err := h.deleteUseCase.Execute(r.Context(), claims.UserId); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

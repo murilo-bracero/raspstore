@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	cm "github.com/go-chi/chi/v5/middleware"
+	"github.com/murilo-bracero/raspstore/commons/pkg/object"
 	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/idp/internal"
 	"github.com/murilo-bracero/raspstore/idp/internal/api/handler"
@@ -22,7 +22,7 @@ func TestGetProfile(t *testing.T) {
 		req, err := http.NewRequest("GET", "/idp/v1/profile", nil)
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req, nil
 	}
@@ -76,7 +76,7 @@ func TestUpdateProfile(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req
 	}
@@ -157,7 +157,7 @@ func TestDeleteProfile(t *testing.T) {
 		assert.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), cm.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &model.UserClaims{})
+		ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, &object.Claims{})
 		req = req.WithContext(ctx)
 		return req
 	}
@@ -198,18 +198,17 @@ func (u *mockGetProfileUseCase) Execute(ctx context.Context, userId string) (use
 	}
 
 	usr := &model.User{
-		UserId:        "c223a9f5-7174-4102-aacc-73f03954dde8",
 		Username:      "cool_username",
 		IsEnabled:     true,
-		Password:      "hashed_password",
 		Secret:        "user_secret",
 		Permissions:   []string{"read", "write"},
-		RefreshToken:  "refresh_token",
 		IsMfaEnabled:  true,
 		IsMfaVerified: false,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
 	}
+
+	usr.SetPassword("mypassword123")
+	usr.GenerateRefreshToken()
+	usr.BeforeCreate()
 
 	if u.accountInactive {
 		usr.IsEnabled = false

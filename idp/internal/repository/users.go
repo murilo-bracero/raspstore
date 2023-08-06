@@ -75,28 +75,15 @@ func (r *usersRespository) Update(usr *model.User) error {
 }
 
 func (r *usersRespository) FindAll(page int, size int, username string, enabled *bool) (userPage *model.UserPage, err error) {
-	contentField := []bson.D{}
-
-	if username != "" {
-		contentField = append(contentField, bson.D{{Key: "$match", Value: bson.D{
-			{Key: "username", Value: bson.D{
-				{Key: "$regex", Value: username},
-			}},
-		}}})
-	}
-
-	if enabled != nil {
-		contentField = append(contentField, bson.D{{Key: "$match", Value: bson.D{
-			{Key: "is_enabled", Value: *enabled},
-		}}})
-	}
-
-	contentField = append(contentField, bson.D{{Key: "$skip", Value: page * size}}, bson.D{{Key: "$limit", Value: size}})
-
-	totalCountField := []bson.M{{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}}}}
 	facet := bson.D{
 		{Key: "$facet", Value: bson.D{
-			{Key: "content", Value: contentField}, {Key: "totalCount", Value: totalCountField},
+			{Key: "content", Value: bson.A{
+				bson.D{{Key: "$skip", Value: page * size}},
+				bson.D{{Key: "$limit", Value: size}},
+			}},
+			{Key: "totalCount", Value: bson.A{
+				bson.D{{Key: "$count", Value: "count"}},
+			}},
 		}},
 	}
 
@@ -108,7 +95,25 @@ func (r *usersRespository) FindAll(page int, size int, username string, enabled 
 		}},
 	}
 
-	cursor, err := r.coll.Aggregate(r.ctx, mongo.Pipeline{facet, project})
+	pipeline := mongo.Pipeline{facet, project}
+
+	if username != "" {
+		match := bson.D{{Key: "$match", Value: bson.D{
+			{Key: "username", Value: bson.D{
+				{Key: "$regex", Value: username},
+			}},
+		}}}
+		pipeline = append([]bson.D{match}, pipeline...)
+	}
+
+	if enabled != nil {
+		match := bson.D{{Key: "$match", Value: bson.D{
+			{Key: "is_enabled", Value: *enabled},
+		}}}
+		pipeline = append([]bson.D{match}, pipeline...)
+	}
+
+	cursor, err := r.coll.Aggregate(r.ctx, pipeline)
 
 	if err != nil {
 		return nil, err
