@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +26,7 @@ func TestUpload(t *testing.T) {
 	createReq := func(body *bytes.Buffer) (req *http.Request) {
 		req, err := http.NewRequest("POST", "/file-service/v1/uploads", body)
 		assert.NoError(t, err)
-		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, defaultUserId)
+		ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, defaultUserId)
 		ctx = context.WithValue(ctx, chiMiddleware.RequestIDKey, defaultUserId)
 		req = req.WithContext(ctx)
 		return req

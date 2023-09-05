@@ -3,8 +3,6 @@ package api
 import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
-	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 )
@@ -34,17 +32,16 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 	router.Use(middleware.Cors)
 	router.Use(chiMiddleware.RequestID)
 	router.Use(chiMiddleware.Logger)
-
-	authMiddleware := rmd.Authorization(internal.PublicKey())
+	router.Use(middleware.JWTMiddleware)
 
 	router.Route(fileBaseRoute, func(r chi.Router) {
-		r.With(authMiddleware).Get("/", fr.filesHandler.ListFiles)
-		r.With(authMiddleware).Put("/{id}", fr.filesHandler.Update)
-		r.With(authMiddleware).Delete("/{id}", fr.filesHandler.Delete)
+		r.Get("/", fr.filesHandler.ListFiles)
+		r.Put("/{id}", fr.filesHandler.Update)
+		r.Delete("/{id}", fr.filesHandler.Delete)
 	})
 
-	router.With(authMiddleware).Post(uploadRoute, fr.uploadHandler.Upload)
-	router.With(authMiddleware).Get(downloadRoute, fr.downloadHandler.Download)
+	router.Post(uploadRoute, fr.uploadHandler.Upload)
+	router.Get(downloadRoute, fr.downloadHandler.Download)
 
 	return router
 }

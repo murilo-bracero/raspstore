@@ -4,8 +4,9 @@ import (
 	"context"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
@@ -29,9 +30,9 @@ func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, file
 		size = maxListSize
 	}
 
-	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
+	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	filesPage, error_ = u.repo.FindAll(userId, page, size, filename, secret)
+	filesPage, error_ = u.repo.FindAll(user.Subject(), page, size, filename, secret)
 
 	if error_ != nil {
 		traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
