@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
+	"log/slog"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
@@ -36,7 +36,7 @@ func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, file
 
 	if error_ != nil {
 		traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-		logger.Error("[%s]: Could list files due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could list files due to error: %s", traceId, error_.Error())
 		return
 	}
 

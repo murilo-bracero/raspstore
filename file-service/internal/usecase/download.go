@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,14 +23,14 @@ func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file 
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not retrieve file from file-service due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could not retrieve file from file-service due to error: %s", traceId, error_.Error())
 		return
 	}
 
 	file, error_ = os.Open(internal.StoragePath() + "/" + fileId)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not open file in fs due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could not open file in fs due to error: %s", traceId, error_.Error())
 		return
 	}
 

@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	u "github.com/murilo-bracero/raspstore/file-service/internal/api/utils"
 	"github.com/murilo-bracero/raspstore/file-service/internal/converter"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
@@ -29,14 +29,14 @@ func NewUploadHandler(uploadUseCase usecase.UploadFileUseCase, createFileUseCase
 }
 
 func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
-	userId := r.Context().Value(rmd.UserClaimsCtxKey).(string)
+	userId := r.Context().Value(m.UserClaimsCtxKey).(string)
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	r.ParseMultipartForm(32 << 20)
 
 	file, header, err := r.FormFile("file")
 
 	if err != nil {
-		log.Printf("[ERROR] - [%s]: Could not open Multipart Form file: %s", traceId, err.Error())
+		slog.Error("[%s]: Could not open Multipart Form file: %s", traceId, err.Error())
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
@@ -64,7 +64,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 func handleCreateUseCaseError(w http.ResponseWriter, file *model.File) {
 	if err := os.Remove(internal.StoragePath() + "/" + file.FileId); err != nil {
-		log.Printf("[ERROR] - Could not remove file from fs, need to do it manually: fileId=%s", file.FileId)
+		slog.Error("Could not remove file from fs, need to do it manually: fileId=%s", file.FileId)
 	}
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

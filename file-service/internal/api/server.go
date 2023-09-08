@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
@@ -25,6 +25,6 @@ func StartApiServer(luc usecase.ListFilesUseCase,
 
 	router := NewFilesRouter(filesHandler, uploadHanler, downloadHandler).MountRoutes()
 	http.Handle("/", router)
-	logger.Info("File Manager REST API runing on port %d", internal.RestPort())
+	slog.Info("File Manager REST API runing on port %d", internal.RestPort())
 	http.ListenAndServe(fmt.Sprintf(":%d", internal.RestPort()), router)
 }

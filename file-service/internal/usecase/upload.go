@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -28,7 +28,7 @@ func (u *uploadFileUseCase) Execute(ctx context.Context, file *model.File, src i
 	filerep, error_ := os.Create(internal.StoragePath() + "/" + file.FileId)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not create file in fs due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could not create file in fs due to error: %s", traceId, error_.Error())
 		return
 	}
 
@@ -37,7 +37,7 @@ func (u *uploadFileUseCase) Execute(ctx context.Context, file *model.File, src i
 	_, error_ = io.Copy(filerep, src)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not read file buffer due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could not read file buffer due to error: %s", traceId, error_.Error())
 		return
 	}
 

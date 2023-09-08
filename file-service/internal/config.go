@@ -2,10 +2,9 @@ package internal
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
-
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 )
 
 func GrpcPort() int {
@@ -60,7 +59,7 @@ func getIntEnv(key string) int {
 	value, err := strconv.Atoi(os.Getenv(key))
 
 	if err != nil {
-		logger.Error("error parsing env var %s: %s", key, err.Error())
+		slog.Error("error parsing env var %s: %s", key, err.Error())
 		os.Exit(1)
 	}
 

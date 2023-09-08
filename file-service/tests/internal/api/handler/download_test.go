@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -23,7 +23,7 @@ import (
 
 func TestDownload(t *testing.T) {
 	if err := godotenv.Load("../../test.env"); err != nil {
-		log.Println("Could not load .env file. Using system variables instead")
+		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
 	createReq := func() (req *http.Request) {

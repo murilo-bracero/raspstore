@@ -1,6 +1,6 @@
 module github.com/murilo-bracero/raspstore/file-service
 
-go 1.20
+go 1.21
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -16,7 +16,6 @@ require (
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -28,15 +27,9 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
-require (
-	github.com/lestrrat-go/jwx v1.2.26
-	github.com/murilo-bracero/raspstore/commons v0.0.0-20230802163124-ed8e98377991
-)
-
-require aidanwoods.dev/go-paseto v1.5.0 // indirect
+require github.com/lestrrat-go/jwx v1.2.26
 
 require (
-	aidanwoods.dev/go-result v0.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect

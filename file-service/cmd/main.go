@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api"
 	db "github.com/murilo-bracero/raspstore/file-service/internal/database"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
@@ -16,13 +16,13 @@ func main() {
 	ctx := context.Background()
 
 	if err := godotenv.Load(); err != nil {
-		logger.Warn("Could not load .env file. Using system variables instead")
+		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
 	conn, err := db.NewMongoConnection(context.Background())
 
 	if err != nil {
-		logger.Error(err.Error())
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
@@ -32,7 +32,7 @@ func main() {
 
 	useCases := usecase.InitUseCases(fileRepo)
 
-	logger.Info("Bootstraping servers")
+	slog.Info("Bootstraping servers")
 	api.StartApiServer(useCases.ListFilesUseCase,
 		useCases.UpdateFileUseCase,
 		useCases.DeleteFileUseCase,
