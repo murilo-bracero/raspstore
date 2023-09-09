@@ -17,3 +17,9 @@ jobs:
       - name: Test
         working-directory: file-service
         run: go test ./test/...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3.7.0
+        with:
+          working-directory: file-service
+          version: v1.54
