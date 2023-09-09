@@ -139,7 +139,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	var res model.FileMetadataLookup
+	var res model.File
 	err := json.Unmarshal(rr.Body.Bytes(), &res)
 
 	assert.NoError(t, err)
@@ -228,7 +228,7 @@ func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filen
 	}
 
 	return &model.FilePage{
-		Content: []*model.FileMetadataLookup{},
+		Content: []*model.File{},
 		Count:   0,
 	}, nil
 }
@@ -238,7 +238,7 @@ type updateUseCaseMock struct {
 	shouldThrowNotFound bool
 }
 
-func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (fileMetadata *model.FileMetadataLookup, error_ error) {
+func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (fileMetadata *model.File, error_ error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}
@@ -250,22 +250,22 @@ func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (file
 	return createFileMetadataLookup(file.FileId), nil
 }
 
-func createFileMetadataLookup(id string) *model.FileMetadataLookup {
+func createFileMetadataLookup(id string) *model.File {
 
 	if id == "" {
 		id = uuid.NewString()
 	}
 
-	return &model.FileMetadataLookup{
+	return &model.File{
 		FileId:    id,
 		Filename:  id,
 		Size:      int64(rand.Int()),
-		Owner:     model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
-		Editors:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
-		Viewers:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
+		Owner:     uuid.NewString(),
+		Editors:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
+		Viewers:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		CreatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
-		UpdatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
+		CreatedBy: uuid.NewString(),
+		UpdatedBy: uuid.NewString(),
 	}
 }

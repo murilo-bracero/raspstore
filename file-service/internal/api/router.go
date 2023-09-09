@@ -5,6 +5,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 )
 
 const serviceBaseRoute = "/file-service"
@@ -17,13 +18,14 @@ type FilesRouter interface {
 }
 
 type filesRouter struct {
+	config          *infra.Config
 	filesHandler    handler.FilesHandler
 	uploadHandler   handler.UploadHandler
 	downloadHandler handler.DownloadHandler
 }
 
-func NewFilesRouter(filesHandler handler.FilesHandler, uploadHandler handler.UploadHandler, downloadHandler handler.DownloadHandler) FilesRouter {
-	return &filesRouter{filesHandler: filesHandler, uploadHandler: uploadHandler, downloadHandler: downloadHandler}
+func NewFilesRouter(config *infra.Config, filesHandler handler.FilesHandler, uploadHandler handler.UploadHandler, downloadHandler handler.DownloadHandler) FilesRouter {
+	return &filesRouter{config: config, filesHandler: filesHandler, uploadHandler: uploadHandler, downloadHandler: downloadHandler}
 }
 
 func (fr *filesRouter) MountRoutes() *chi.Mux {
@@ -32,7 +34,7 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 	router.Use(middleware.Cors)
 	router.Use(chiMiddleware.RequestID)
 	router.Use(chiMiddleware.Logger)
-	router.Use(middleware.JWTMiddleware)
+	router.Use(middleware.JWTMiddleware(fr.config))
 
 	router.Route(fileBaseRoute, func(r chi.Router) {
 		r.Get("/", fr.filesHandler.ListFiles)

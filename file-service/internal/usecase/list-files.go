@@ -36,7 +36,7 @@ func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, file
 
 	if error_ != nil {
 		traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-		slog.Error("[%s]: Could list files due to error: %s", traceId, error_.Error())
+		slog.Error("Could list files due to error", "traceId", traceId, "error", error_)
 		return
 	}
 

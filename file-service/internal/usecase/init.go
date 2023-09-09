@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
 
@@ -14,14 +15,14 @@ type useCases struct {
 	DownloadFileUseCase DownloadFileUseCase
 }
 
-func InitUseCases(repo repository.FilesRepository) *useCases {
+func InitUseCases(config *infra.Config, repo repository.FilesRepository) *useCases {
 	return &useCases{
-		CreateFileUseCase:   NewCreateFileUseCase(repo),
+		CreateFileUseCase:   NewCreateFileUseCase(config, repo),
 		DeleteFileUseCase:   NewDeleteFileUseCase(repo),
 		ListFilesUseCase:    NewListFilesUseCase(repo),
 		UpdateFileUseCase:   NewUpdateFileUseCase(repo),
 		GetFileUseCase:      NewGetFileUseCase(repo),
-		UploadUseCase:       NewUploadFileUseCase(),
-		DownloadFileUseCase: NewDownloadFileUseCase(),
+		UploadUseCase:       NewUploadFileUseCase(config),
+		DownloadFileUseCase: NewDownloadFileUseCase(config),
 	}
 }

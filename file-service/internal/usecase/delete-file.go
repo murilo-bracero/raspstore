@@ -26,11 +26,11 @@ func (u *deleteFileUseCase) Execute(ctx context.Context, fileId string) (error_ 
 	traceId := ctx.Value(cm.RequestIDKey).(string)
 	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	if err := u.repo.Delete(user.Subject(), fileId); err != nil {
-		slog.Error("[%s]: Could not delete file in database: fileId=%s, %s", traceId, fileId, err.Error())
+	if error_ = u.repo.Delete(user.Subject(), fileId); error_ != nil {
+		slog.Error("Could not delete file in database:", "traceId", traceId, "fileId", fileId, "error", error_)
 		return
 	}
 
-	slog.Info("[%s]: File removed successfully: fileId=%s", traceId, fileId)
+	slog.Info("File removed successfully:", "traceId", traceId, "fileId", fileId)
 	return
 }

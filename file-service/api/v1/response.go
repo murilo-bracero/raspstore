@@ -3,11 +3,11 @@ package v1
 import "github.com/murilo-bracero/raspstore/file-service/internal/model"
 
 type FilePageResponse struct {
-	Size          int                         `json:"size"`
-	TotalElements int                         `json:"totalElements"`
-	Page          int                         `json:"page"`
-	Next          string                      `json:"next"`
-	Content       []*model.FileMetadataLookup `json:"content"`
+	Size          int           `json:"size"`
+	TotalElements int           `json:"totalElements"`
+	Page          int           `json:"page"`
+	Next          string        `json:"next"`
+	Content       []*model.File `json:"content"`
 }
 
 type ErrorResponse struct {

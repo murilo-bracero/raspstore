@@ -8,6 +8,7 @@ import (
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 )
 
 type userClaimsKeyType int
@@ -17,27 +18,28 @@ const UserClaimsCtxKey userClaimsKeyType = 101
 const (
 	tokenPrefix         = "Bearer"
 	authorizationHeader = "Authorization"
-	keycloakUrl         = "http://localhost:30101/realms/raspstore-dev"
 )
 
 var (
 	ErrInvalidToken = errors.New("token is missing or is invalid")
 )
 
-func JWTMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tkn, err := verifyJwt(r)
+func JWTMiddleware(config *infra.Config) func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tkn, err := verifyJwt(r, config.Auth.CertURI)
 
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+				return
+			}
 
-		ctx := context.WithValue(r.Context(), UserClaimsCtxKey, tkn)
-		r = r.WithContext(ctx)
+			ctx := context.WithValue(r.Context(), UserClaimsCtxKey, tkn)
+			r = r.WithContext(ctx)
 
-		h.ServeHTTP(w, r)
-	})
+			h.ServeHTTP(w, r)
+		})
+	}
 }
 
 func getTokenHeader(r *http.Request) (token string, err error) {
@@ -58,14 +60,14 @@ func getTokenHeader(r *http.Request) (token string, err error) {
 	return split[1], nil
 }
 
-func verifyJwt(r *http.Request) (jwt.Token, error) {
+func verifyJwt(r *http.Request, jwkUri string) (jwt.Token, error) {
 	token, err := getTokenHeader(r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	keyset, err := jwk.Fetch(r.Context(), keycloakUrl+"/protocol/openid-connect/certs")
+	keyset, err := jwk.Fetch(r.Context(), jwkUri)
 	if err != nil {
 		return nil, err
 	}

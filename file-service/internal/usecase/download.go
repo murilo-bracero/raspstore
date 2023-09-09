@@ -6,17 +6,19 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/murilo-bracero/raspstore/file-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 )
 
 type DownloadFileUseCase interface {
 	Execute(ctx context.Context, fileId string) (file *os.File, error_ error)
 }
 
-type downloadFileUseCase struct{}
+type downloadFileUseCase struct {
+	config *infra.Config
+}
 
-func NewDownloadFileUseCase() DownloadFileUseCase {
-	return &downloadFileUseCase{}
+func NewDownloadFileUseCase(config *infra.Config) DownloadFileUseCase {
+	return &downloadFileUseCase{config: config}
 }
 
 func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file *os.File, error_ error) {
@@ -27,7 +29,7 @@ func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file 
 		return
 	}
 
-	file, error_ = os.Open(internal.StoragePath() + "/" + fileId)
+	file, error_ = os.Open(d.config.Server.Storage.Path + "/" + fileId)
 
 	if error_ != nil {
 		slog.Error("[%s]: Could not open file in fs due to error: %s", traceId, error_.Error())
