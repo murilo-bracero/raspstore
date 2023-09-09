@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	v1 "github.com/murilo-bracero/raspstore/file-service/api/v1"
@@ -37,6 +38,12 @@ func Created(w http.ResponseWriter, body interface{}) {
 func Send(w http.ResponseWriter, obj interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if jsonResponse, err := json.Marshal(obj); err == nil {
-		w.Write(jsonResponse)
+		write(w, jsonResponse)
+	}
+}
+
+func write(w http.ResponseWriter, body []byte) {
+	if _, err := w.Write(body); err != nil {
+		slog.Error("error while writing message to response body", "error", err)
 	}
 }

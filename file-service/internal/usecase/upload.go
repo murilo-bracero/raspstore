@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/murilo-bracero/raspstore/file-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 )
 
@@ -16,19 +16,20 @@ type UploadFileUseCase interface {
 }
 
 type uploadFileUseCase struct {
+	config *infra.Config
 }
 
-func NewUploadFileUseCase() UploadFileUseCase {
-	return &uploadFileUseCase{}
+func NewUploadFileUseCase(config *infra.Config) UploadFileUseCase {
+	return &uploadFileUseCase{config: config}
 }
 
 func (u *uploadFileUseCase) Execute(ctx context.Context, file *model.File, src io.Reader) (error_ error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	filerep, error_ := os.Create(internal.StoragePath() + "/" + file.FileId)
+	filerep, error_ := os.Create(u.config.Server.Storage.Path + "/" + file.FileId)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not create file in fs due to error: %s", traceId, error_.Error())
+		slog.Error("[%s]: Could not create file in fs due to error: %s", traceId, error_.Error())
 		return
 	}
 
@@ -37,7 +38,7 @@ func (u *uploadFileUseCase) Execute(ctx context.Context, file *model.File, src i
 	_, error_ = io.Copy(filerep, src)
 
 	if error_ != nil {
-		log.Printf("[ERROR] - [%s]: Could not read file buffer due to error: %s", traceId, error_.Error())
+		slog.Error("Could not read file buffer due to error", "traceId", traceId, "error", error_)
 		return
 	}
 

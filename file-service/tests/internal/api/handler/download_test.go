@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -14,21 +14,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDownload(t *testing.T) {
 	if err := godotenv.Load("../../test.env"); err != nil {
-		log.Println("Could not load .env file. Using system variables instead")
+		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
-		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, defaultUserId)
+		ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, defaultUserId)
 		return req.WithContext(ctx)
 	}
 

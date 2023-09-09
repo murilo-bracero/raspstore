@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
+	"log/slog"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
+	"github.com/lestrrat-go/jwx/jwt"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
@@ -29,13 +30,13 @@ func (u *listFilesUseCase) Execute(ctx context.Context, page int, size int, file
 		size = maxListSize
 	}
 
-	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
+	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	filesPage, error_ = u.repo.FindAll(userId, page, size, filename, secret)
+	filesPage, error_ = u.repo.FindAll(user.Subject(), page, size, filename, secret)
 
 	if error_ != nil {
 		traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-		logger.Error("[%s]: Could list files due to error: %s", traceId, error_.Error())
+		slog.Error("Could list files due to error", "traceId", traceId, "error", error_)
 		return
 	}
 

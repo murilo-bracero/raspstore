@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
+	"log/slog"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
+	cm "github.com/go-chi/chi/v5/middleware"
+	"github.com/lestrrat-go/jwx/jwt"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
 )
 
@@ -22,14 +23,14 @@ func NewDeleteFileUseCase(repo repository.FilesRepository) DeleteFileUseCase {
 }
 
 func (u *deleteFileUseCase) Execute(ctx context.Context, fileId string) (error_ error) {
-	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-	userId := ctx.Value(rmd.UserClaimsCtxKey).(string)
+	traceId := ctx.Value(cm.RequestIDKey).(string)
+	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	if err := u.repo.Delete(userId, fileId); err != nil {
-		logger.Error("[%s]: Could not delete file in database: fileId=%s, %s", traceId, fileId, err.Error())
+	if error_ = u.repo.Delete(user.Subject(), fileId); error_ != nil {
+		slog.Error("Could not delete file in database:", "traceId", traceId, "fileId", fileId, "error", error_)
 		return
 	}
 
-	logger.Info("[%s]: File removed successfully: fileId=%s", traceId, fileId)
+	slog.Info("File removed successfully:", "traceId", traceId, "fileId", fileId)
 	return
 }

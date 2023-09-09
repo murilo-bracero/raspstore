@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
 )
 
@@ -26,9 +27,9 @@ func NewDownloadHandler(downloadUseCase usecase.DownloadFileUseCase, getFileUseC
 
 func (h *downloadHandler) Download(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "fileId")
-	userId := r.Context().Value(rmd.UserClaimsCtxKey).(string)
+	usr := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	fileRep, err := h.getFileUseCase.Execute(userId, fileId)
+	fileRep, err := h.getFileUseCase.Execute(usr.Subject(), fileId)
 
 	if err == internal.ErrFileDoesNotExists {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

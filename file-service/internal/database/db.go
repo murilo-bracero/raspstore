@@ -2,10 +2,9 @@ package database
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
-	"github.com/murilo-bracero/raspstore/commons/pkg/logger"
-	"github.com/murilo-bracero/raspstore/file-service/internal"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,25 +18,22 @@ type conn struct {
 	database *mongo.Database
 }
 
-func NewMongoConnection(ctx context.Context) (MongoConnection, error) {
-	fmt.Println("Connecting to MongoDB...")
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(internal.MongoUri()))
+func NewMongoConnection(ctx context.Context, config *infra.Config) (MongoConnection, error) {
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.Database.Uri))
 
 	if err != nil {
-		logger.Error("Could not connect to MongoDB: %s", err.Error())
+		slog.Error("Could not connect to MongoDB", "error", err)
 		return nil, err
 	}
 
-	fmt.Println("Connected to MongoDB Successfully")
-	return &conn{database: client.Database(internal.MongoDatabaseName())}, nil
+	return &conn{database: client.Database(config.Database.Name)}, nil
 }
 
 func (c *conn) Close(ctx context.Context) {
 	err := c.database.Client().Disconnect(ctx)
 
 	if err != nil {
-		logger.Error("Error releasing MongoDB connection: %s", err.Error())
+		slog.Error("Error releasing MongoDB connection", "error", err)
 	}
 }
 

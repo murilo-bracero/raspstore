@@ -17,7 +17,7 @@ const filesCollectionName = "files"
 type FilesRepository interface {
 	Save(file *model.File) error
 	FindById(userId string, fileId string) (*model.File, error)
-	FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error)
+	FindByIdLookup(userId string, fileId string) (fileMetadata *model.File, err error)
 	FindUsageByUserId(userId string) (usage int64, err error)
 	Delete(userId string, fileId string) error
 	Update(userId string, file *model.File) error
@@ -67,16 +67,14 @@ func (f *filesRepository) FindById(userId string, fileId string) (file *model.Fi
 	return file, err
 }
 
-func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMetadata *model.FileMetadataLookup, err error) {
+func (f *filesRepository) FindByIdLookup(userId string, fileId string) (fileMetadata *model.File, err error) {
 	match := bson.D{
 		bson.E{Key: "$match", Value: bson.D{
 			bson.E{Key: "file_id", Value: fileId},
 		}},
 	}
 
-	pipeline := append([]bson.D{match}, lookupUserFields()...)
-
-	pipeline = append(pipeline, aggregateAccessControl(userId))
+	pipeline := append([]bson.D{match}, aggregateAccessControl(userId))
 
 	cursor, err := f.coll.Aggregate(f.ctx, pipeline)
 
@@ -165,8 +163,6 @@ func (f *filesRepository) FindAll(userId string, page int, size int, filename st
 
 	contentField = append(contentField, bson.D{bson.E{Key: "$skip", Value: page * size}}, bson.D{bson.E{Key: "$limit", Value: size}})
 
-	contentField = append(contentField, lookupUserFields()...)
-
 	totalCountField := bson.D{
 		bson.E{Key: "$group", Value: bson.D{
 			bson.E{Key: "_id", Value: nil},
@@ -253,26 +249,4 @@ func aggregateAccessControl(userId string) bson.D {
 			bson.D{bson.E{Key: "viewers", Value: userId}},
 			bson.D{bson.E{Key: "editors", Value: userId}},
 		}}}}}
-}
-
-func lookupUserFields() []bson.D {
-	return []bson.D{
-		lookup("users", "owner_user_id", "user_id", "owner"),
-		lookup("users", "created_by", "user_id", "created_by"),
-		lookup("users", "updated_by", "user_id", "updated_by"),
-		lookup("users", "viewers", "user_id", "viewers"),
-		lookup("users", "editors", "user_id", "editors"),
-		{bson.E{Key: "$unwind", Value: "$owner"}},
-		{bson.E{Key: "$unwind", Value: "$created_by"}},
-		{bson.E{Key: "$unwind", Value: "$updated_by"}},
-	}
-}
-
-func lookup(from string, lField string, fField string, as string) bson.D {
-	return bson.D{bson.E{Key: "$lookup", Value: bson.D{
-		bson.E{Key: "from", Value: from},
-		bson.E{Key: "localField", Value: lField},
-		bson.E{Key: "foreignField", Value: fField},
-		bson.E{Key: "as", Value: as},
-	}}}
 }

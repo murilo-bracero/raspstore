@@ -13,8 +13,9 @@ import (
 	"testing"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,10 +24,20 @@ const testFilename = "test.txt"
 const defaultUserId = "e9e28c79-a5e8-4545-bd32-e536e690bd4a"
 
 func TestUpload(t *testing.T) {
+	config := &infra.Config{Server: struct {
+		Port    int
+		Storage struct {
+			Path  string
+			Limit string
+		}
+	}{Storage: struct {
+		Path  string
+		Limit string
+	}{Path: "./"}}}
 	createReq := func(body *bytes.Buffer) (req *http.Request) {
 		req, err := http.NewRequest("POST", "/file-service/v1/uploads", body)
 		assert.NoError(t, err)
-		ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, defaultUserId)
+		ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, defaultUserId)
 		ctx = context.WithValue(ctx, chiMiddleware.RequestIDKey, defaultUserId)
 		req = req.WithContext(ctx)
 		return req
@@ -35,7 +46,7 @@ func TestUpload(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(uploadUseCase, cFileUseCase)
+		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -68,7 +79,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return bad request when form without file", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(uploadUseCase, cFileUseCase)
+		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -89,7 +100,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return bad request when form without file", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(uploadUseCase, cFileUseCase)
+		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -110,7 +121,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return internal server error when upload use case returns error", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{shouldReturnError: true}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(uploadUseCase, cFileUseCase)
+		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -143,7 +154,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return internal server error when create use case returns error", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{shouldReturnErr: true}
-		ctr := handler.NewUploadHandler(uploadUseCase, cFileUseCase)
+		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)

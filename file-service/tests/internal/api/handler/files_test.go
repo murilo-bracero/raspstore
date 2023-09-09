@@ -14,9 +14,9 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	rmd "github.com/murilo-bracero/raspstore/commons/pkg/security/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal"
 	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/api/handler"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/api/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +27,7 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -47,7 +47,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -67,7 +67,7 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -85,7 +85,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -103,7 +103,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 	random := uuid.NewString()
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
@@ -128,7 +128,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 	  }`)
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), rmd.UserClaimsCtxKey, "random-uuid")
+	ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, "random-uuid")
 	ctx = context.WithValue(ctx, middleware.RequestIDKey, "test-trace-id")
 	req = req.WithContext(ctx)
 
@@ -139,7 +139,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	var res model.FileMetadataLookup
+	var res model.File
 	err := json.Unmarshal(rr.Body.Bytes(), &res)
 
 	assert.NoError(t, err)
@@ -170,7 +170,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, "random-uuid")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -195,7 +195,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, rmd.UserClaimsCtxKey, "random-uuid")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, "random-uuid")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -228,7 +228,7 @@ func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filen
 	}
 
 	return &model.FilePage{
-		Content: []*model.FileMetadataLookup{},
+		Content: []*model.File{},
 		Count:   0,
 	}, nil
 }
@@ -238,7 +238,7 @@ type updateUseCaseMock struct {
 	shouldThrowNotFound bool
 }
 
-func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (fileMetadata *model.FileMetadataLookup, error_ error) {
+func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (fileMetadata *model.File, error_ error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}
@@ -250,22 +250,22 @@ func (c *updateUseCaseMock) Execute(ctx context.Context, file *model.File) (file
 	return createFileMetadataLookup(file.FileId), nil
 }
 
-func createFileMetadataLookup(id string) *model.FileMetadataLookup {
+func createFileMetadataLookup(id string) *model.File {
 
 	if id == "" {
 		id = uuid.NewString()
 	}
 
-	return &model.FileMetadataLookup{
+	return &model.File{
 		FileId:    id,
 		Filename:  id,
 		Size:      int64(rand.Int()),
-		Owner:     model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
-		Editors:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
-		Viewers:   []model.UserView{{UserId: uuid.NewString(), Username: uuid.NewString()}, {UserId: uuid.NewString(), Username: uuid.NewString()}},
+		Owner:     uuid.NewString(),
+		Editors:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
+		Viewers:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		CreatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
-		UpdatedBy: model.UserView{UserId: uuid.NewString(), Username: uuid.NewString()},
+		CreatedBy: uuid.NewString(),
+		UpdatedBy: uuid.NewString(),
 	}
 }
