@@ -6,11 +6,10 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/murilo-bracero/raspstore/file-service/internal/api"
-	db "github.com/murilo-bracero/raspstore/file-service/internal/database"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra"
-	"github.com/murilo-bracero/raspstore/file-service/internal/repository"
-	"github.com/murilo-bracero/raspstore/file-service/internal/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/server"
 )
 
 func main() {
@@ -21,9 +20,9 @@ func main() {
 		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
-	config := infra.NewConfig("")
+	config := config.NewConfig("config/application.yaml")
 
-	conn, err := db.NewMongoConnection(ctx, config)
+	conn, err := repository.NewDatabaseConnection(ctx, config)
 
 	if err != nil {
 		slog.Error("could not connect to database", "error", err)
@@ -37,7 +36,7 @@ func main() {
 	useCases := usecase.InitUseCases(config, fileRepo)
 
 	slog.Info("Bootstraping servers")
-	api.StartApiServer(config,
+	server.StartApiServer(config,
 		useCases.ListFilesUseCase,
 		useCases.UpdateFileUseCase,
 		useCases.DeleteFileUseCase,
