@@ -1,7 +1,8 @@
-package usecase
+package usecase_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
@@ -20,7 +21,10 @@ func (m *mockFilesRepository) Save(file *entity.File) error {
 }
 
 func (m *mockFilesRepository) Delete(userId string, fileId string) error {
-	return errors.New("Not implemented!")
+	if strings.HasSuffix(fileId, "_error") {
+		return errors.New("generic error")
+	}
+	return nil
 }
 
 func (m *mockFilesRepository) FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
@@ -28,11 +32,20 @@ func (m *mockFilesRepository) FindAll(userId string, page int, size int, filenam
 }
 
 func (m *mockFilesRepository) FindById(userId string, fileId string) (*entity.File, error) {
-	return nil, errors.New("Not implemented!")
+	if fileId == "validFile" {
+		return &entity.File{
+			FileId:   "validFile",
+			Filename: "example.txt",
+		}, nil
+	}
+	return nil, errors.New("file not found")
 }
 
 func (m *mockFilesRepository) Update(userId string, file *entity.File) error {
-	return errors.New("Not implemented!")
+	if file.FileId == "validFile" {
+		return nil
+	}
+	return errors.New("failed to update file")
 }
 
 var mockConfig = &config.Config{
@@ -47,7 +60,7 @@ var mockConfig = &config.Config{
 		Limit string
 	}{Path: "./", Limit: "1000M"}}}
 
-func TestExecute(t *testing.T) {
+func TestCreateFileUseCase(t *testing.T) {
 
 	useCase := usecase.NewCreateFileUseCase(mockConfig, &mockFilesRepository{})
 

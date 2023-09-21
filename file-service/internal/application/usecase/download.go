@@ -24,15 +24,10 @@ func NewDownloadFileUseCase(config *config.Config) DownloadFileUseCase {
 func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file *os.File, error_ error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	if error_ != nil {
-		slog.Error("[%s]: Could not retrieve file from file-service due to error: %s", traceId, error_.Error())
-		return
-	}
-
 	file, error_ = os.Open(d.config.Server.Storage.Path + "/" + fileId)
 
 	if error_ != nil {
-		slog.Error("[%s]: Could not open file in fs due to error: %s", traceId, error_.Error())
+		slog.Error("Could not open file in fs", "traceId", traceId, "error", error_)
 		return
 	}
 

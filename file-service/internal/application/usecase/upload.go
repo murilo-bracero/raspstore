@@ -29,7 +29,7 @@ func (u *uploadFileUseCase) Execute(ctx context.Context, file *entity.File, src 
 	filerep, error_ := os.Create(u.config.Server.Storage.Path + "/" + file.FileId)
 
 	if error_ != nil {
-		slog.Error("[%s]: Could not create file in fs due to error: %s", traceId, error_.Error())
+		slog.Error("Could not create file in fs", "traceId", traceId, "error", error_)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (u *uploadFileUseCase) Execute(ctx context.Context, file *entity.File, src 
 	_, error_ = io.Copy(filerep, src)
 
 	if error_ != nil {
-		slog.Error("Could not read file buffer due to error", "traceId", traceId, "error", error_)
+		slog.Error("Could not read file buffer", "traceId", traceId, "error", error_)
 		return
 	}
 

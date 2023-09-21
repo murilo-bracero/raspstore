@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
@@ -23,10 +21,6 @@ import (
 )
 
 func TestDownload(t *testing.T) {
-	if err := godotenv.Load("../../test.env"); err != nil {
-		slog.Warn("Could not load .env file. Using system variables instead")
-	}
-
 	token := jwt.New()
 	token.Set("sub", defaultUserId)
 
