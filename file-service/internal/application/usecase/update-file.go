@@ -47,7 +47,7 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 
 	if error_ = c.repo.Update(user.Subject(), fileMetadata); error_ != nil {
 		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", error_)
-		return
+		return nil, error_
 	}
 
 	slog.Info("File updated successfully", "traceId", traceId, "fileId", file.FileId)

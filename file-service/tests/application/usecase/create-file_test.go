@@ -1,52 +1,14 @@
 package usecase_test
 
 import (
-	"errors"
-	"strings"
 	"testing"
 
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	"go.uber.org/mock/gomock"
 )
-
-type mockFilesRepository struct{}
-
-func (m *mockFilesRepository) FindUsageByUserId(userID string) (int64, error) {
-	return 100, nil
-}
-
-func (m *mockFilesRepository) Save(file *entity.File) error {
-	return nil
-}
-
-func (m *mockFilesRepository) Delete(userId string, fileId string) error {
-	if strings.HasSuffix(fileId, "_error") {
-		return errors.New("generic error")
-	}
-	return nil
-}
-
-func (m *mockFilesRepository) FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
-	return nil, errors.New("Not implemented!")
-}
-
-func (m *mockFilesRepository) FindById(userId string, fileId string) (*entity.File, error) {
-	if fileId == "validFile" {
-		return &entity.File{
-			FileId:   "validFile",
-			Filename: "example.txt",
-		}, nil
-	}
-	return nil, errors.New("file not found")
-}
-
-func (m *mockFilesRepository) Update(userId string, file *entity.File) error {
-	if file.FileId == "validFile" {
-		return nil
-	}
-	return errors.New("failed to update file")
-}
 
 var mockConfig = &config.Config{
 	Server: struct {
@@ -61,10 +23,15 @@ var mockConfig = &config.Config{
 	}{Path: "./", Limit: "1000M"}}}
 
 func TestCreateFileUseCase(t *testing.T) {
-
-	useCase := usecase.NewCreateFileUseCase(mockConfig, &mockFilesRepository{})
+	mockCtrl := gomock.NewController(t)
 
 	t.Run("happy path", func(t *testing.T) {
+		mockObj := mocks.NewMockFilesRepository(mockCtrl)
+		mockObj.EXPECT().Save(gomock.Any()).Return(nil)
+		mockObj.EXPECT().FindUsageByUserId("user1").Return(int64(100), nil)
+
+		useCase := usecase.NewCreateFileUseCase(mockConfig, mockObj)
+
 		file := &entity.File{
 			Owner: "user1",
 			Size:  toMb(100),
@@ -78,6 +45,11 @@ func TestCreateFileUseCase(t *testing.T) {
 	})
 
 	t.Run("upload with file size greather than provided by config", func(t *testing.T) {
+		mockObj := mocks.NewMockFilesRepository(mockCtrl)
+		mockObj.EXPECT().FindUsageByUserId("user2").Return(int64(100), nil)
+
+		useCase := usecase.NewCreateFileUseCase(mockConfig, mockObj)
+
 		file := &entity.File{
 			Owner: "user2",
 			Size:  toMb(1001),

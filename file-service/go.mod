@@ -27,7 +27,10 @@ require (
 
 require github.com/go-chi/chi/v5 v5.0.8
 
-require github.com/lestrrat-go/jwx v1.2.26
+require (
+	github.com/lestrrat-go/jwx v1.2.26
+	go.uber.org/mock v0.3.0
+)
 
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
