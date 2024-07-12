@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin_test_password001
+    command: [ "start-dev" ]
+  file:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    depends_on:
+      - keycloak
+networks:
+  default:
+    external: true
+    name: raspstore-network
