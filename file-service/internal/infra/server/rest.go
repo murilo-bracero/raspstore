@@ -11,19 +11,12 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 )
 
-func StartApiServer(config *config.Config,
-	luc usecase.ListFilesUseCase,
-	uuc usecase.UpdateFileUseCase,
-	duc usecase.DeleteFileUseCase,
-	upc usecase.UploadFileUseCase,
-	downloadUc usecase.DownloadFileUseCase,
-	createUc usecase.CreateFileUseCase,
-	getFileUc usecase.GetFileUseCase) {
-	filesHandler := handler.NewFilesHandler(luc, uuc, duc)
+func StartApiServer(config *config.Config, useCases *usecase.UseCases) {
+	filesHandler := handler.NewFilesHandler(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase)
 
-	uploadHanler := handler.NewUploadHandler(config, upc, createUc)
+	uploadHanler := handler.NewUploadHandler(config, useCases.UploadUseCase, useCases.CreateFileUseCase)
 
-	downloadHandler := handler.NewDownloadHandler(downloadUc, getFileUc)
+	downloadHandler := handler.NewDownloadHandler(useCases.DownloadFileUseCase, useCases.GetFileUseCase)
 
 	router := NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
 	http.Handle("/", router)

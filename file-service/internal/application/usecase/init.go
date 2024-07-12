@@ -5,7 +5,7 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 )
 
-type useCases struct {
+type UseCases struct {
 	CreateFileUseCase   CreateFileUseCase
 	DeleteFileUseCase   DeleteFileUseCase
 	ListFilesUseCase    ListFilesUseCase
@@ -15,8 +15,8 @@ type useCases struct {
 	DownloadFileUseCase DownloadFileUseCase
 }
 
-func InitUseCases(config *config.Config, repo repository.FilesRepository) *useCases {
-	return &useCases{
+func InitUseCases(config *config.Config, repo repository.FilesRepository) *UseCases {
+	return &UseCases{
 		CreateFileUseCase:   NewCreateFileUseCase(config, repo),
 		DeleteFileUseCase:   NewDeleteFileUseCase(repo),
 		ListFilesUseCase:    NewListFilesUseCase(repo),

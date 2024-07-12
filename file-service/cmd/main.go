@@ -36,12 +36,5 @@ func main() {
 	useCases := usecase.InitUseCases(config, fileRepo)
 
 	slog.Info("Bootstraping servers")
-	server.StartApiServer(config,
-		useCases.ListFilesUseCase,
-		useCases.UpdateFileUseCase,
-		useCases.DeleteFileUseCase,
-		useCases.UploadUseCase,
-		useCases.DownloadFileUseCase,
-		useCases.CreateFileUseCase,
-		useCases.GetFileUseCase)
+	server.StartApiServer(config, useCases)
 }
