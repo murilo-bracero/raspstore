@@ -197,7 +197,7 @@ type deleteUseCaseMock struct {
 	shouldThrowError bool
 }
 
-func (c *deleteUseCaseMock) Execute(ctx context.Context, fileId string) (error_ error) {
+func (c *deleteUseCaseMock) Execute(ctx context.Context, fileId string) (err error) {
 	if c.shouldThrowError {
 		return errors.New("generic error")
 	}
@@ -209,7 +209,7 @@ type listUseCaseMock struct {
 	shouldThrowError bool
 }
 
-func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, error_ error) {
+func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}
@@ -225,7 +225,7 @@ type updateUseCaseMock struct {
 	shouldThrowNotFound bool
 }
 
-func (c *updateUseCaseMock) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, error_ error) {
+func (c *updateUseCaseMock) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}

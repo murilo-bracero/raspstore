@@ -85,7 +85,7 @@ type downloadFileUseCaseMock struct {
 	shouldReturnErr bool
 }
 
-func (d *downloadFileUseCaseMock) Execute(ctx context.Context, fileId string) (file *os.File, error_ error) {
+func (d *downloadFileUseCaseMock) Execute(ctx context.Context, fileId string) (file *os.File, err error) {
 	if d.shouldReturnErr {
 		return nil, errors.New("generic error")
 	}
@@ -100,7 +100,7 @@ type getFileUseCaseMock struct {
 	shouldReturnNotFound bool
 }
 
-func (f *getFileUseCaseMock) Execute(userId string, fileId string) (file *entity.File, error_ error) {
+func (f *getFileUseCaseMock) Execute(userId string, fileId string) (file *entity.File, err error) {
 	if f.shouldReturnErr {
 		return nil, errors.New("generic error")
 	}

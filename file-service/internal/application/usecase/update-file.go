@@ -12,7 +12,7 @@ import (
 )
 
 type UpdateFileUseCase interface {
-	Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, error_ error)
+	Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error)
 }
 
 type updateFileUseCase struct {
@@ -23,14 +23,14 @@ func NewUpdateFileUseCase(repo repository.FilesRepository) UpdateFileUseCase {
 	return &updateFileUseCase{repo: repo}
 }
 
-func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, error_ error) {
+func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error) {
 	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
 
-	fileMetadata, error_ = c.repo.FindById(user.Subject(), file.FileId)
+	fileMetadata, err = c.repo.FindById(user.Subject(), file.FileId)
 
-	if error_ != nil {
-		slog.Error("Could not find file", "traceId", traceId, "fileId", file.FileId, "error", error_)
+	if err != nil {
+		slog.Error("Could not find file", "traceId", traceId, "fileId", file.FileId, "error", err)
 		return
 	}
 
@@ -45,9 +45,9 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 		fileMetadata.Editors = file.Editors
 	}
 
-	if error_ = c.repo.Update(user.Subject(), fileMetadata); error_ != nil {
-		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", error_)
-		return nil, error_
+	if err = c.repo.Update(user.Subject(), fileMetadata); err != nil {
+		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", err)
+		return nil, err
 	}
 
 	slog.Info("File updated successfully", "traceId", traceId, "fileId", file.FileId)

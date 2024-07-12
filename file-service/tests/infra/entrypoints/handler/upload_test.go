@@ -201,7 +201,7 @@ type uploadFileUseCaseMock struct {
 	shouldReturnError bool
 }
 
-func (u *uploadFileUseCaseMock) Execute(ctx context.Context, file *entity.File, src io.Reader) (error_ error) {
+func (u *uploadFileUseCaseMock) Execute(ctx context.Context, file *entity.File, src io.Reader) (err error) {
 	if u.shouldReturnError {
 		return errors.New("generic error")
 	}
@@ -213,7 +213,7 @@ type createUseCaseMock struct {
 	shouldReturnErr bool
 }
 
-func (f *createUseCaseMock) Execute(file *entity.File) (error_ error) {
+func (f *createUseCaseMock) Execute(file *entity.File) (err error) {
 	if f.shouldReturnErr {
 		return errors.New("generic error")
 	}

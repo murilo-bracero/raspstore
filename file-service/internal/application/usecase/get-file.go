@@ -10,15 +10,15 @@ type getFileUseCase struct {
 }
 
 type GetFileUseCase interface {
-	Execute(userId string, fileId string) (file *entity.File, error_ error)
+	Execute(userId string, fileId string) (file *entity.File, err error)
 }
 
 func NewGetFileUseCase(repo repository.FilesRepository) GetFileUseCase {
 	return &getFileUseCase{repo: repo}
 }
 
-func (c *getFileUseCase) Execute(userId string, fileId string) (file *entity.File, error_ error) {
-	file, error_ = c.repo.FindById(userId, fileId)
+func (c *getFileUseCase) Execute(userId string, fileId string) (file *entity.File, err error) {
+	file, err = c.repo.FindById(userId, fileId)
 
 	return
 }

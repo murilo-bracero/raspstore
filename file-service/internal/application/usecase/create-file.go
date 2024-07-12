@@ -15,7 +15,7 @@ var (
 )
 
 type CreateFileUseCase interface {
-	Execute(file *entity.File) (error_ error)
+	Execute(file *entity.File) (err error)
 }
 
 type createFileUseCase struct {
@@ -27,16 +27,11 @@ func NewCreateFileUseCase(config *config.Config, fr repository.FilesRepository) 
 	return &createFileUseCase{filesRepository: fr, config: config}
 }
 
-func (c *createFileUseCase) Execute(file *entity.File) (error_ error) {
-	usage, error_ := c.filesRepository.FindUsageByUserId(file.Owner)
+func (c *createFileUseCase) Execute(file *entity.File) (err error) {
+	usage, err := c.filesRepository.FindUsageByUserId(file.Owner)
 
-	if error_ != nil {
-		slog.Error("Could not find user usage:", "error", error_.Error())
-		return
-	}
-
-	if error_ != nil {
-		slog.Error("Could not get user config:", "error", error_)
+	if err != nil {
+		slog.Error("Could not find user usage:", "error", err.Error())
 		return
 	}
 
@@ -47,8 +42,8 @@ func (c *createFileUseCase) Execute(file *entity.File) (error_ error) {
 		return ErrNotAvailableSpace
 	}
 
-	if error_ = c.filesRepository.Save(file); error_ != nil {
-		slog.Error("Could not create file:", "error", error_.Error())
+	if err = c.filesRepository.Save(file); err != nil {
+		slog.Error("Could not create file:", "error", err.Error())
 		return
 	}
 

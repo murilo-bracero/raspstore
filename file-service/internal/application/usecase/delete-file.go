@@ -11,7 +11,7 @@ import (
 )
 
 type DeleteFileUseCase interface {
-	Execute(ctx context.Context, fileId string) (error_ error)
+	Execute(ctx context.Context, fileId string) (err error)
 }
 
 type deleteFileUseCase struct {
@@ -22,12 +22,12 @@ func NewDeleteFileUseCase(repo repository.FilesRepository) DeleteFileUseCase {
 	return &deleteFileUseCase{repo: repo}
 }
 
-func (u *deleteFileUseCase) Execute(ctx context.Context, fileId string) (error_ error) {
+func (u *deleteFileUseCase) Execute(ctx context.Context, fileId string) (err error) {
 	traceId := ctx.Value(cm.RequestIDKey).(string)
 	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	if error_ = u.repo.Delete(user.Subject(), fileId); error_ != nil {
-		slog.Error("Could not delete file in database:", "traceId", traceId, "fileId", fileId, "error", error_)
+	if err = u.repo.Delete(user.Subject(), fileId); err != nil {
+		slog.Error("Could not delete file in database:", "traceId", traceId, "fileId", fileId, "error", err)
 		return
 	}
 
