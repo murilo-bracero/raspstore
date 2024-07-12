@@ -1,4 +1,4 @@
-package response
+package model
 
 import "github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 

@@ -3,8 +3,10 @@ package middleware
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -25,9 +27,17 @@ var (
 )
 
 func JWTMiddleware(config *config.Config) func(h http.Handler) http.Handler {
+	ar := jwk.NewAutoRefresh(context.Background())
+
+	ar.Configure(config.Auth.CertURI, jwk.WithMinRefreshInterval(15*time.Minute))
+
+	if _, err := ar.Refresh(context.Background(), config.Auth.CertURI); err != nil {
+		slog.Error("Failed to refresh JWT Tokens", "err", err)
+	}
+
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tkn, err := verifyJwt(r, config.Auth.CertURI)
+			tkn, err := verifyJwt(r, ar, config.Auth.CertURI)
 
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -40,6 +50,21 @@ func JWTMiddleware(config *config.Config) func(h http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 		})
 	}
+}
+
+func verifyJwt(r *http.Request, ar *jwk.AutoRefresh, jwkUri string) (jwt.Token, error) {
+	token, err := getTokenHeader(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	keyset, err := ar.Fetch(r.Context(), jwkUri)
+	if err != nil {
+		return nil, err
+	}
+
+	return jwt.Parse([]byte(token), jwt.WithKeySet(keyset), jwt.WithValidate(true))
 }
 
 func getTokenHeader(r *http.Request) (token string, err error) {
@@ -58,19 +83,4 @@ func getTokenHeader(r *http.Request) (token string, err error) {
 	}
 
 	return split[1], nil
-}
-
-func verifyJwt(r *http.Request, jwkUri string) (jwt.Token, error) {
-	token, err := getTokenHeader(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	keyset, err := jwk.Fetch(r.Context(), jwkUri)
-	if err != nil {
-		return nil, err
-	}
-
-	return jwt.Parse([]byte(token), jwt.WithKeySet(keyset), jwt.WithValidate(true))
 }

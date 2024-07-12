@@ -18,7 +18,7 @@ type deleteFileUseCase struct {
 	repo repository.FilesRepository
 }
 
-func NewDeleteFileUseCase(repo repository.FilesRepository) DeleteFileUseCase {
+func NewDeleteFileUseCase(repo repository.FilesRepository) *deleteFileUseCase {
 	return &deleteFileUseCase{repo: repo}
 }
 

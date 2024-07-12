@@ -13,7 +13,7 @@ type GetFileUseCase interface {
 	Execute(userId string, fileId string) (file *entity.File, err error)
 }
 
-func NewGetFileUseCase(repo repository.FilesRepository) GetFileUseCase {
+func NewGetFileUseCase(repo repository.FilesRepository) *getFileUseCase {
 	return &getFileUseCase{repo: repo}
 }
 

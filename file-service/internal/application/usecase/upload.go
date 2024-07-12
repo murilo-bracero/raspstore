@@ -19,7 +19,7 @@ type uploadFileUseCase struct {
 	config *config.Config
 }
 
-func NewUploadFileUseCase(config *config.Config) UploadFileUseCase {
+func NewUploadFileUseCase(config *config.Config) *uploadFileUseCase {
 	return &uploadFileUseCase{config: config}
 }
 

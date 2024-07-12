@@ -23,7 +23,7 @@ type createFileUseCase struct {
 	filesRepository repository.FilesRepository
 }
 
-func NewCreateFileUseCase(config *config.Config, fr repository.FilesRepository) CreateFileUseCase {
+func NewCreateFileUseCase(config *config.Config, fr repository.FilesRepository) *createFileUseCase {
 	return &createFileUseCase{filesRepository: fr, config: config}
 }
 

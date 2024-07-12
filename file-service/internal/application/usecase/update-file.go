@@ -19,7 +19,7 @@ type updateFileUseCase struct {
 	repo repository.FilesRepository
 }
 
-func NewUpdateFileUseCase(repo repository.FilesRepository) UpdateFileUseCase {
+func NewUpdateFileUseCase(repo repository.FilesRepository) *updateFileUseCase {
 	return &updateFileUseCase{repo: repo}
 }
 

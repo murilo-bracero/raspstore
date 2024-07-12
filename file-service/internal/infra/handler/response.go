@@ -1,29 +1,29 @@
-package utils
+package handler
 
 import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model/response"
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 )
 
 func HandleBadRequest(w http.ResponseWriter, traceId string, code string, message string) {
-	BadRequest(w, response.ErrorResponse{
+	BadRequest(w, model.ErrorResponse{
 		TraceId: traceId,
 		Code:    code,
 		Message: message,
 	})
 }
 
-func BadRequest(w http.ResponseWriter, body response.ErrorResponse) {
+func BadRequest(w http.ResponseWriter, body model.ErrorResponse) {
 	w.WriteHeader(http.StatusBadRequest)
 	Send(w, body)
 }
 
 func InternalServerError(w http.ResponseWriter, traceId string) {
 	w.WriteHeader(http.StatusInternalServerError)
-	Send(w, response.ErrorResponse{
+	Send(w, model.ErrorResponse{
 		Code:    "ERR098",
 		Message: "Service currently unavailable",
 		TraceId: traceId,

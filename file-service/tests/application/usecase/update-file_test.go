@@ -7,10 +7,10 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	"github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -52,7 +52,7 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 	t.Run("FileNotFound", func(t *testing.T) {
 		mockObj := mocks.NewMockFilesRepository(mockCtrl)
 
-		mockObj.EXPECT().FindById("userId", "nonexistentFile").Return(nil, exceptions.ErrFileDoesNotExists)
+		mockObj.EXPECT().FindById("userId", "nonexistentFile").Return(nil, repository.ErrFileDoesNotExists)
 
 		useCase := usecase.NewUpdateFileUseCase(mockObj)
 

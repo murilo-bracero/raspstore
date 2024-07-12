@@ -18,7 +18,7 @@ type databaseConnection struct {
 	database *mongo.Database
 }
 
-func NewDatabaseConnection(ctx context.Context, config *config.Config) (DatabaseConnection, error) {
+func NewDatabaseConnection(ctx context.Context, config *config.Config) (*databaseConnection, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.Database.Uri))
 
 	if err != nil {

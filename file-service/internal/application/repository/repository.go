@@ -1,6 +1,12 @@
 package repository
 
-import "github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
+import (
+	"errors"
+
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
+)
+
+var ErrFileDoesNotExists = errors.New("file with provided ID does not exists")
 
 type FilesRepository interface {
 	Save(file *entity.File) error

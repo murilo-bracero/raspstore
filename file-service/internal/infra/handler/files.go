@@ -8,13 +8,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	u "github.com/murilo-bracero/raspstore/file-service/internal/application/common/utils"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/parser"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
-	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model/request"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validators"
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 )
 
 type FilesHandler interface {
@@ -50,20 +48,20 @@ func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 
 	nextUrl := buildNextUrl(filesPage, r.Host, page, size)
 
-	u.Send(w, parser.FilePageResponseParser(page, size, filesPage, nextUrl))
+	Send(w, parser.FilePageResponseParser(page, size, filesPage, nextUrl))
 }
 
 func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
-	var req request.UpdateFileRequest
+	var req model.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
-	if err := validators.ValidateUpdateFileRequest(&req); err != nil {
-		u.HandleBadRequest(w, traceId, "ERR001", err.Error())
+	if err := ValidateUpdateFileRequest(&req); err != nil {
+		HandleBadRequest(w, traceId, "ERR001", err.Error())
 		return
 	}
 
@@ -79,7 +77,7 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	fileMetadata, err := f.updateUseCase.Execute(r.Context(), file)
 
-	if err == e.ErrFileDoesNotExists {
+	if err == repository.ErrFileDoesNotExists {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -89,7 +87,7 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Send(w, fileMetadata)
+	Send(w, fileMetadata)
 }
 
 func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {

@@ -17,7 +17,7 @@ type downloadFileUseCase struct {
 	config *config.Config
 }
 
-func NewDownloadFileUseCase(config *config.Config) DownloadFileUseCase {
+func NewDownloadFileUseCase(config *config.Config) *downloadFileUseCase {
 	return &downloadFileUseCase{config: config}
 }
 

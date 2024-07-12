@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	ar "github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +18,9 @@ type filesRepository struct {
 	coll *mongo.Collection
 }
 
-func NewFilesRepository(ctx context.Context, conn DatabaseConnection) ar.FilesRepository {
+var _ repository.FilesRepository = (*filesRepository)(nil)
+
+func NewFilesRepository(ctx context.Context, conn DatabaseConnection) *filesRepository {
 	return &filesRepository{ctx: ctx, coll: conn.Collection(filesCollectionName)}
 }
 
@@ -49,7 +50,7 @@ func (f *filesRepository) FindById(userId string, fileId string) (file *entity.F
 	found := f.coll.FindOne(f.ctx, filter)
 
 	if found.Err() == mongo.ErrNoDocuments {
-		return nil, e.ErrFileDoesNotExists
+		return nil, repository.ErrFileDoesNotExists
 	}
 
 	err = found.Decode(&file)
@@ -100,7 +101,7 @@ func (f *filesRepository) Update(userId string, file *entity.File) error {
 	result, err := f.coll.UpdateOne(f.ctx, filter, update)
 
 	if result.MatchedCount == 0 {
-		return e.ErrFileDoesNotExists
+		return repository.ErrFileDoesNotExists
 	}
 
 	return err

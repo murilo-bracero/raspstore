@@ -7,10 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
-	u "github.com/murilo-bracero/raspstore/file-service/internal/application/common/utils"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model/response"
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 )
@@ -60,7 +59,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Created(w, &response.UploadSuccessResponse{
+	Created(w, &model.UploadSuccessResponse{
 		FileId:   fm.FileId,
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,

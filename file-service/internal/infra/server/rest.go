@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/common/router"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/entrypoints/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 )
 
 func StartApiServer(config *config.Config,
@@ -26,7 +25,7 @@ func StartApiServer(config *config.Config,
 
 	downloadHandler := handler.NewDownloadHandler(downloadUc, getFileUc)
 
-	router := router.NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
+	router := NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
 	http.Handle("/", router)
 	slog.Info("File Manager REST API runing", "port", config.Server.Port)
 

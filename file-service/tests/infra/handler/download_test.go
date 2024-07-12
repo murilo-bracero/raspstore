@@ -13,9 +13,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/entrypoints/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/stretchr/testify/assert"
 )
@@ -106,7 +106,7 @@ func (f *getFileUseCaseMock) Execute(userId string, fileId string) (file *entity
 	}
 
 	if f.shouldReturnNotFound {
-		return nil, e.ErrFileDoesNotExists
+		return nil, repository.ErrFileDoesNotExists
 	}
 
 	return &entity.File{

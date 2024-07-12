@@ -49,6 +49,8 @@ func TestDownloadFileUseCase(t *testing.T) {
 
 		content, err := io.ReadAll(file)
 
+		assert.NoError(t, err)
+
 		assert.NotNil(t, file)
 
 		assert.Equal(t, "test file content", string(content))

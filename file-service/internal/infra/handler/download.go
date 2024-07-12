@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 )
 
@@ -31,7 +31,7 @@ func (h *downloadHandler) Download(w http.ResponseWriter, r *http.Request) {
 
 	fileRep, err := h.getFileUseCase.Execute(usr.Subject(), fileId)
 
-	if err == e.ErrFileDoesNotExists {
+	if err == repository.ErrFileDoesNotExists {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}

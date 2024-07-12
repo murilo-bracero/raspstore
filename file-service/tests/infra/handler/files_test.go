@@ -14,9 +14,9 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
-	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/infra/entrypoints/handler"
+	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -231,7 +231,7 @@ func (c *updateUseCaseMock) Execute(ctx context.Context, file *entity.File) (fil
 	}
 
 	if c.shouldThrowNotFound {
-		return nil, e.ErrFileDoesNotExists
+		return nil, repository.ErrFileDoesNotExists
 	}
 
 	return createFileMetadataLookup(file.FileId), nil

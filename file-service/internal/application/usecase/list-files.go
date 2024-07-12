@@ -21,7 +21,7 @@ type listFilesUseCase struct {
 	repo repository.FilesRepository
 }
 
-func NewListFilesUseCase(repo repository.FilesRepository) ListFilesUseCase {
+func NewListFilesUseCase(repo repository.FilesRepository) *listFilesUseCase {
 	return &listFilesUseCase{repo: repo}
 }
 

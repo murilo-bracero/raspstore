@@ -16,7 +16,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/entrypoints/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/stretchr/testify/assert"
 )

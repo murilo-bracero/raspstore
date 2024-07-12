@@ -2,11 +2,11 @@ package parser
 
 import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model/response"
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 )
 
-func FilePageResponseParser(page int, size int, filesPage *entity.FilePage, nextUrl string) *response.FilePageResponse {
-	return &response.FilePageResponse{
+func FilePageResponseParser(page int, size int, filesPage *entity.FilePage, nextUrl string) *model.FilePageResponse {
+	return &model.FilePageResponse{
 		Page:          page,
 		Size:          size,
 		TotalElements: filesPage.Count,

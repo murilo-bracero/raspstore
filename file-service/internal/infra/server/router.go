@@ -1,10 +1,10 @@
-package router
+package server
 
 import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/entrypoints/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 )
 

@@ -1,4 +1,4 @@
-package request
+package model
 
 type UpdateFileRequest struct {
 	Filename string   `json:"filename,omitempty"`
