@@ -1,13 +1,26 @@
 package model
 
-import "github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
+import (
+	"time"
+)
 
 type FilePageResponse struct {
 	Size          int            `json:"size"`
 	TotalElements int            `json:"totalElements"`
 	Page          int            `json:"page"`
 	Next          string         `json:"next"`
-	Content       []*entity.File `json:"content"`
+	Content       []*FileContent `json:"content"`
+}
+
+type FileContent struct {
+	FileId    string     `json:"fileId,omitempty"`
+	Filename  string     `json:"filename,omitempty"`
+	Size      int64      `json:"size,omitempty"`
+	Owner     string     `json:"owner,omitempty"`
+	CreatedAt time.Time  `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	CreatedBy string     `json:"createdBy,omitempty"`
+	UpdatedBy *string    `json:"updatedBy,omitempty"`
 }
 
 type ErrorResponse struct {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
@@ -18,18 +19,18 @@ type DownloadHandler interface {
 
 type downloadHandler struct {
 	downloadUseCase usecase.DownloadFileUseCase
-	getFileUseCase  usecase.GetFileUseCase
+	fileFacade      facade.FileFacade
 }
 
-func NewDownloadHandler(downloadUseCase usecase.DownloadFileUseCase, getFileUseCase usecase.GetFileUseCase) DownloadHandler {
-	return &downloadHandler{downloadUseCase: downloadUseCase, getFileUseCase: getFileUseCase}
+func NewDownloadHandler(downloadUseCase usecase.DownloadFileUseCase, fileFacade facade.FileFacade) DownloadHandler {
+	return &downloadHandler{downloadUseCase: downloadUseCase, fileFacade: fileFacade}
 }
 
 func (h *downloadHandler) Download(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "fileId")
 	usr := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
 
-	fileRep, err := h.getFileUseCase.Execute(usr.Subject(), fileId)
+	fileRep, err := h.fileFacade.FindById(usr.Subject(), fileId)
 
 	if err == repository.ErrFileDoesNotExists {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

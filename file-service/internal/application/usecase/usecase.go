@@ -7,21 +7,15 @@ import (
 
 type UseCases struct {
 	CreateFileUseCase   CreateFileUseCase
-	DeleteFileUseCase   DeleteFileUseCase
-	ListFilesUseCase    ListFilesUseCase
 	UpdateFileUseCase   UpdateFileUseCase
-	GetFileUseCase      GetFileUseCase
 	UploadUseCase       UploadFileUseCase
 	DownloadFileUseCase DownloadFileUseCase
 }
 
-func InitUseCases(config *config.Config, repo repository.FilesRepository) *UseCases {
+func InitUseCases(config *config.Config, repo repository.FilesRepository, txRepo repository.TxFilesRepository) *UseCases {
 	return &UseCases{
 		CreateFileUseCase:   NewCreateFileUseCase(config, repo),
-		DeleteFileUseCase:   NewDeleteFileUseCase(repo),
-		ListFilesUseCase:    NewListFilesUseCase(repo),
-		UpdateFileUseCase:   NewUpdateFileUseCase(repo),
-		GetFileUseCase:      NewGetFileUseCase(repo),
+		UpdateFileUseCase:   NewUpdateFileUseCase(txRepo),
 		UploadUseCase:       NewUploadFileUseCase(config),
 		DownloadFileUseCase: NewDownloadFileUseCase(config),
 	}

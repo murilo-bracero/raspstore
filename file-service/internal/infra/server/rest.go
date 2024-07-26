@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 )
 
-func StartApiServer(config *config.Config, useCases *usecase.UseCases) {
-	filesHandler := handler.NewFilesHandler(useCases.ListFilesUseCase, useCases.UpdateFileUseCase, useCases.DeleteFileUseCase)
+func StartApiServer(config *config.Config, fileFacade facade.FileFacade, useCases *usecase.UseCases) {
+	filesHandler := handler.NewFilesHandler(fileFacade, useCases.UpdateFileUseCase)
 
 	uploadHanler := handler.NewUploadHandler(config, useCases.UploadUseCase, useCases.CreateFileUseCase)
 
-	downloadHandler := handler.NewDownloadHandler(useCases.DownloadFileUseCase, useCases.GetFileUseCase)
+	downloadHandler := handler.NewDownloadHandler(useCases.DownloadFileUseCase, fileFacade)
 
 	router := NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
 	http.Handle("/", router)

@@ -12,6 +12,7 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
+	u "github.com/murilo-bracero/raspstore/file-service/internal/infra/utils"
 )
 
 type UploadHandler interface {
@@ -59,7 +60,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Created(w, &model.UploadSuccessResponse{
+	u.Created(w, &model.UploadSuccessResponse{
 		FileId:   fm.FileId,
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,
@@ -67,7 +68,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *uploadHandler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File) {
-	if err := os.Remove(h.config.Server.Storage.Path + "/" + file.FileId); err != nil {
+	if err := os.Remove(h.config.Server.Storage.Path + "/storage/" + file.FileId); err != nil {
 		slog.Error("Could not remove file from fs", "fileId", file.FileId)
 	}
 

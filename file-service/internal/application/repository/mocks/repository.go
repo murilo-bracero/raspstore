@@ -9,6 +9,7 @@
 package mocks
 
 import (
+	sql "database/sql"
 	reflect "reflect"
 
 	entity "github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
@@ -50,6 +51,20 @@ func (m *MockFilesRepository) Delete(userId, fileId string) error {
 func (mr *MockFilesRepositoryMockRecorder) Delete(userId, fileId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockFilesRepository)(nil).Delete), userId, fileId)
+}
+
+// DeleteFilePermissionByFileId mocks base method.
+func (m *MockFilesRepository) DeleteFilePermissionByFileId(fileId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFilePermissionByFileId", fileId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFilePermissionByFileId indicates an expected call of DeleteFilePermissionByFileId.
+func (mr *MockFilesRepositoryMockRecorder) DeleteFilePermissionByFileId(fileId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFilePermissionByFileId", reflect.TypeOf((*MockFilesRepository)(nil).DeleteFilePermissionByFileId), fileId)
 }
 
 // FindAll mocks base method.
@@ -123,4 +138,99 @@ func (m *MockFilesRepository) Update(userId string, file *entity.File) error {
 func (mr *MockFilesRepositoryMockRecorder) Update(userId, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockFilesRepository)(nil).Update), userId, file)
+}
+
+// MockTxFilesRepository is a mock of TxFilesRepository interface.
+type MockTxFilesRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockTxFilesRepositoryMockRecorder
+}
+
+// MockTxFilesRepositoryMockRecorder is the mock recorder for MockTxFilesRepository.
+type MockTxFilesRepositoryMockRecorder struct {
+	mock *MockTxFilesRepository
+}
+
+// NewMockTxFilesRepository creates a new mock instance.
+func NewMockTxFilesRepository(ctrl *gomock.Controller) *MockTxFilesRepository {
+	mock := &MockTxFilesRepository{ctrl: ctrl}
+	mock.recorder = &MockTxFilesRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTxFilesRepository) EXPECT() *MockTxFilesRepositoryMockRecorder {
+	return m.recorder
+}
+
+// Begin mocks base method.
+func (m *MockTxFilesRepository) Begin() (*sql.Tx, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Begin")
+	ret0, _ := ret[0].(*sql.Tx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Begin indicates an expected call of Begin.
+func (mr *MockTxFilesRepositoryMockRecorder) Begin() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Begin", reflect.TypeOf((*MockTxFilesRepository)(nil).Begin))
+}
+
+// Commit mocks base method.
+func (m *MockTxFilesRepository) Commit(tx *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Commit", tx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Commit indicates an expected call of Commit.
+func (mr *MockTxFilesRepositoryMockRecorder) Commit(tx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockTxFilesRepository)(nil).Commit), tx)
+}
+
+// DeleteFilePermissionByFileId mocks base method.
+func (m *MockTxFilesRepository) DeleteFilePermissionByFileId(tx *sql.Tx, fileId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFilePermissionByFileId", tx, fileId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFilePermissionByFileId indicates an expected call of DeleteFilePermissionByFileId.
+func (mr *MockTxFilesRepositoryMockRecorder) DeleteFilePermissionByFileId(tx, fileId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFilePermissionByFileId", reflect.TypeOf((*MockTxFilesRepository)(nil).DeleteFilePermissionByFileId), tx, fileId)
+}
+
+// FindById mocks base method.
+func (m *MockTxFilesRepository) FindById(tx *sql.Tx, userId, fileId string) (*entity.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindById", tx, userId, fileId)
+	ret0, _ := ret[0].(*entity.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindById indicates an expected call of FindById.
+func (mr *MockTxFilesRepositoryMockRecorder) FindById(tx, userId, fileId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockTxFilesRepository)(nil).FindById), tx, userId, fileId)
+}
+
+// Update mocks base method.
+func (m *MockTxFilesRepository) Update(tx *sql.Tx, userId string, file *entity.File) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", tx, userId, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockTxFilesRepositoryMockRecorder) Update(tx, userId, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTxFilesRepository)(nil).Update), tx, userId, file)
 }

@@ -24,7 +24,7 @@ func NewDownloadFileUseCase(config *config.Config) *downloadFileUseCase {
 func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file *os.File, err error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	file, err = os.Open(d.config.Server.Storage.Path + "/" + fileId)
+	file, err = os.Open(d.config.Server.Storage.Path + "/storage/" + fileId)
 
 	if err != nil {
 		slog.Error("Could not open file in fs", "traceId", traceId, "error", err)

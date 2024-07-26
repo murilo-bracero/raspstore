@@ -12,20 +12,39 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
+	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetAllFilesSuccess(t *testing.T) {
-	uc := &listUseCaseMock{}
-	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
+	token := jwt.New()
+	token.Set("sub", "userId")
+
+	mockCtrl := gomock.NewController(t)
+
+	ff := mocks.NewMockFileFacade(mockCtrl)
+
+	ff.EXPECT().FindAll(gomock.Any(), gomock.Any(), 0, 0, "", false).Return(&entity.FilePage{
+		Content: []*entity.File{},
+		Count:   0,
+	}, nil)
+
+	ctr := apiHandler.NewFilesHandler(ff, nil)
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -36,14 +55,28 @@ func TestGetAllFilesSuccess(t *testing.T) {
 }
 
 func TestGetAllFilesPaginatedSuccess(t *testing.T) {
-	uc := &listUseCaseMock{}
-	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
+	token := jwt.New()
+	token.Set("sub", "userId")
+
+	mockCtrl := gomock.NewController(t)
+
+	ff := mocks.NewMockFileFacade(mockCtrl)
+
+	ff.EXPECT().FindAll(gomock.Any(), gomock.Any(), 0, 3, "", false).Return(&entity.FilePage{
+		Content: []*entity.File{},
+		Count:   0,
+	}, nil)
+
+	ctr := apiHandler.NewFilesHandler(ff, nil)
 
 	page := 0
 	size := 3
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -54,14 +87,25 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 }
 
 func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
-	uc := &listUseCaseMock{shouldThrowError: true}
-	ctr := apiHandler.NewFilesHandler(uc, nil, nil)
+	token := jwt.New()
+	token.Set("sub", "userId")
+
+	mockCtrl := gomock.NewController(t)
+
+	ff := mocks.NewMockFileFacade(mockCtrl)
+
+	ff.EXPECT().FindAll(gomock.Any(), gomock.Any(), 0, 3, "", false).Return(nil, errors.New("generic error"))
+
+	ctr := apiHandler.NewFilesHandler(ff, nil)
 
 	page := 0
 	size := 3
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -72,12 +116,28 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 }
 
 func TestDeleteFileSuccess(t *testing.T) {
-	uc := &deleteUseCaseMock{}
-	ctr := apiHandler.NewFilesHandler(nil, nil, uc)
+	token := jwt.New()
+	token.Set("sub", "userId")
 
 	random := uuid.NewString()
+
+	mockCtrl := gomock.NewController(t)
+
+	ff := mocks.NewMockFileFacade(mockCtrl)
+
+	ff.EXPECT().DeleteById(gomock.Any(), gomock.Any(), random).Return(nil)
+
+	ctr := apiHandler.NewFilesHandler(ff, nil)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", random)
+
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -88,13 +148,27 @@ func TestDeleteFileSuccess(t *testing.T) {
 }
 
 func TestDeleteFileInternalServerError(t *testing.T) {
-	uc := &deleteUseCaseMock{shouldThrowError: true}
-	ctr := apiHandler.NewFilesHandler(nil, nil, uc)
+	token := jwt.New()
+	token.Set("sub", "userId")
 
 	random := uuid.NewString()
+
+	mockCtrl := gomock.NewController(t)
+
+	ff := mocks.NewMockFileFacade(mockCtrl)
+
+	ff.EXPECT().DeleteById("test-trace-id", "userId", random).Return(errors.New("generic error"))
+
+	ctr := apiHandler.NewFilesHandler(ff, nil)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", random)
+
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -107,7 +181,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 func TestUpdateFileSuccess(t *testing.T) {
 	uc := &updateUseCaseMock{}
-	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
+	ctr := apiHandler.NewFilesHandler(nil, uc)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -147,7 +221,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 func TestUpdateFileNotFound(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowNotFound: true}
-	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
+	ctr := apiHandler.NewFilesHandler(nil, uc)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -171,7 +245,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 
 func TestUpdateFileInternalServerError(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowError: true}
-	ctr := apiHandler.NewFilesHandler(nil, uc, nil)
+	ctr := apiHandler.NewFilesHandler(nil, uc)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -191,33 +265,6 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-}
-
-type deleteUseCaseMock struct {
-	shouldThrowError bool
-}
-
-func (c *deleteUseCaseMock) Execute(ctx context.Context, fileId string) (err error) {
-	if c.shouldThrowError {
-		return errors.New("generic error")
-	}
-
-	return
-}
-
-type listUseCaseMock struct {
-	shouldThrowError bool
-}
-
-func (c *listUseCaseMock) Execute(ctx context.Context, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
-	if c.shouldThrowError {
-		return nil, errors.New("generic error")
-	}
-
-	return &entity.FilePage{
-		Content: []*entity.File{},
-		Count:   0,
-	}, nil
 }
 
 type updateUseCaseMock struct {
@@ -251,8 +298,8 @@ func createFileMetadataLookup(id string) *entity.File {
 		Editors:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		Viewers:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		UpdatedAt: &[]time.Time{time.Now()}[0],
 		CreatedBy: uuid.NewString(),
-		UpdatedBy: uuid.NewString(),
+		UpdatedBy: &[]string{uuid.NewString()}[0],
 	}
 }

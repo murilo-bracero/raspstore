@@ -19,7 +19,7 @@ func TestUploadFileUseCase(t *testing.T) {
 		FileId: uuid.NewString(),
 	}
 
-	file, err := os.Create("/tmp/upload.txt")
+	file, err := os.Create("/tmp/storage/upload.txt")
 
 	assert.NoError(t, err)
 
@@ -33,7 +33,7 @@ func TestUploadFileUseCase(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		_, err = os.Lstat(mockConfig.Server.Storage.Path + "/" + eFile.FileId)
+		_, err = os.Lstat(mockConfig.Server.Storage.Path + "/storage/" + eFile.FileId)
 
 		assert.NoError(t, err)
 	})

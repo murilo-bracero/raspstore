@@ -27,13 +27,15 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 		middleware.UserClaimsCtxKey, token)
 
 	t.Run("ValidFileUpdate", func(t *testing.T) {
-		mockObj := mocks.NewMockFilesRepository(mockCtrl)
+		mockObj := mocks.NewMockTxFilesRepository(mockCtrl)
 
-		mockObj.EXPECT().FindById("userId", "validFile").Return(&entity.File{
+		mockObj.EXPECT().FindById(gomock.Any(), "userId", "validFile").Return(&entity.File{
 			FileId:   "validFile",
 			Filename: "updated.txt",
 		}, nil)
-		mockObj.EXPECT().Update("userId", gomock.Any()).Return(nil)
+		mockObj.EXPECT().Update(gomock.Any(), "userId", gomock.Any()).Return(nil)
+		mockObj.EXPECT().Begin().Return(nil, nil)
+		mockObj.EXPECT().Commit(nil).Return(nil)
 
 		useCase := usecase.NewUpdateFileUseCase(mockObj)
 
@@ -50,9 +52,10 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("FileNotFound", func(t *testing.T) {
-		mockObj := mocks.NewMockFilesRepository(mockCtrl)
+		mockObj := mocks.NewMockTxFilesRepository(mockCtrl)
 
-		mockObj.EXPECT().FindById("userId", "nonexistentFile").Return(nil, repository.ErrFileDoesNotExists)
+		mockObj.EXPECT().Begin().Return(nil, nil)
+		mockObj.EXPECT().FindById(gomock.Any(), "userId", "nonexistentFile").Return(nil, repository.ErrFileDoesNotExists)
 
 		useCase := usecase.NewUpdateFileUseCase(mockObj)
 
@@ -68,13 +71,14 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("FailedToUpdateFile", func(t *testing.T) {
-		mockObj := mocks.NewMockFilesRepository(mockCtrl)
+		mockObj := mocks.NewMockTxFilesRepository(mockCtrl)
 
-		mockObj.EXPECT().FindById("userId", "failedFile").Return(&entity.File{
+		mockObj.EXPECT().FindById(gomock.Any(), "userId", "failedFile").Return(&entity.File{
 			FileId:   "failedFile",
 			Filename: "updated.txt",
 		}, nil)
-		mockObj.EXPECT().Update("userId", gomock.Any()).Return(errors.New("generic error"))
+		mockObj.EXPECT().Begin().Return(nil, nil)
+		mockObj.EXPECT().Update(gomock.Any(), "userId", gomock.Any()).Return(errors.New("generic error"))
 
 		useCase := usecase.NewUpdateFileUseCase(mockObj)
 
