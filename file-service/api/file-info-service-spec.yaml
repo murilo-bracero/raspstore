@@ -150,7 +150,7 @@ components:
       properties:
         fileId:
           type: string
-          example: 507f1f77bcf86cd799439011
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
         filename:
           type: string
           example: file.txt
@@ -162,33 +162,24 @@ components:
           type: boolean
         owner:
           type: string
-          example: 63d14edc2f4ee7bec256515b
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
           description: |-
             User representation of the owner of the file. 
             There can exists only one owner per file
-        editors:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserInfoRepresentation'
-          example:
-            - userId: 63d1539be80b85c273d612e4
-              username: karl
-            - userId: 63d153b097e145d528a1bfbf
-              username: johndoe1
-        viewers:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserInfoRepresentation'
         createdBy:
-          $ref: '#/components/schemas/UserInfoRepresentation'
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
         updatedBy:
-          $ref: '#/components/schemas/UserInfoRepresentation'
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
         createdAt:
           type: string
-          format: date
+          format: datetime
+          example: '2024-07-26T16:46:10.439-03:00'
         updatedAt:
           type: string
-          format: date
+          format: datetime
+          example: '2024-07-26T16:46:10.439-03:00'
     PageRepresentation:
       type: object
       properties:
@@ -212,30 +203,12 @@ components:
           example: coolfile.bpm
         secret:
           type: boolean
-        editors:
-          type: array
-          items:
-            type: string
-            example: 63d150ccd80a557126f07299
-          example: [63d1512264ad3b195c19d8d2, 63d151299970181cc3adcaf1]
-        viewers:
-          type: array
-          items:
-            type: string
-            example: 63d150ff46156f7cf0c54e1b
-          example: [63d1510e09ca8779e148c45c, 63d15115460f5f0da06df1a5]
     ApiErrorException:
       type: object
       properties:
-        code:
-          type: string
-          example: 'ERR010'
         message:
           type: string
           example: 'Field email must not be null or empty'
-        traceId:
-          type: string
-          example: 'df438c36-9aa4-11ed-a8fc-0242ac120002'
   requestBodies:
     UploadFileRequest:
       content:
@@ -281,17 +254,30 @@ components:
       required: true
       schema:
         type: string
-        example: 63d14dfdec04b7ba9c2372f5
-    
+        example: 2133bfe8-367c-458c-83ab-10a8d885339c
+  
+  headers:
+    X-Trace-Id:
+      schema:
+        type: string
+      description: The id of the request for debug and error tracing purposes
+      example: dff475fe-cb88-4c9e-b718-36180c634246
+
   responses:
     BadRequestFileUpload:
       description: payload invalid or malformed
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorException'
     SuccessFileResponse:
       description: File retrieved successfully
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
       content:
         application/octet-stream:
           schema:
@@ -299,18 +285,27 @@ components:
             example: file binary
     SuccessUpdateFileMetadataResponse:
       description: File metadata updated successfully
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FileMetadataRepresentation'
     BadRequestUpdateFileMetadataResponse:
       description: payload invalid or malformed
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorException'
     
     SuccessFileMetadataListResponse:
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
       description: List of file metadata object
       content:
         application/json:

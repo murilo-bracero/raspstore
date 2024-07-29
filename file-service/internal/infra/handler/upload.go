@@ -34,7 +34,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		slog.Error("Could not allocate MultipartForm parser", "traceId", traceId, "error", err)
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		u.UnprocessableEntity(w, traceId)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		slog.Error("Could not open Multipart Form file", "traceId", traceId, "error", err)
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		u.UnprocessableEntity(w, traceId)
 		return
 	}
 
@@ -51,12 +51,12 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	fm := entity.NewFile(header.Filename, header.Size, false, usr.Subject())
 
 	if err := h.uploadUseCase.Execute(r.Context(), fm, file); err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
 	if err := h.createFileUseCase.Execute(fm); err != nil {
-		h.handleCreateUseCaseError(w, fm)
+		h.handleCreateUseCaseError(w, fm, traceId)
 		return
 	}
 
@@ -64,13 +64,13 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		FileId:   fm.FileId,
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,
-	})
+	}, traceId)
 }
 
-func (h *uploadHandler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File) {
+func (h *uploadHandler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File, traceId string) {
 	if err := os.Remove(h.config.Server.Storage.Path + "/storage/" + file.FileId); err != nil {
 		slog.Error("Could not remove file from fs", "fileId", file.FileId)
 	}
 
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	u.InternalServerError(w, traceId)
 }

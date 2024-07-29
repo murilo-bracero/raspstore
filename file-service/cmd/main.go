@@ -24,6 +24,18 @@ func main() {
 
 	config := config.NewConfig("config/application.yaml")
 
+	slog.Info("creating required folders")
+
+	if err := os.MkdirAll(config.Server.Storage.Path+"/internal", os.ModePerm); err != nil {
+		slog.Error("could not create required internal folder", "error", err)
+		os.Exit(1)
+	}
+
+	if err := os.MkdirAll(config.Server.Storage.Path+"/storage", os.ModePerm); err != nil {
+		slog.Error("could not create required storage folder", "error", err)
+		os.Exit(1)
+	}
+
 	conn, err := db.NewSqliteDatabaseConnection(config)
 
 	if err != nil {

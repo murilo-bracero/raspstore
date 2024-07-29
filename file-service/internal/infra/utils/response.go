@@ -8,34 +8,56 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 )
 
-func HandleBadRequest(w http.ResponseWriter, traceId string, code string, message string) {
+const traceIdHeaderKey = "X-Trace-Id"
+
+func HandleBadRequest(w http.ResponseWriter, traceId string, message string) {
+	w.Header().Set(traceIdHeaderKey, traceId)
 	BadRequest(w, model.ErrorResponse{
-		TraceId: traceId,
-		Code:    code,
 		Message: message,
 	})
 }
 
 func BadRequest(w http.ResponseWriter, body model.ErrorResponse) {
-	w.WriteHeader(http.StatusBadRequest)
-	Send(w, body)
+	defer w.WriteHeader(http.StatusBadRequest)
+
+	send(w, body)
 }
 
 func InternalServerError(w http.ResponseWriter, traceId string) {
-	w.WriteHeader(http.StatusInternalServerError)
-	Send(w, model.ErrorResponse{
-		Code:    "ERR098",
-		Message: "Service currently unavailable",
-		TraceId: traceId,
-	})
+	w.Header().Set(traceIdHeaderKey, traceId)
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func Created(w http.ResponseWriter, body interface{}) {
-	w.WriteHeader(http.StatusCreated)
-	Send(w, body)
+func NotFound(w http.ResponseWriter, traceId string) {
+	w.Header().Set(traceIdHeaderKey, traceId)
+	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
 
-func Send(w http.ResponseWriter, obj interface{}) {
+func UnprocessableEntity(w http.ResponseWriter, traceId string) {
+	w.Header().Set(traceIdHeaderKey, traceId)
+	http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+}
+
+func Unauthorized(w http.ResponseWriter) {
+	http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+}
+
+func Created(w http.ResponseWriter, body interface{}, traceId string) {
+	defer w.WriteHeader(http.StatusCreated)
+
+	w.Header().Set(traceIdHeaderKey, traceId)
+	send(w, body)
+}
+
+func Ok(w http.ResponseWriter, body interface{}, traceId string) {
+	defer w.WriteHeader(http.StatusOK)
+
+	w.Header().Set(traceIdHeaderKey, traceId)
+	send(w, body)
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func send(w http.ResponseWriter, obj interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if jsonResponse, err := json.Marshal(obj); err == nil {
 		write(w, jsonResponse)

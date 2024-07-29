@@ -50,11 +50,11 @@ func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	filesPage, err := f.fileFacade.FindAll(traceId, user.Subject(), page, size, filename, secret)
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	u.Send(w, mapper.MapFilePageResponse(page, size, filesPage, r.Host))
+	u.Ok(w, mapper.MapFilePageResponse(page, size, filesPage, r.Host), traceId)
 }
 
 func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -62,12 +62,12 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req model.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		u.UnprocessableEntity(w, traceId)
 		return
 	}
 
 	if err := validator.ValidateUpdateFileRequest(&req); err != nil {
-		u.HandleBadRequest(w, traceId, "ERR001", err.Error())
+		u.HandleBadRequest(w, traceId, err.Error())
 		return
 	}
 
@@ -82,16 +82,16 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	fileMetadata, err := f.updateUseCase.Execute(r.Context(), file)
 
 	if err == repository.ErrFileDoesNotExists {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		u.NotFound(w, traceId)
 		return
 	}
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
-	u.Send(w, fileMetadata)
+	u.Ok(w, fileMetadata, traceId)
 }
 
 func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,8 @@ func (f *filesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
 
 	if err := f.fileFacade.DeleteById(traceId, user.Subject(), fileId); err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)

@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
+	u "github.com/murilo-bracero/raspstore/file-service/internal/infra/utils"
 )
 
 type DownloadHandler interface {
@@ -29,23 +31,24 @@ func NewDownloadHandler(downloadUseCase usecase.DownloadFileUseCase, fileFacade 
 func (h *downloadHandler) Download(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "fileId")
 	usr := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
 	fileRep, err := h.fileFacade.FindById(usr.Subject(), fileId)
 
 	if err == repository.ErrFileDoesNotExists {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		u.NotFound(w, traceId)
 		return
 	}
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
 	file, err := h.downloadUseCase.Execute(r.Context(), fileId)
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		u.InternalServerError(w, traceId)
 		return
 	}
 
