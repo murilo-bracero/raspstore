@@ -12,7 +12,7 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
-	u "github.com/murilo-bracero/raspstore/file-service/internal/infra/utils"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 )
 
 type DownloadHandler interface {
@@ -36,19 +36,19 @@ func (h *downloadHandler) Download(w http.ResponseWriter, r *http.Request) {
 	fileRep, err := h.fileFacade.FindById(usr.Subject(), fileId)
 
 	if err == repository.ErrFileDoesNotExists {
-		u.NotFound(w, traceId)
+		response.NotFound(w, traceId)
 		return
 	}
 
 	if err != nil {
-		u.InternalServerError(w, traceId)
+		response.InternalServerError(w, traceId)
 		return
 	}
 
 	file, err := h.downloadUseCase.Execute(r.Context(), fileId)
 
 	if err != nil {
-		u.InternalServerError(w, traceId)
+		response.InternalServerError(w, traceId)
 		return
 	}
 

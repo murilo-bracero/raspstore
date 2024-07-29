@@ -11,7 +11,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
-	u "github.com/murilo-bracero/raspstore/file-service/internal/infra/utils"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 )
 
 type userClaimsKeyType int
@@ -41,7 +41,7 @@ func JWTMiddleware(config *config.Config) func(h http.Handler) http.Handler {
 			tkn, err := verifyJwt(r, ar, config.Auth.CertURI)
 
 			if err != nil {
-				u.Unauthorized(w)
+				response.Unauthorized(w)
 				return
 			}
 
