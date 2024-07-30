@@ -26,7 +26,7 @@ func NewUploadFileUseCase(config *config.Config) *uploadFileUseCase {
 func (u *uploadFileUseCase) Execute(ctx context.Context, file *entity.File, src io.Reader) (err error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	filerep, err := os.Create(u.config.Server.Storage.Path + "/storage/" + file.FileId)
+	filerep, err := os.Create(u.config.Storage.Path + "/storage/" + file.FileId)
 
 	if err != nil {
 		slog.Error("Could not create file in fs", "traceId", traceId, "error", err)

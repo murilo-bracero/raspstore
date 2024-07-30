@@ -68,7 +68,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *uploadHandler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File, traceId string) {
-	if err := os.Remove(h.config.Server.Storage.Path + "/storage/" + file.FileId); err != nil {
+	if err := os.Remove(h.config.Storage.Path + "/storage/" + file.FileId); err != nil {
 		slog.Error("Could not remove file from fs", "fileId", file.FileId)
 	}
 

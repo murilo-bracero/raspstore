@@ -25,16 +25,10 @@ const testFilename = "test.txt"
 const defaultUserId = "e9e28c79-a5e8-4545-bd32-e536e690bd4a"
 
 func TestUpload(t *testing.T) {
-	config := &config.Config{Server: struct {
-		Port    int
-		Storage struct {
-			Path  string
-			Limit string
-		}
-	}{Storage: struct {
+	config := &config.Config{Storage: struct {
 		Path  string
 		Limit string
-	}{Path: "./"}}}
+	}{Path: "./"}}
 
 	token := jwt.New()
 	token.Set("sub", defaultUserId)

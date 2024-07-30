@@ -35,7 +35,7 @@ func (c *createFileUseCase) Execute(file *entity.File) (err error) {
 		return
 	}
 
-	available := int64(parser.ParseUsage(c.config.Server.Storage.Limit)) - usage
+	available := int64(parser.ParseUsage(c.config.Storage.Limit)) - usage
 
 	if file.Size > available {
 		slog.Info("Could not create file because available storage for user is insufficient:", "userId", file.Owner, "available", available)

@@ -1,13 +1,9 @@
-database:
-  type: sqlite
-  uri: {{ envOrKey "MONGO_URI" "" }}
-  name: {{ envOrKey "MONGO_DATABASE_NAME" "rstore" }}
+storage:
+  path: {{ envOrKey "STORAGE_PATH" "~/.rstore" }}
+  limit: {{ envOrKey "STORAGE_LIMIT" "1G" }}
 
 server:
   port: {{ envOrKey "SERVER_PORT" "8080" }}
-  storage:
-    path: {{ envOrKey "STORAGE_PATH" "~/.rstore" }}
-    limit: {{ envOrKey "STORAGE_LIMIT" "1G" }}
 
 auth:
-  certURI: {{ envOrKey "AUTH_CERT_URI" "" }} 
+  public-key-url: {{ envOrKey "PUBLIC_KEY_URL" "" }} 

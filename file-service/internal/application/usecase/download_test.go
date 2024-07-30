@@ -31,7 +31,7 @@ func createFile(fileId string) error {
 }
 
 func TestDownloadFileUseCase(t *testing.T) {
-	mockConfig.Server.Storage.Path = "/tmp"
+	mockConfig.Storage.Path = "/tmp"
 
 	fileId := uuid.New()
 	err := createFile(fileId.String())

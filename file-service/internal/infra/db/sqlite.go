@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	"github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	_ "modernc.org/sqlite"
 )
 
 type databaseConnection struct {
@@ -19,20 +19,20 @@ type databaseConnection struct {
 var _ DatabaseConnection = (*databaseConnection)(nil)
 
 func NewSqliteDatabaseConnection(c *config.Config) (*databaseConnection, error) {
-	if err := os.MkdirAll(c.Server.Storage.Path+"/internal", os.ModePerm); err != nil {
+	if err := os.MkdirAll(c.Storage.Path+"/internal", os.ModePerm); err != nil {
 		return nil, err
 	}
 
-	slog.Info(c.Server.Storage.Path + "/internal/rstore.db")
+	slog.Info(c.Storage.Path + "/internal/rstore.db")
 
-	database, err := sql.Open("sqlite3", c.Server.Storage.Path+"/internal/rstore.db")
+	database, err := sql.Open("sqlite3", c.Storage.Path+"/internal/rstore.db")
 
 	if err != nil {
 		slog.Error("could not open sqlite database on ./rstore.db", "err", err)
 		return nil, err
 	}
 
-	dbDriver, err := sqlite3.WithInstance(database, &sqlite3.Config{})
+	dbDriver, err := sqlite.WithInstance(database, &sqlite.Config{})
 
 	if err != nil {
 		slog.Error("could initialize sqlite migration", "err", err)

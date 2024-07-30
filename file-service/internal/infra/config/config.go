@@ -10,19 +10,15 @@ import (
 )
 
 type Config struct {
-	Database struct {
-		Uri  string
-		Name string
+	Storage struct {
+		Path  string
+		Limit string
 	}
 	Server struct {
-		Port    int
-		Storage struct {
-			Path  string
-			Limit string
-		}
+		Port int
 	}
 	Auth struct {
-		CertURI string `yaml:"certURI"`
+		PublicKeyUrl string `yaml:"public-key-url"`
 	}
 }
 
