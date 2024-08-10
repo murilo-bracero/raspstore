@@ -36,7 +36,7 @@ func (t *txFilesRepository) Commit(tx *sql.Tx) error {
 func (t *txFilesRepository) FindById(tx *sql.Tx, userId string, fileId string) (*entity.File, error) {
 	nq := t.queries.WithTx(tx)
 
-	rows, err := nq.FindFileByExternalID(t.ctx, gen.FindFileByExternalIDParams{FileID: fileId, OwnerID: userId})
+	rows, err := nq.FindFileByID(t.ctx, gen.FindFileByIDParams{FileID: fileId, OwnerID: userId})
 
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (t *txFilesRepository) Update(tx *sql.Tx, userId string, file *entity.File)
 	file.UpdatedAt = &ts
 	file.UpdatedBy = &userId
 
-	return nq.UpdateFileByExternalId(t.ctx, gen.UpdateFileByExternalIdParams{
+	return nq.UpdateFileByID(t.ctx, gen.UpdateFileByIDParams{
 		FileID:    file.FileId,
 		OwnerID:   userId,
 		FileName:  file.Filename,
@@ -103,5 +103,5 @@ func (t *txFilesRepository) Update(tx *sql.Tx, userId string, file *entity.File)
 func (t *txFilesRepository) DeleteFilePermissionByFileId(tx *sql.Tx, fileId string) error {
 	nq := t.queries.WithTx(tx)
 
-	return nq.DeleteFilePermissionByFileId(t.ctx, fileId)
+	return nq.DeleteFilePermissionByFileID(t.ctx, fileId)
 }

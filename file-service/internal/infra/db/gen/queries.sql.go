@@ -38,7 +38,7 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) error {
 	return err
 }
 
-const deleteFileByExternalID = `-- name: DeleteFileByExternalID :exec
+const deleteFileByID = `-- name: DeleteFileByID :exec
 DELETE FROM files
 WHERE file_id IN (
     SELECT f.file_id 
@@ -52,22 +52,22 @@ WHERE file_id IN (
 )
 `
 
-type DeleteFileByExternalIDParams struct {
+type DeleteFileByIDParams struct {
 	FileID  string
 	OwnerID string
 }
 
-func (q *Queries) DeleteFileByExternalID(ctx context.Context, arg DeleteFileByExternalIDParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFileByExternalID, arg.FileID, arg.OwnerID)
+func (q *Queries) DeleteFileByID(ctx context.Context, arg DeleteFileByIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFileByID, arg.FileID, arg.OwnerID)
 	return err
 }
 
-const deleteFilePermissionByFileId = `-- name: DeleteFilePermissionByFileId :exec
+const deleteFilePermissionByFileID = `-- name: DeleteFilePermissionByFileID :exec
 DELETE FROM files_permissions WHERE file_id = ?
 `
 
-func (q *Queries) DeleteFilePermissionByFileId(ctx context.Context, fileID string) error {
-	_, err := q.db.ExecContext(ctx, deleteFilePermissionByFileId, fileID)
+func (q *Queries) DeleteFilePermissionByFileID(ctx context.Context, fileID string) error {
+	_, err := q.db.ExecContext(ctx, deleteFilePermissionByFileID, fileID)
 	return err
 }
 
@@ -144,26 +144,26 @@ func (q *Queries) FindAllFiles(ctx context.Context, arg FindAllFilesParams) ([]F
 	return items, nil
 }
 
-const findFileByExternalID = `-- name: FindFileByExternalID :many
+const findFileByID = `-- name: FindFileByID :many
 SELECT f.file_id, f.file_name, f.size, f.is_secret, f.owner_id, f.created_at, f.updated_at, f.created_by, f.updated_by, fp.permission_id, fp.file_id, fp.permission, fp.user_id
 FROM files f
 LEFT JOIN files_permissions fp ON f.file_id = fp.file_id
 WHERE f.file_id = ?1
 AND (
-    f.owner_id = ?2 OR EXISTS (
-        SELECT 1
+    f.owner_id = ?2 OR (f.file_id IN (
+        SELECT ffp.file_id
         FROM files_permissions ffp
         WHERE ffp.file_id = f.file_id AND ffp.user_id = ?2
-    )
+    ) AND f.is_secret = FALSE)
 )
 `
 
-type FindFileByExternalIDParams struct {
+type FindFileByIDParams struct {
 	FileID  string
 	OwnerID string
 }
 
-type FindFileByExternalIDRow struct {
+type FindFileByIDRow struct {
 	FileID       string
 	FileName     string
 	Size         int64
@@ -179,15 +179,15 @@ type FindFileByExternalIDRow struct {
 	UserID       sql.NullString
 }
 
-func (q *Queries) FindFileByExternalID(ctx context.Context, arg FindFileByExternalIDParams) ([]FindFileByExternalIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, findFileByExternalID, arg.FileID, arg.OwnerID)
+func (q *Queries) FindFileByID(ctx context.Context, arg FindFileByIDParams) ([]FindFileByIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, findFileByID, arg.FileID, arg.OwnerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FindFileByExternalIDRow
+	var items []FindFileByIDRow
 	for rows.Next() {
-		var i FindFileByExternalIDRow
+		var i FindFileByIDRow
 		if err := rows.Scan(
 			&i.FileID,
 			&i.FileName,
@@ -216,21 +216,21 @@ func (q *Queries) FindFileByExternalID(ctx context.Context, arg FindFileByExtern
 	return items, nil
 }
 
-const findUsageByUserId = `-- name: FindUsageByUserId :one
+const findUsageByUserID = `-- name: FindUsageByUserID :one
 SELECT SUM(f.size) as totalSize
 FROM files f
 WHERE f.owner_id = ?
 GROUP BY f.owner_id
 `
 
-func (q *Queries) FindUsageByUserId(ctx context.Context, ownerID string) (sql.NullFloat64, error) {
-	row := q.db.QueryRowContext(ctx, findUsageByUserId, ownerID)
+func (q *Queries) FindUsageByUserID(ctx context.Context, ownerID string) (sql.NullFloat64, error) {
+	row := q.db.QueryRowContext(ctx, findUsageByUserID, ownerID)
 	var totalsize sql.NullFloat64
 	err := row.Scan(&totalsize)
 	return totalsize, err
 }
 
-const updateFileByExternalId = `-- name: UpdateFileByExternalId :exec
+const updateFileByID = `-- name: UpdateFileByID :exec
 UPDATE files SET 
 file_name = ?3,
 is_secret = ?4,
@@ -248,7 +248,7 @@ WHERE file_id IN (
 )
 `
 
-type UpdateFileByExternalIdParams struct {
+type UpdateFileByIDParams struct {
 	FileID    string
 	OwnerID   string
 	FileName  string
@@ -257,8 +257,8 @@ type UpdateFileByExternalIdParams struct {
 	UpdatedBy sql.NullString
 }
 
-func (q *Queries) UpdateFileByExternalId(ctx context.Context, arg UpdateFileByExternalIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateFileByExternalId,
+func (q *Queries) UpdateFileByID(ctx context.Context, arg UpdateFileByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateFileByID,
 		arg.FileID,
 		arg.OwnerID,
 		arg.FileName,

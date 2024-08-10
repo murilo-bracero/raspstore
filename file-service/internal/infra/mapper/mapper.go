@@ -44,7 +44,7 @@ func mapFilePageContentParser(entity *entity.File) *model.FileContent {
 
 func buildNextUrl(filesPage *entity.FilePage, host string, page int, size int) (nextUrl string) {
 	if len(filesPage.Content) == size {
-		nextUrl = fmt.Sprintf("%s/file-service/files?page=%d&size=%d", host, page+1, size)
+		nextUrl = fmt.Sprintf("%s/file-service/v1/files?page=%d&size=%d", host, page+1, size)
 	}
 
 	return

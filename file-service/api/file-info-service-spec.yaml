@@ -41,6 +41,31 @@ paths:
         '500':
           description: Internal Server Error
   /v1/files/{fileId}:
+    get:
+      tags:
+        - files
+      summary: Find file metadata by ID
+      description: |-
+        Find file metada by file ID.
+        This action can only be done by the logged in user.
+        
+        If "secret" tag is true, only the owner of the resource can see it.
+      operationId: getFileById
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessFindFileMetadataResponse'
+        '404':
+          headers:
+            schema:
+              $ref: '#/components/headers/X-Trace-Id'
+          description: File with provided ID not found.
+        '500':
+          headers:
+            schema:
+              $ref: '#/components/headers/X-Trace-Id'
+          description: Internal Server Error.
     put:
       tags:
         - files
@@ -292,6 +317,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/FileMetadataRepresentation'
+    SuccessFindFileMetadataResponse:
+      description: File metadata found
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileMetadataRepresentation'
     BadRequestUpdateFileMetadataResponse:
       description: payload invalid or malformed
       headers:
@@ -301,7 +335,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorException'
-    
     SuccessFileMetadataListResponse:
       headers:
         schema:

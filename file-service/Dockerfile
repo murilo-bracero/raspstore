@@ -20,6 +20,4 @@ COPY --chown=185 --from=build /app/file-service .
 COPY --chown=185 --from=build /app/config ./config
 COPY --chown=185 --from=build /app/sql ./sql
 
-EXPOSE 8080 8080
-
 CMD ["./file-service"]

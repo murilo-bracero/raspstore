@@ -10,16 +10,10 @@ import (
 
 const traceIdHeaderKey = "X-Trace-Id"
 
-func HandleBadRequest(w http.ResponseWriter, traceId string, message string) {
+func BadRequest(w http.ResponseWriter, body model.ErrorResponse, traceId string) {
 	w.Header().Set(traceIdHeaderKey, traceId)
-	BadRequest(w, model.ErrorResponse{
-		Message: message,
-	})
-}
-
-func BadRequest(w http.ResponseWriter, body model.ErrorResponse) {
-	defer w.WriteHeader(http.StatusBadRequest)
-
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
 	send(w, body)
 }
 
@@ -43,18 +37,15 @@ func Unauthorized(w http.ResponseWriter) {
 }
 
 func Created(w http.ResponseWriter, body interface{}, traceId string) {
-	defer w.WriteHeader(http.StatusCreated)
-
 	w.Header().Set(traceIdHeaderKey, traceId)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	send(w, body)
 }
 
 func Ok(w http.ResponseWriter, body interface{}, traceId string) {
-	defer w.WriteHeader(http.StatusOK)
-
 	w.Header().Set(traceIdHeaderKey, traceId)
 	send(w, body)
-	w.Header().Set("Content-Type", "application/json")
 }
 
 func send(w http.ResponseWriter, obj interface{}) {

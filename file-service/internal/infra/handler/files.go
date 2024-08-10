@@ -22,6 +22,7 @@ import (
 
 type FilesHandler interface {
 	ListFiles(w http.ResponseWriter, r *http.Request)
+	FindById(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
 }
@@ -57,6 +58,22 @@ func (f *filesHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	response.Ok(w, mapper.MapFilePageResponse(page, size, filesPage, r.Host), traceId)
 }
 
+func (f *filesHandler) FindById(w http.ResponseWriter, r *http.Request) {
+	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
+	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+
+	fileId := chi.URLParam(r, "id")
+
+	entity, err := f.fileFacade.FindById(user.Subject(), fileId)
+
+	if err == repository.ErrFileDoesNotExists {
+		response.NotFound(w, traceId)
+		return
+	}
+
+	response.Ok(w, entity, traceId)
+}
+
 func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
@@ -67,7 +84,9 @@ func (f *filesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validator.ValidateUpdateFileRequest(&req); err != nil {
-		response.HandleBadRequest(w, traceId, err.Error())
+		response.BadRequest(w, model.ErrorResponse{
+			Message: err.Error(),
+		}, traceId)
 		return
 	}
 

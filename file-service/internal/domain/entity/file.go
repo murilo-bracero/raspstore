@@ -10,7 +10,7 @@ type File struct {
 	FileId    string     `json:"fileId,omitempty" bson:"file_id"`
 	Filename  string     `json:"filename,omitempty"`
 	Size      int64      `json:"size,omitempty"`
-	Secret    bool       `json:"-" bson:"is_secret"`
+	Secret    bool       `json:"secret" bson:"is_secret"`
 	Owner     string     `json:"owner,omitempty"`
 	Editors   []string   `json:"editors"`
 	Viewers   []string   `json:"viewers"`

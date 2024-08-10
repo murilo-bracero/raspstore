@@ -48,7 +48,7 @@ func (r *filesRepository) Save(file *entity.File) error {
 }
 
 func (r *filesRepository) FindById(id string, userId string) (*entity.File, error) {
-	rows, err := r.queries.FindFileByExternalID(r.ctx, gen.FindFileByExternalIDParams{FileID: id, OwnerID: userId})
+	rows, err := r.queries.FindFileByID(r.ctx, gen.FindFileByIDParams{FileID: id, OwnerID: userId})
 
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (r *filesRepository) FindById(id string, userId string) (*entity.File, erro
 }
 
 func (r *filesRepository) Delete(userId string, fileId string) error {
-	return r.queries.DeleteFileByExternalID(r.ctx, gen.DeleteFileByExternalIDParams{FileID: fileId, OwnerID: userId})
+	return r.queries.DeleteFileByID(r.ctx, gen.DeleteFileByIDParams{FileID: fileId, OwnerID: userId})
 }
 
 func (r *filesRepository) Update(userId string, file *entity.File) error {
@@ -104,7 +104,7 @@ func (r *filesRepository) Update(userId string, file *entity.File) error {
 	file.UpdatedAt = &ts
 	file.UpdatedBy = &userId
 
-	return r.queries.UpdateFileByExternalId(r.ctx, gen.UpdateFileByExternalIdParams{
+	return r.queries.UpdateFileByID(r.ctx, gen.UpdateFileByIDParams{
 		FileID:    file.FileId,
 		OwnerID:   userId,
 		FileName:  file.Filename,
@@ -161,7 +161,7 @@ func (r *filesRepository) FindAll(userId string, page int, size int, filename st
 }
 
 func (r *filesRepository) FindUsageByUserId(userId string) (int64, error) {
-	row, err := r.queries.FindUsageByUserId(r.ctx, userId)
+	row, err := r.queries.FindUsageByUserID(r.ctx, userId)
 
 	if err == sql.ErrNoRows {
 		return 0, nil
@@ -175,5 +175,5 @@ func (r *filesRepository) FindUsageByUserId(userId string) (int64, error) {
 }
 
 func (r *filesRepository) DeleteFilePermissionByFileId(fileId string) error {
-	return r.queries.DeleteFilePermissionByFileId(r.ctx, fileId)
+	return r.queries.DeleteFilePermissionByFileID(r.ctx, fileId)
 }

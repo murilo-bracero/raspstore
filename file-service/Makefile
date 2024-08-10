@@ -10,6 +10,12 @@ go-build:
 go-install:
 	go mod download
 
+docker-build:
+	docker build \
+		-t ghcr.io/murilo-bracero/spellscan-card-loader:$(version) \
+		-t ghcr.io/murilo-bracero/spellscan-card-loader:latest \
+		.
+
 install-tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
 	go install go.uber.org/mock/mockgen@v0.3.0

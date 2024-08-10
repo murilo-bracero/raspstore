@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
@@ -56,6 +58,22 @@ func main() {
 	if err != nil {
 		slog.Error("Error initializing database", "err", err)
 	}
+
+	sigc := make(chan os.Signal, 1)
+
+	signal.Notify(sigc, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGINT)
+
+	go func() {
+		<-sigc
+
+		if err := conn.Close(); err != nil {
+			slog.Error("could not close db connection", "err", err)
+			os.Exit(1)
+		}
+
+		slog.Info("Process finished")
+		os.Exit(0)
+	}()
 
 	slog.Info("Bootstraping servers")
 	server.StartApiServer(config, fileFacade, useCases)

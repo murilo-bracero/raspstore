@@ -25,7 +25,7 @@ func NewSqliteDatabaseConnection(c *config.Config) (*databaseConnection, error) 
 
 	slog.Info(c.Storage.Path + "/internal/rstore.db")
 
-	database, err := sql.Open("sqlite3", c.Storage.Path+"/internal/rstore.db")
+	database, err := sql.Open("sqlite", c.Storage.Path+"/internal/rstore.db")
 
 	if err != nil {
 		slog.Error("could not open sqlite database on ./rstore.db", "err", err)
@@ -39,7 +39,7 @@ func NewSqliteDatabaseConnection(c *config.Config) (*databaseConnection, error) 
 		return nil, err
 	}
 
-	fileSource, err := (&file.File{}).Open("file://db/migrations")
+	fileSource, err := (&file.File{}).Open("file://sql/migrations")
 
 	if err != nil {
 		slog.Error("error referencing migrations directory", "err", err)

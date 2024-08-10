@@ -38,6 +38,7 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 
 	router.Route(fileBaseRoute, func(r chi.Router) {
 		r.Get("/", fr.filesHandler.ListFiles)
+		r.Get("/{id}", fr.filesHandler.FindById)
 		r.Put("/{id}", fr.filesHandler.Update)
 		r.Delete("/{id}", fr.filesHandler.Delete)
 	})

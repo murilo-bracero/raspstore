@@ -8,6 +8,12 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin_test_password001
+      - KC_HEALTH_ENABLED=true
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     command: [ "start-dev" ]
   file:
     build:
@@ -18,7 +24,8 @@ services:
     env_file:
       - .env.docker
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 networks:
   default:
     external: true
