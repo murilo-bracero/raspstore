@@ -24,7 +24,7 @@ func main() {
 		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
-	config := config.NewConfig("config/application.yaml")
+	config := config.NewConfig("config/config.yaml")
 
 	slog.Info("creating required folders")
 
