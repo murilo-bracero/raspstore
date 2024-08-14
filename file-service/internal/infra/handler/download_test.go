@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	chim "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
@@ -29,6 +30,7 @@ func TestDownload(t *testing.T) {
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
 		ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, chim.RequestIDKey, "trace-id")
 		return req.WithContext(ctx)
 	}
 
