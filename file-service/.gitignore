@@ -3,3 +3,4 @@ tmp/
 .air.*
 *.db
 .vscode
+*.swp
