@@ -3,6 +3,7 @@ storage:
   limit: {{ envOrKey "STORAGE_LIMIT" "1G" }}
 
 server:
+  read-header-timeout: {{ envOrKeyInt "READ_HEADER_TIMEOUT" 3 }}
   port: {{ envOrKey "SERVER_PORT" "9090" }}
 
 auth:

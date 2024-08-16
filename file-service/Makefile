@@ -34,4 +34,4 @@ go-lint:
 		-v $(shell pwd):/app \
 		-w /app \
 		golangci/golangci-lint:$(golangci_version) \
-		golangci-lint run -v
+		golangci-lint run --enable gosec  -v

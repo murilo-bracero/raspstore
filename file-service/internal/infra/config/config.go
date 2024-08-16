@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log/slog"
 	"os"
+	"strconv"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
@@ -15,7 +16,8 @@ type Config struct {
 		Limit string
 	}
 	Server struct {
-		Port int
+		ReadHeaderTimeout int `yaml:"read-header-timeout"`
+		Port              int
 	}
 	Auth struct {
 		PublicKeyUrl string `yaml:"public-key-url"`
@@ -24,7 +26,7 @@ type Config struct {
 
 func NewConfig(path string) *Config {
 	if path == "" {
-		path = "./application.yml"
+		path = "./config.yaml"
 	}
 
 	file, err := os.ReadFile(path)
@@ -34,7 +36,8 @@ func NewConfig(path string) *Config {
 	}
 
 	t := template.New("configParser").Funcs(template.FuncMap{
-		"envOrKey": envOrKey,
+		"envOrKey":    envOrKey,
+		"envOrKeyInt": envOrKeyInt,
 	})
 
 	t, err = t.Parse(string(file))
@@ -56,6 +59,22 @@ func NewConfig(path string) *Config {
 	}
 
 	return &config
+}
+
+func envOrKeyInt(envVar string, defaultValue int) (int, error) {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	cvt, err := strconv.Atoi(value)
+
+	if err != nil {
+		slog.Error("cannot convert variable value string to int", "environmentVariable", envVar, "err", err)
+		return 0, err
+	}
+
+	return cvt, nil
 }
 
 func envOrKey(envVar, defaultValue string) (string, error) {

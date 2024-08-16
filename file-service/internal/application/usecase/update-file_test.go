@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
@@ -21,6 +22,9 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 
 	token := jwt.New()
 	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
+
+	_, err = createFile(uuid.NewString())
 	assert.NoError(t, err)
 
 	ctx := context.WithValue(context.WithValue(context.Background(),
