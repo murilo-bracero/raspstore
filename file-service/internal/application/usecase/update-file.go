@@ -12,25 +12,32 @@ import (
 )
 
 type UpdateFileUseCase interface {
-	Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, error_ error)
+	Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error)
 }
 
 type updateFileUseCase struct {
-	repo repository.FilesRepository
+	repo repository.TxFilesRepository
 }
 
-func NewUpdateFileUseCase(repo repository.FilesRepository) UpdateFileUseCase {
+func NewUpdateFileUseCase(repo repository.TxFilesRepository) *updateFileUseCase {
 	return &updateFileUseCase{repo: repo}
 }
 
-func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, error_ error) {
+func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error) {
 	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
 	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
 
-	fileMetadata, error_ = c.repo.FindById(user.Subject(), file.FileId)
+	tx, err := c.repo.Begin()
 
-	if error_ != nil {
-		slog.Error("Could not find file", "traceId", traceId, "fileId", file.FileId, "error", error_)
+	if err != nil {
+		slog.Error("Could not initialize transaction", "traceId", traceId, "error", err)
+		return nil, err
+	}
+
+	fileMetadata, err = c.repo.FindById(tx, user.Subject(), file.FileId)
+
+	if err != nil {
+		slog.Error("Could not find file", "traceId", traceId, "fileId", file.FileId, "error", err)
 		return
 	}
 
@@ -38,19 +45,18 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 	fileMetadata.Filename = file.Filename
 
 	if fileMetadata.Secret {
-		fileMetadata.Viewers = []string{}
-		fileMetadata.Editors = []string{}
-	} else {
-		fileMetadata.Viewers = file.Viewers
-		fileMetadata.Editors = file.Editors
+		c.repo.DeleteFilePermissionByFileId(tx, fileMetadata.FileId)
 	}
 
-	if error_ = c.repo.Update(user.Subject(), fileMetadata); error_ != nil {
-		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", error_)
-		return
+	if err = c.repo.Update(tx, user.Subject(), fileMetadata); err != nil {
+		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", err)
+		return nil, err
+	}
+
+	if err := c.repo.Commit(tx); err != nil {
+		slog.Error("Could commit update file transaction", "traceId", traceId, "fileId", file.FileId, "error", err)
 	}
 
 	slog.Info("File updated successfully", "traceId", traceId, "fileId", file.FileId)
-
 	return
 }

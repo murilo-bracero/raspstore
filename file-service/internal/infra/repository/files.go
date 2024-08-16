@@ -2,217 +2,178 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"log/slog"
 	"time"
 
-	ar "github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
+	"github.com/google/uuid"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	e "github.com/murilo-bracero/raspstore/file-service/internal/domain/exceptions"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/db/gen"
 )
 
-const filesCollectionName = "files"
-
 type filesRepository struct {
-	ctx  context.Context
-	coll *mongo.Collection
+	ctx     context.Context
+	queries *gen.Queries
 }
 
-func NewFilesRepository(ctx context.Context, conn DatabaseConnection) ar.FilesRepository {
-	return &filesRepository{ctx: ctx, coll: conn.Collection(filesCollectionName)}
+var _ repository.FilesRepository = (*filesRepository)(nil)
+
+func NewFilesRepository(ctx context.Context, db *sql.DB) *filesRepository {
+	return &filesRepository{queries: gen.New(db), ctx: ctx}
 }
 
-func (f *filesRepository) Save(file *entity.File) error {
+func (r *filesRepository) Save(file *entity.File) error {
+	file.FileId = uuid.NewString()
 	file.CreatedAt = time.Now()
-	file.UpdatedAt = time.Now()
+	ts := time.Now()
+	file.UpdatedAt = &ts
 
-	if _, err := f.coll.InsertOne(f.ctx, file); err != nil {
+	err := r.queries.CreateFile(r.ctx, gen.CreateFileParams{
+		FileName:  file.Filename,
+		Size:      file.Size,
+		IsSecret:  file.Secret,
+		OwnerID:   file.Owner,
+		FileID:    file.FileId,
+		CreatedAt: file.CreatedAt.UnixMilli(),
+		CreatedBy: file.Owner,
+	})
+
+	if err != nil {
+		slog.Error("could not save file into database", "err", err)
 		return err
 	}
 
 	return nil
 }
 
-func (f *filesRepository) FindById(userId string, fileId string) (file *entity.File, err error) {
-	filter := bson.D{
-		bson.E{Key: "file_id", Value: fileId},
-		bson.E{Key: "$or",
-			Value: bson.A{
-				bson.D{bson.E{Key: "owner_user_id", Value: userId}},
-				bson.D{bson.E{Key: "editors", Value: userId}},
-				bson.D{bson.E{Key: "viewers", Value: userId}},
-			},
-		},
-	}
-
-	found := f.coll.FindOne(f.ctx, filter)
-
-	if found.Err() == mongo.ErrNoDocuments {
-		return nil, e.ErrFileDoesNotExists
-	}
-
-	err = found.Decode(&file)
-
-	return file, err
-}
-
-func (f *filesRepository) Delete(userId string, fileId string) error {
-	filter := bson.D{
-		bson.E{Key: "file_id", Value: fileId},
-		bson.E{Key: "owner_user_id", Value: userId},
-	}
-
-	_, err := f.coll.DeleteOne(f.ctx, filter)
-
-	return err
-}
-
-func (f *filesRepository) Update(userId string, file *entity.File) error {
-
-	var filter bson.D
-
-	if file.Secret {
-		filter = bson.D{
-			bson.E{Key: "file_id", Value: file.FileId},
-			bson.E{Key: "$or",
-				Value: bson.A{
-					bson.D{bson.E{Key: "owner_user_id", Value: userId}},
-					bson.D{bson.E{Key: "editors", Value: userId}},
-				},
-			},
-		}
-	} else {
-		filter = bson.D{
-			bson.E{Key: "file_id", Value: file.FileId},
-			bson.E{Key: "owner_user_id", Value: userId},
-		}
-	}
-
-	update := bson.M{"$set": bson.M{
-		"filename":   file.Filename,
-		"is_secret":  file.Secret,
-		"editors":    file.Editors,
-		"viewers":    file.Viewers,
-		"updated_at": time.Now(),
-		"updated_by": file.UpdatedBy}}
-
-	result, err := f.coll.UpdateOne(f.ctx, filter, update)
-
-	if result.MatchedCount == 0 {
-		return e.ErrFileDoesNotExists
-	}
-
-	return err
-}
-
-func (f *filesRepository) FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
-	contentField := []bson.D{}
-
-	if filename != "" {
-		contentField = append(contentField, bson.D{bson.E{Key: "$match", Value: bson.D{
-			bson.E{Key: "filename", Value: bson.D{
-				bson.E{Key: "$regex", Value: filename},
-			}},
-		}}})
-	}
-
-	var accessControl bson.D
-	if secret {
-		accessControl = bson.D{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "owner_user_id", Value: userId}}}}
-		contentField = append(contentField, bson.D{bson.E{Key: "$match", Value: bson.D{
-			bson.E{Key: "is_secret", Value: true},
-		}}})
-	} else {
-		accessControl = aggregateAccessControl(userId)
-	}
-
-	contentField = append(contentField, bson.D{bson.E{Key: "$skip", Value: page * size}}, bson.D{bson.E{Key: "$limit", Value: size}})
-
-	totalCountField := bson.D{
-		bson.E{Key: "$group", Value: bson.D{
-			bson.E{Key: "_id", Value: nil},
-			bson.E{Key: "count", Value: bson.D{
-				bson.E{Key: "$sum", Value: 1},
-			}},
-		}},
-	}
-
-	facet := bson.D{
-		bson.E{Key: "$facet", Value: bson.D{
-			bson.E{Key: "content", Value: contentField},
-			bson.E{Key: "totalCount", Value: bson.A{totalCountField}},
-		}},
-	}
-
-	project := bson.D{
-		bson.E{Key: "$project", Value: bson.D{
-			bson.E{Key: "content", Value: "$content"},
-			bson.E{Key: "count", Value: bson.D{
-				bson.E{Key: "$arrayElemAt", Value: bson.A{"$totalCount.count", 0}},
-			}}}},
-	}
-
-	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{accessControl, facet, project})
+func (r *filesRepository) FindById(id string, userId string) (*entity.File, error) {
+	rows, err := r.queries.FindFileByID(r.ctx, gen.FindFileByIDParams{FileID: id, OwnerID: userId})
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer cursor.Close(f.ctx)
+	if len(rows) == 0 {
+		return nil, repository.ErrFileDoesNotExists
+	}
 
-	for cursor.Next(f.ctx) {
-		if err = cursor.Decode(&filesPage); err != nil {
-			return nil, err
+	ref := rows[0]
+
+	updatedAt := time.UnixMilli(ref.UpdatedAt.Int64)
+
+	file := &entity.File{
+		FileId:    ref.FileID,
+		Filename:  ref.FileName,
+		Size:      ref.Size,
+		Secret:    ref.IsSecret,
+		Owner:     ref.OwnerID,
+		CreatedAt: time.UnixMilli(ref.CreatedAt),
+		UpdatedAt: &updatedAt,
+		CreatedBy: ref.CreatedBy,
+		UpdatedBy: &ref.UpdatedBy.String,
+		Viewers:   []string{},
+		Editors:   []string{},
+	}
+
+	for _, row := range rows {
+		if !row.Permission.Valid {
+			continue
+		}
+
+		permission := row.Permission.String
+
+		if permission == "VIEWER" {
+			file.Viewers = append(file.Viewers, row.UserID.String)
+		}
+
+		if permission == "EDITOR" {
+			file.Editors = append(file.Editors, row.UserID.String)
 		}
 	}
 
-	return filesPage, nil
+	return file, nil
 }
 
-func (f *filesRepository) FindUsageByUserId(userId string) (usage int64, err error) {
-	match := bson.D{
-		bson.E{Key: "$match", Value: bson.D{
-			bson.E{Key: "owner_user_id", Value: userId},
-		}},
+func (r *filesRepository) Delete(userId string, fileId string) error {
+	return r.queries.DeleteFileByID(r.ctx, gen.DeleteFileByIDParams{FileID: fileId, OwnerID: userId})
+}
+
+func (r *filesRepository) Update(userId string, file *entity.File) error {
+	ts := time.Now()
+	file.UpdatedAt = &ts
+	file.UpdatedBy = &userId
+
+	return r.queries.UpdateFileByID(r.ctx, gen.UpdateFileByIDParams{
+		FileID:    file.FileId,
+		OwnerID:   userId,
+		FileName:  file.Filename,
+		IsSecret:  file.Secret,
+		UpdatedAt: sql.NullInt64{Int64: file.UpdatedAt.UnixMilli(), Valid: true},
+		UpdatedBy: sql.NullString{String: *file.UpdatedBy, Valid: true},
+	})
+}
+
+func (r *filesRepository) FindAll(userId string, page int, size int, filename string, secret bool) (filesPage *entity.FilePage, err error) {
+	rows, err := r.queries.FindAllFiles(r.ctx, gen.FindAllFilesParams{
+		OwnerID:  userId,
+		FileName: "%" + filename + "%",
+		IsSecret: secret,
+		Limit:    int64(size),
+		Offset:   int64(page) * int64(size),
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	project := bson.D{
-		primitive.E{Key: "$group", Value: bson.M{
-			"_id":        "$owner_user_id",
-			"totalUsage": bson.M{"$sum": "$size"},
-		}},
+	totalCount := 0
+
+	if len(rows) != 0 {
+		totalCount = int(rows[0].Totalcount)
 	}
 
-	cursor, err := f.coll.Aggregate(f.ctx, mongo.Pipeline{match, project})
+	filePage := &entity.FilePage{Count: totalCount, Content: make([]*entity.File, len(rows))}
+
+	for i, row := range rows {
+		filePage.Content[i] = &entity.File{
+			FileId:    row.FileID,
+			Filename:  row.FileName,
+			Size:      row.Size,
+			Secret:    row.IsSecret,
+			Owner:     row.OwnerID,
+			CreatedAt: time.UnixMilli(row.CreatedAt),
+			CreatedBy: row.CreatedBy,
+		}
+
+		if row.UpdatedAt.Valid {
+			updatedAt := time.UnixMilli(row.UpdatedAt.Int64)
+			filePage.Content[i].UpdatedAt = &updatedAt
+		}
+
+		if row.UpdatedBy.Valid {
+			updatedBy := row.UpdatedBy.String
+			filePage.Content[i].UpdatedBy = &updatedBy
+		}
+	}
+
+	return filePage, nil
+}
+
+func (r *filesRepository) FindUsageByUserId(userId string) (int64, error) {
+	row, err := r.queries.FindUsageByUserID(r.ctx, userId)
+
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 
 	if err != nil {
 		return 0, err
 	}
 
-	defer cursor.Close(f.ctx)
-
-	for cursor.Next(f.ctx) {
-		value, err := cursor.Current.LookupErr("totalUsage")
-
-		if err != nil {
-			return 0, nil
-		}
-
-		var ok bool
-		if usage, ok = value.Int64OK(); !ok {
-			return -1, nil
-		}
-	}
-
-	return
+	return int64(row.Float64), nil
 }
 
-func aggregateAccessControl(userId string) bson.D {
-	return bson.D{bson.E{Key: "$match", Value: bson.D{
-		bson.E{Key: "$or", Value: bson.A{
-			bson.D{bson.E{Key: "owner_user_id", Value: userId}},
-			bson.D{bson.E{Key: "viewers", Value: userId}},
-			bson.D{bson.E{Key: "editors", Value: userId}},
-		}}}}}
+func (r *filesRepository) DeleteFilePermissionByFileId(fileId string) error {
+	return r.queries.DeleteFilePermissionByFileID(r.ctx, fileId)
 }

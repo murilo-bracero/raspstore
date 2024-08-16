@@ -1,0 +1,9 @@
+storage:
+  path: {{ envOrKey "STORAGE_PATH" "~/.rstore" }}
+  limit: {{ envOrKey "STORAGE_LIMIT" "1G" }}
+
+server:
+  port: {{ envOrKey "SERVER_PORT" "9090" }}
+
+auth:
+  public-key-url: {{ envOrKey "PUBLIC_KEY_URL" "" }} 

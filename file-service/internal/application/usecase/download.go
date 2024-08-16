@@ -10,24 +10,24 @@ import (
 )
 
 type DownloadFileUseCase interface {
-	Execute(ctx context.Context, fileId string) (file *os.File, error_ error)
+	Execute(ctx context.Context, fileId string) (file *os.File, err error)
 }
 
 type downloadFileUseCase struct {
 	config *config.Config
 }
 
-func NewDownloadFileUseCase(config *config.Config) DownloadFileUseCase {
+func NewDownloadFileUseCase(config *config.Config) *downloadFileUseCase {
 	return &downloadFileUseCase{config: config}
 }
 
-func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file *os.File, error_ error) {
+func (d *downloadFileUseCase) Execute(ctx context.Context, fileId string) (file *os.File, err error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	file, error_ = os.Open(d.config.Server.Storage.Path + "/" + fileId)
+	file, err = os.Open(d.config.Storage.Path + "/storage/" + fileId)
 
-	if error_ != nil {
-		slog.Error("Could not open file in fs", "traceId", traceId, "error", error_)
+	if err != nil {
+		slog.Error("Could not open file in fs", "traceId", traceId, "error", err)
 		return
 	}
 

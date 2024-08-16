@@ -16,7 +16,7 @@ jobs:
 
       - name: Test
         working-directory: file-service
-        run: go test -v ./tests/...
+        run: go test -v ./...
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3.7.0

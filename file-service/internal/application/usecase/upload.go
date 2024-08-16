@@ -12,33 +12,33 @@ import (
 )
 
 type UploadFileUseCase interface {
-	Execute(ctx context.Context, file *entity.File, src io.Reader) (error_ error)
+	Execute(ctx context.Context, file *entity.File, src io.Reader) (err error)
 }
 
 type uploadFileUseCase struct {
 	config *config.Config
 }
 
-func NewUploadFileUseCase(config *config.Config) UploadFileUseCase {
+func NewUploadFileUseCase(config *config.Config) *uploadFileUseCase {
 	return &uploadFileUseCase{config: config}
 }
 
-func (u *uploadFileUseCase) Execute(ctx context.Context, file *entity.File, src io.Reader) (error_ error) {
+func (u *uploadFileUseCase) Execute(ctx context.Context, file *entity.File, src io.Reader) (err error) {
 	traceId := ctx.Value(middleware.RequestIDKey).(string)
 
-	filerep, error_ := os.Create(u.config.Server.Storage.Path + "/" + file.FileId)
+	filerep, err := os.Create(u.config.Storage.Path + "/storage/" + file.FileId)
 
-	if error_ != nil {
-		slog.Error("Could not create file in fs", "traceId", traceId, "error", error_)
+	if err != nil {
+		slog.Error("Could not create file in fs", "traceId", traceId, "error", err)
 		return
 	}
 
 	defer filerep.Close()
 
-	_, error_ = io.Copy(filerep, src)
+	_, err = io.Copy(filerep, src)
 
-	if error_ != nil {
-		slog.Error("Could not read file buffer", "traceId", traceId, "error", error_)
+	if err != nil {
+		slog.Error("Could not read file buffer", "traceId", traceId, "error", err)
 		return
 	}
 
