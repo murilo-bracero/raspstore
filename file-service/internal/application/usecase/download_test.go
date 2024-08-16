@@ -13,7 +13,9 @@ import (
 )
 
 func createFile(fileId string) error {
-	os.MkdirAll("/tmp/storage/", os.ModePerm)
+	if err := os.MkdirAll("/tmp/storage/", os.ModePerm); err != nil {
+		return err
+	}
 
 	file, err := os.Create("/tmp/storage/" + fileId)
 

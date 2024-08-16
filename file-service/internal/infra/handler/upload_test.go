@@ -31,7 +31,8 @@ func TestUpload(t *testing.T) {
 	}{Path: "./"}}
 
 	token := jwt.New()
-	token.Set("sub", defaultUserId)
+	err := token.Set("sub", defaultUserId)
+	assert.NoError(t, err)
 
 	createReq := func(body *bytes.Buffer) (req *http.Request) {
 		req, err := http.NewRequest("POST", "/file-service/v1/uploads", body)

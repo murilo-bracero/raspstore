@@ -45,7 +45,11 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 	fileMetadata.Filename = file.Filename
 
 	if fileMetadata.Secret {
-		c.repo.DeleteFilePermissionByFileId(tx, fileMetadata.FileId)
+		err := c.repo.DeleteFilePermissionByFileId(tx, fileMetadata.FileId)
+		if err != nil {
+			slog.Error("Could not remove permissions to set file secret", "traceId", traceId, "fileId", fileMetadata.FileId, "error", err)
+			return nil, err
+		}
 	}
 
 	if err = c.repo.Update(tx, user.Subject(), fileMetadata); err != nil {

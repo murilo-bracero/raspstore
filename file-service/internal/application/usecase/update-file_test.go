@@ -20,7 +20,8 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	ctx := context.WithValue(context.WithValue(context.Background(),
 		chiMiddleware.RequestIDKey, "trace12345"),

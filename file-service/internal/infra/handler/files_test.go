@@ -27,7 +27,8 @@ import (
 
 func TestGetAllFilesSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -56,7 +57,8 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -88,7 +90,8 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -117,7 +120,8 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 
 func TestDeleteFileSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	random := uuid.NewString()
 
@@ -149,7 +153,8 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 func TestDeleteFileInternalServerError(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	random := uuid.NewString()
 

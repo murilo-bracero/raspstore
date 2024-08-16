@@ -98,8 +98,13 @@ func NewApiTest(ctx context.Context) (*ApiTest, error) {
 }
 
 func (a *ApiTest) Cleanup(ctx context.Context) {
-	a.apiC.Terminate(ctx)
-	a.keycloakC.Terminate(ctx)
+	if err := a.apiC.Terminate(ctx); err != nil {
+		slog.Error("error terminating api container", "error", err)
+	}
+
+	if err := a.keycloakC.Terminate(ctx); err != nil {
+		slog.Error("error terminating keycloak container", "error", err)
+	}
 }
 
 func getContainerUrl(ctx context.Context, c tc.Container, port nat.Port) (string, error) {

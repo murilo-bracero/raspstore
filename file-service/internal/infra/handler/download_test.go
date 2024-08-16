@@ -25,7 +25,8 @@ import (
 
 func TestDownload(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", defaultUserId)
+	err := token.Set("sub", defaultUserId)
+	assert.NoError(t, err)
 
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
