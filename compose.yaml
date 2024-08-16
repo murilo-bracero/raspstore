@@ -1,0 +1,24 @@
+version: "3.9"
+services: 
+  auth:
+    build: idp
+    ports: 
+      - "3001:9000"
+      - "3002:9090"
+    env_file:
+      - idp/.env.docker
+    networks:
+      default:
+        aliases:
+          - idp
+  file:
+    build: file-info-service
+    ports:
+      - "3005:9000"
+      - "3006:9090"
+    env_file:
+      - file-info-service/.env.docker
+networks:
+  default:
+    external: true
+    name: raspstore-network
