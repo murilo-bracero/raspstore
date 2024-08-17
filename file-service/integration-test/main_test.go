@@ -473,7 +473,7 @@ func getToken(keycloakUrl string) (string, error) {
 func createTempFile(filename string) (string, error) {
 	tempDir := os.TempDir()
 	tempFile := filepath.Join(tempDir, filename)
-	err := os.WriteFile(tempFile, []byte("test content"), 0666)
+	err := os.WriteFile(tempFile, []byte("test content"), 0600)
 	return tempFile, err
 }
 

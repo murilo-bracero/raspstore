@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -298,7 +297,7 @@ func createFileMetadataLookup(id string) *entity.File {
 	return &entity.File{
 		FileId:    id,
 		Filename:  id,
-		Size:      int64(rand.Int()),
+		Size:      13293,
 		Owner:     uuid.NewString(),
 		Editors:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		Viewers:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},

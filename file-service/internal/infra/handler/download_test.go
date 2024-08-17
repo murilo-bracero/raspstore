@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -45,7 +44,7 @@ func TestDownload(t *testing.T) {
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(&entity.File{
 			FileId:    "4e2bc94b-a6b6-4c44-9512-79b5eb654524",
 			Filename:  testFilename,
-			Size:      int64(rand.Int()),
+			Size:      1024,
 			UpdatedAt: &[]time.Time{time.Now()}[0],
 			CreatedBy: uuid.NewString(),
 			UpdatedBy: &[]string{uuid.NewString()}[0],

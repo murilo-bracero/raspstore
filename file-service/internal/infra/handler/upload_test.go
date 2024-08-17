@@ -188,7 +188,7 @@ func TestUpload(t *testing.T) {
 func createTempFile() (string, error) {
 	tempDir := os.TempDir()
 	tempFile := filepath.Join(tempDir, testFilename)
-	err := os.WriteFile(tempFile, []byte("test content"), 0666)
+	err := os.WriteFile(tempFile, []byte("test content"), 0600)
 	return tempFile, err
 }
 
