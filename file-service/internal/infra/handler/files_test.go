@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,7 +26,8 @@ import (
 
 func TestGetAllFilesSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -56,7 +56,8 @@ func TestGetAllFilesSuccess(t *testing.T) {
 
 func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -88,7 +89,8 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 
 func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	mockCtrl := gomock.NewController(t)
 
@@ -117,7 +119,8 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 
 func TestDeleteFileSuccess(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	random := uuid.NewString()
 
@@ -149,7 +152,8 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 func TestDeleteFileInternalServerError(t *testing.T) {
 	token := jwt.New()
-	token.Set("sub", "userId")
+	err := token.Set("sub", "userId")
+	assert.NoError(t, err)
 
 	random := uuid.NewString()
 
@@ -293,7 +297,7 @@ func createFileMetadataLookup(id string) *entity.File {
 	return &entity.File{
 		FileId:    id,
 		Filename:  id,
-		Size:      int64(rand.Int()),
+		Size:      13293,
 		Owner:     uuid.NewString(),
 		Editors:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},
 		Viewers:   []string{uuid.NewString(), uuid.NewString(), uuid.NewString()},

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
@@ -23,7 +24,13 @@ func StartApiServer(config *config.Config, fileFacade facade.FileFacade, useCase
 	http.Handle("/", router)
 	slog.Info("File Manager REST API runing", "port", config.Server.Port)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Server.Port), router); err != nil {
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", config.Server.Port),
+		ReadHeaderTimeout: time.Duration(config.Server.ReadHeaderTimeout) * time.Second,
+		Handler:           router,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
 		slog.Error("Could not start File Manager REST server", "error", err)
 		os.Exit(1)
 	}

@@ -13,13 +13,13 @@ import (
 )
 
 func TestUploadFileUseCase(t *testing.T) {
-	mockConfig.Storage.Path = "/tmp"
+	mockConfig.Storage.Path = os.TempDir()
 
 	eFile := &entity.File{
 		FileId: uuid.NewString(),
 	}
 
-	file, err := os.Create("/tmp/storage/upload.txt")
+	file, err := os.CreateTemp(os.TempDir()+"/storage/", "upload.*.txt")
 
 	assert.NoError(t, err)
 
