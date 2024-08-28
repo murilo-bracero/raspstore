@@ -16,8 +16,8 @@ go-install:
 
 docker-build:
 	docker build \
-		-t ghcr.io/murilo-bracero/spellscan-card-loader:$(version) \
-		-t ghcr.io/murilo-bracero/spellscan-card-loader:latest \
+		-t ghcr.io/murilo-bracero/raspstore-server:$(version) \
+		-t ghcr.io/murilo-bracero/raspstore-server:latest \
 		.
 
 install-tools:
