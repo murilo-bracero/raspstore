@@ -20,7 +20,8 @@ type Config struct {
 		Port              int
 	}
 	Auth struct {
-		PublicKeyUrl string `yaml:"public-key-url"`
+		PAMEnabled   bool   `yaml:"enable-pam"`
+		PublicKeyURL string `yaml:"public-key-url"`
 	}
 }
 
@@ -36,8 +37,9 @@ func NewConfig(path string) *Config {
 	}
 
 	t := template.New("configParser").Funcs(template.FuncMap{
-		"envOrKey":    envOrKey,
-		"envOrKeyInt": envOrKeyInt,
+		"envOrKey":        envOrKey,
+		"envOrKeyInt":     envOrKeyInt,
+		"envOrKeyBoolean": envOrKeyBoolean,
 	})
 
 	t, err = t.Parse(string(file))
@@ -75,6 +77,14 @@ func envOrKeyInt(envVar string, defaultValue int) (int, error) {
 	}
 
 	return cvt, nil
+}
+
+func envOrKeyBoolean(envVar string, defaultValue bool) (bool, error) {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue, nil
+	}
+	return strconv.ParseBool(value)
 }
 
 func envOrKey(envVar, defaultValue string) (string, error) {

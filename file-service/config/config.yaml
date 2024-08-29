@@ -7,4 +7,5 @@ server:
   port: {{ envOrKey "SERVER_PORT" "9090" }}
 
 auth:
-  public-key-url: {{ envOrKey "PUBLIC_KEY_URL" "" }} 
+  enable-pam: {{ envOrKeyBoolean "RS_ENABLE_PAM" true }}
+  public-key-url: {{ envOrKey "PUBLIC_KEY_URL" "" }}

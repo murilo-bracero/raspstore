@@ -30,15 +30,15 @@ var (
 func JWTMiddleware(config *config.Config) func(h http.Handler) http.Handler {
 	ar := jwk.NewAutoRefresh(context.Background())
 
-	ar.Configure(config.Auth.PublicKeyUrl, jwk.WithMinRefreshInterval(15*time.Minute))
+	ar.Configure(config.Auth.PublicKeyURL, jwk.WithMinRefreshInterval(15*time.Minute))
 
-	if _, err := ar.Refresh(context.Background(), config.Auth.PublicKeyUrl); err != nil {
+	if _, err := ar.Refresh(context.Background(), config.Auth.PublicKeyURL); err != nil {
 		slog.Error("Failed to refresh JWT Tokens", "err", err)
 	}
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tkn, err := verifyJwt(r, ar, config.Auth.PublicKeyUrl)
+			tkn, err := verifyJwt(r, ar, config.Auth.PublicKeyURL)
 
 			if err != nil {
 				response.Unauthorized(w)
