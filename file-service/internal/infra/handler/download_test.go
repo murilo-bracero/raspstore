@@ -14,10 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -50,7 +50,7 @@ func TestDownload(t *testing.T) {
 			UpdatedBy: &[]string{uuid.NewString()}[0],
 		}, nil)
 
-		ctr := handler.NewDownloadHandler(downloadUseCase, ff)
+		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
 
 		req := createReq()
 
@@ -72,7 +72,7 @@ func TestDownload(t *testing.T) {
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, repository.ErrFileDoesNotExists)
 
-		ctr := handler.NewDownloadHandler(downloadUseCase, ff)
+		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
 
 		req := createReq()
 
@@ -93,7 +93,7 @@ func TestDownload(t *testing.T) {
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, errors.New("generic error"))
 
-		ctr := handler.NewDownloadHandler(downloadUseCase, ff)
+		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
 
 		req := createReq()
 

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,16 +12,26 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
 
 func StartApiServer(config *config.Config, fileFacade facade.FileFacade, useCases *usecase.UseCases) {
-	filesHandler := handler.NewFilesHandler(fileFacade, useCases.UpdateFileUseCase)
+	appHandler := handler.New(useCases.DownloadFileUseCase,
+		useCases.UploadUseCase,
+		useCases.CreateFileUseCase,
+		useCases.UpdateFileUseCase,
+		useCases.LoginPAMUseCase,
+		fileFacade,
+		config)
 
-	uploadHanler := handler.NewUploadHandler(config, useCases.UploadUseCase, useCases.CreateFileUseCase)
+	jwtValidator, err := validator.NewJWTValidator(context.Background(), config)
 
-	downloadHandler := handler.NewDownloadHandler(useCases.DownloadFileUseCase, fileFacade)
+	if err != nil {
+		slog.Error("Could not setup JWT validator", "err", err)
+		os.Exit(1)
+	}
 
-	router := NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
+	router := NewFilesRouter(config, appHandler, jwtValidator).MountRoutes()
 	http.Handle("/", router)
 	slog.Info("File Manager REST API runing", "port", config.Server.Port)
 

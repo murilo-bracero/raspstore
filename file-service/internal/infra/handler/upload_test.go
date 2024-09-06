@@ -46,7 +46,7 @@ func TestUpload(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+		ctr := handler.New(nil, uploadUseCase, cFileUseCase, nil, nil, nil, config)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -79,7 +79,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return bad request when form without file", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+		ctr := handler.New(nil, uploadUseCase, cFileUseCase, nil, nil, nil, config)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -100,7 +100,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return bad request when form without file", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+		ctr := handler.New(nil, uploadUseCase, cFileUseCase, nil, nil, nil, config)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -121,7 +121,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return internal server error when upload use case returns error", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{shouldReturnError: true}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+		ctr := handler.New(nil, uploadUseCase, cFileUseCase, nil, nil, nil, config)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -154,7 +154,7 @@ func TestUpload(t *testing.T) {
 	t.Run("should return internal server error when create use case returns error", func(t *testing.T) {
 		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{shouldReturnErr: true}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+		ctr := handler.New(nil, uploadUseCase, cFileUseCase, nil, nil, nil, config)
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)

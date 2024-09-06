@@ -8,11 +8,11 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

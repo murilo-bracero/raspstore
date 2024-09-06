@@ -3,10 +3,10 @@ package usecase_test
 import (
 	"testing"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository/mocks"
 	"go.uber.org/mock/gomock"
 )
 

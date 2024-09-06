@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/bootstrap"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/db"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
@@ -26,16 +27,12 @@ func main() {
 
 	config := config.NewConfig("config/config.yaml")
 
-	slog.Info("creating required folders")
+	slog.Info("Bootstrapping Application")
 
-	if err := os.MkdirAll(config.Storage.Path+"/internal", os.ModePerm); err != nil {
-		slog.Error("could not create required internal folder", "error", err)
-		os.Exit(1)
-	}
+	err := bootstrap.Run(ctx, config)
 
-	if err := os.MkdirAll(config.Storage.Path+"/storage", os.ModePerm); err != nil {
-		slog.Error("could not create required storage folder", "error", err)
-		os.Exit(1)
+	if err != nil {
+		slog.Error("Could not bootstrap the application", "err", err)
 	}
 
 	conn, err := db.NewSqliteDatabaseConnection(config)

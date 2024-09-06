@@ -22,6 +22,7 @@ type Config struct {
 	Auth struct {
 		PAMEnabled   bool   `yaml:"enable-pam"`
 		PublicKeyURL string `yaml:"public-key-url"`
+		TokenSecret  string `yaml:"token-secret"`
 	}
 }
 
