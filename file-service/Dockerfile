@@ -12,6 +12,8 @@ RUN CGO_ENABLED=1 go build -o file-service ./cmd
 
 FROM alpine:3.16
 
+RUN apk add linux-pam
+
 RUN addgroup -S rstoregroup && adduser -S rstoreuser -G rstoregroup
 
 USER rstoreuser
