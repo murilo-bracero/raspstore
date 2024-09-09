@@ -14,7 +14,6 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/mapper"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
 
@@ -33,11 +32,11 @@ func (f *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	filesPage, err := f.fileFacade.FindAll(traceId, user.Subject(), page, size, filename, secret)
 
 	if err != nil {
-		response.InternalServerError(w, traceId)
+		internalServerError(w, traceId)
 		return
 	}
 
-	response.Ok(w, mapper.MapFilePageResponse(page, size, filesPage, r.Host), traceId)
+	ok(w, mapper.MapFilePageResponse(page, size, filesPage, r.Host), traceId)
 }
 
 func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
@@ -49,11 +48,11 @@ func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
 	entity, err := f.fileFacade.FindById(user.Subject(), fileId)
 
 	if err == repository.ErrFileDoesNotExists {
-		response.NotFound(w, traceId)
+		notFound(w, traceId)
 		return
 	}
 
-	response.Ok(w, entity, traceId)
+	ok(w, entity, traceId)
 }
 
 func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -61,12 +60,12 @@ func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req model.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.UnprocessableEntity(w, traceId)
+		unprocessableEntity(w, traceId)
 		return
 	}
 
 	if err := validator.ValidateUpdateFileRequest(&req); err != nil {
-		response.BadRequest(w, model.ErrorResponse{
+		badRequest(w, model.ErrorResponse{
 			Message: err.Error(),
 		}, traceId)
 		return
@@ -83,16 +82,16 @@ func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	fileMetadata, err := f.updateFileUseCase.Execute(r.Context(), file)
 
 	if err == repository.ErrFileDoesNotExists {
-		response.NotFound(w, traceId)
+		notFound(w, traceId)
 		return
 	}
 
 	if err != nil {
-		response.InternalServerError(w, traceId)
+		internalServerError(w, traceId)
 		return
 	}
 
-	response.Ok(w, fileMetadata, traceId)
+	ok(w, fileMetadata, traceId)
 }
 
 func (f *Handler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +103,7 @@ func (f *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
 
 	if err := f.fileFacade.DeleteById(traceId, user.Subject(), fileId); err != nil {
-		response.InternalServerError(w, traceId)
+		internalServerError(w, traceId)
 		return
 	}
 

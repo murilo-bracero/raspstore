@@ -38,7 +38,7 @@ func TestGetAllFilesSuccess(t *testing.T) {
 		Count:   0,
 	}, nil)
 
-	ctr := apiHandler.New(nil, nil, nil, nil, nil, ff, nil)
+	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -68,7 +68,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 		Count:   0,
 	}, nil)
 
-	ctr := apiHandler.New(nil, nil, nil, nil, nil, ff, nil)
+	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
 
 	page := 0
 	size := 3
@@ -98,7 +98,7 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 
 	ff.EXPECT().FindAll(gomock.Any(), gomock.Any(), 0, 3, "", false).Return(nil, errors.New("generic error"))
 
-	ctr := apiHandler.New(nil, nil, nil, nil, nil, ff, nil)
+	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
 
 	page := 0
 	size := 3
@@ -130,7 +130,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 	ff.EXPECT().DeleteById(gomock.Any(), gomock.Any(), random).Return(nil)
 
-	ctr := apiHandler.New(nil, nil, nil, nil, nil, ff, nil)
+	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", random)
@@ -163,7 +163,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 	ff.EXPECT().DeleteById("test-trace-id", "userId", random).Return(errors.New("generic error"))
 
-	ctr := apiHandler.New(nil, nil, nil, nil, nil, ff, nil)
+	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", random)
@@ -185,7 +185,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 func TestUpdateFileSuccess(t *testing.T) {
 	uc := &updateUseCaseMock{}
-	ctr := apiHandler.New(nil, nil, nil, uc, nil, nil, nil)
+	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -225,7 +225,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 func TestUpdateFileNotFound(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowNotFound: true}
-	ctr := apiHandler.New(nil, nil, nil, uc, nil, nil, nil)
+	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -249,7 +249,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 
 func TestUpdateFileInternalServerError(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowError: true}
-	ctr := apiHandler.New(nil, nil, nil, uc, nil, nil, nil)
+	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{

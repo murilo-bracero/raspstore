@@ -35,11 +35,10 @@ func TestDownload(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		downloadUseCase := &downloadFileUseCaseMock{}
-
 		mockCtrl := gomock.NewController(t)
 
 		ff := mocks.NewMockFileFacade(mockCtrl)
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(&entity.File{
 			FileId:    "4e2bc94b-a6b6-4c44-9512-79b5eb654524",
@@ -50,7 +49,17 @@ func TestDownload(t *testing.T) {
 			UpdatedBy: &[]string{uuid.NewString()}[0],
 		}, nil)
 
-		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
+		tempFile, err := createTempFile()
+
+		assert.NoError(t, err, "createTempFile")
+
+		fileMock, err := os.Open(tempFile)
+
+		assert.NoError(t, err, "os.Open")
+
+		ffc.EXPECT().Download("trace-id", defaultUserId, "4e2bc94b-a6b6-4c44-9512-79b5eb654524").Return(fileMock, nil)
+
+		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
 
 		req := createReq()
 
@@ -65,14 +74,14 @@ func TestDownload(t *testing.T) {
 	})
 
 	t.Run("should return NOT FOUND when no file are found in database with given id", func(t *testing.T) {
-		downloadUseCase := &downloadFileUseCaseMock{}
 		mockCtrl := gomock.NewController(t)
 
 		ff := mocks.NewMockFileFacade(mockCtrl)
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, repository.ErrFileDoesNotExists)
 
-		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
+		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
 
 		req := createReq()
 
@@ -85,15 +94,14 @@ func TestDownload(t *testing.T) {
 	})
 
 	t.Run("should return internal server error when use case returns unhandled error", func(t *testing.T) {
-		downloadUseCase := &downloadFileUseCaseMock{}
-
 		mockCtrl := gomock.NewController(t)
 
 		ff := mocks.NewMockFileFacade(mockCtrl)
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, errors.New("generic error"))
 
-		ctr := handler.New(downloadUseCase, nil, nil, nil, nil, ff, nil)
+		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
 
 		req := createReq()
 
@@ -104,18 +112,4 @@ func TestDownload(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
-}
-
-type downloadFileUseCaseMock struct {
-	shouldReturnErr bool
-}
-
-func (d *downloadFileUseCaseMock) Execute(ctx context.Context, fileId string) (file *os.File, err error) {
-	if d.shouldReturnErr {
-		return nil, errors.New("generic error")
-	}
-
-	tempFile, _ := createTempFile()
-
-	return os.Open(tempFile)
 }

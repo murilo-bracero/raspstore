@@ -14,17 +14,20 @@ import (
 
 func TestValidate(t *testing.T) {
 	config := &config.Config{
-		Storage: struct {
-			Path  string
-			Limit string
-		}{Path: os.TempDir()},
+		Storage: config.StorageConfig{Path: os.TempDir()},
 	}
 
 	err := os.Mkdir(os.TempDir()+"/secrets", os.ModePerm)
 
-	assert.NoError(t, err, "os.Makedir")
+	if err != nil && !os.IsExist(err) {
+		assert.Fail(t, "os.Makedir")
+	}
 
 	ctx := context.Background()
+
+	t.Cleanup(func() {
+		os.RemoveAll(os.TempDir() + "/secrets")
+	})
 
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
 		bt := &bootstrap.SecretsBootstrap{}
@@ -45,6 +48,8 @@ func TestValidate(t *testing.T) {
 
 		content, err := io.ReadAll(fl)
 
+		assert.NoError(t, err, "io.ReadAll")
+
 		var jsonKeyMap map[string]interface{}
 		err = json.Unmarshal(content, &jsonKeyMap)
 
@@ -59,9 +64,5 @@ func TestValidate(t *testing.T) {
 		assert.NotEmpty(t, jsonKeyMap["p"])
 		assert.NotEmpty(t, jsonKeyMap["q"])
 		assert.NotEmpty(t, jsonKeyMap["qi"])
-	})
-
-	t.Cleanup(func() {
-		os.RemoveAll(os.TempDir() + "/secrets")
 	})
 }

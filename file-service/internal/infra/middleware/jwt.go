@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
 
@@ -20,7 +19,7 @@ func JWTMiddleware(validator *validator.JWTValidator) func(h http.Handler) http.
 			tkn, err := validator.Validate(r.Context(), r.Header.Get(authorizationHeader))
 
 			if err != nil {
-				response.Unauthorized(w)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 

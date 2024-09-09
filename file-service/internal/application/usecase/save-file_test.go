@@ -10,13 +10,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-var mockConfig = &config.Config{Storage: struct {
-	Path  string
-	Limit string
-}{Path: "./", Limit: "1000M"}}
-
 func TestCreateFileUseCase(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+
+	mockConfig := &config.Config{Storage: config.StorageConfig{Path: "./", Limit: "1000M"}}
 
 	t.Run("happy path", func(t *testing.T) {
 		mockObj := mocks.NewMockFilesRepository(mockCtrl)

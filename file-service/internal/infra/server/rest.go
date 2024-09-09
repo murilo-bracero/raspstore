@@ -15,29 +15,38 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
 
-func StartApiServer(config *config.Config, fileFacade facade.FileFacade, useCases *usecase.UseCases) {
-	appHandler := handler.New(useCases.DownloadFileUseCase,
-		useCases.UploadUseCase,
-		useCases.CreateFileUseCase,
-		useCases.UpdateFileUseCase,
-		useCases.LoginPAMUseCase,
-		fileFacade,
-		config)
+type ApiServerParams struct {
+	Config            *config.Config
+	FileFacade        facade.FileFacade
+	FileSystemFacade  facade.FileSystemFacade
+	CreateFileUseCase usecase.CreateFileUseCase
+	UpdateFileUseCase usecase.UpdateFileUseCase
+	LoginPAMUseCase   usecase.LoginPAMUseCase
+}
 
-	jwtValidator, err := validator.NewJWTValidator(context.Background(), config)
+func StartApiServer(params *ApiServerParams) {
+	appHandler := handler.New(
+		params.CreateFileUseCase,
+		params.UpdateFileUseCase,
+		params.LoginPAMUseCase,
+		params.FileFacade,
+		params.FileSystemFacade,
+		params.Config)
+
+	jwtValidator, err := validator.NewJWTValidator(context.Background(), params.Config)
 
 	if err != nil {
 		slog.Error("Could not setup JWT validator", "err", err)
 		os.Exit(1)
 	}
 
-	router := NewFilesRouter(config, appHandler, jwtValidator).MountRoutes()
+	router := NewFilesRouter(params.Config, appHandler, jwtValidator).MountRoutes()
 	http.Handle("/", router)
-	slog.Info("File Manager REST API runing", "port", config.Server.Port)
+	slog.Info("File Manager REST API runing", "port", params.Config.Server.Port)
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", config.Server.Port),
-		ReadHeaderTimeout: time.Duration(config.Server.ReadHeaderTimeout) * time.Second,
+		Addr:              fmt.Sprintf(":%d", params.Config.Server.Port),
+		ReadHeaderTimeout: time.Duration(params.Config.Server.ReadHeaderTimeout) * time.Second,
 		Handler:           router,
 	}
 

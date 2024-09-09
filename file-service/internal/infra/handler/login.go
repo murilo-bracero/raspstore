@@ -3,22 +3,20 @@ package handler
 import (
 	"net/http"
 	"time"
-
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 )
 
 func (l *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	usr, pass, ok := r.BasicAuth()
 
 	if !ok {
-		response.Unauthorized(w)
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
 	token, err := l.loginPAMUseCase.Execute(usr, pass)
 
 	if err != nil {
-		response.Unauthorized(w)
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 

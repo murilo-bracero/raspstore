@@ -3,6 +3,8 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -97,4 +99,28 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, fileMetadata)
 	})
+}
+
+func createFile(seed string) (string, error) {
+	dir := os.TempDir() + "/storage/"
+
+	if err := os.Mkdir(dir, os.ModePerm); err != nil {
+		if !os.IsExist(err) {
+			return "", err
+		}
+	}
+
+	file, err := os.CreateTemp(dir, seed)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer file.Close()
+
+	if _, err := file.WriteString("test file content"); err != nil {
+		return "", err
+	}
+
+	return filepath.Base(file.Name()), nil
 }

@@ -26,8 +26,10 @@ install-tools:
 
 generate:
 	sqlc generate -f config/sqlc.yaml
-	mockgen -source=internal/application/repository/repository.go -destination=internal/application/repository/mocks/repository.go -package=mocks
+	mockgen -source=internal/infra/repository/repository.go -destination=internal/infra/repository/mocks/repository.go -package=mocks
 	mockgen -source=internal/application/facade/file.go -destination=internal/application/facade/mocks/file.go -package=mocks
+	mockgen -source=internal/application/facade/fs.go -destination=internal/application/facade/mocks/fs.go -package=mocks
+	mockgen -source=internal/application/usecase/login-pam.go -destination=internal/application/usecase/mocks/fs.go -package=mocks
 
 go-lint:
 	docker run -t --rm \

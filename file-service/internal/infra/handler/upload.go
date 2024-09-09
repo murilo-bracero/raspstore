@@ -10,7 +10,6 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 )
 
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +17,7 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		slog.Error("Could not allocate MultipartForm parser", "traceId", traceId, "error", err)
-		response.UnprocessableEntity(w, traceId)
+		unprocessableEntity(w, traceId)
 		return
 	}
 
@@ -26,7 +25,7 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		slog.Error("Could not open Multipart Form file", "traceId", traceId, "error", err)
-		response.UnprocessableEntity(w, traceId)
+		unprocessableEntity(w, traceId)
 		return
 	}
 
@@ -34,8 +33,8 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	fm := entity.NewFile(header.Filename, header.Size, false, usr.Subject())
 
-	if err := h.uploadUseCase.Execute(r.Context(), fm, file); err != nil {
-		response.InternalServerError(w, traceId)
+	if err := h.fileSystemFacade.Upload(traceId, fm, file); err != nil {
+		internalServerError(w, traceId)
 		return
 	}
 
@@ -44,7 +43,7 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Created(w, &model.UploadSuccessResponse{
+	created(w, &model.UploadSuccessResponse{
 		FileId:   fm.FileId,
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,
@@ -56,5 +55,5 @@ func (h *Handler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.F
 		slog.Error("Could not remove file from fs", "fileId", file.FileId)
 	}
 
-	response.InternalServerError(w, traceId)
+	internalServerError(w, traceId)
 }

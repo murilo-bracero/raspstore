@@ -11,26 +11,27 @@ import (
 )
 
 type Config struct {
-	Storage struct {
-		Path  string
-		Limit string
-	}
-	Server struct {
-		ReadHeaderTimeout int `yaml:"read-header-timeout"`
-		Port              int
-	}
-	Auth struct {
-		PAMEnabled   bool   `yaml:"enable-pam"`
-		PublicKeyURL string `yaml:"public-key-url"`
-		TokenSecret  string `yaml:"token-secret"`
-	}
+	Storage StorageConfig
+	Server  ServerConfig
+	Auth    AuthConfig
 }
 
-func NewConfig(path string) *Config {
-	if path == "" {
-		path = "./config.yaml"
-	}
+type StorageConfig struct {
+	Path  string
+	Limit string
+}
 
+type ServerConfig struct {
+	ReadHeaderTimeout int `yaml:"read-header-timeout"`
+	Port              int
+}
+
+type AuthConfig struct {
+	PAMEnabled   bool   `yaml:"enable-pam"`
+	PublicKeyURL string `yaml:"public-key-url"`
+}
+
+func New(path string) *Config {
 	file, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("could not find config yaml file with the provided path", "error", err, "path", path)
