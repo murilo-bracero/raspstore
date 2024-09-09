@@ -23,7 +23,7 @@ const bitsize = 4096
 func (b *SecretsBootstrap) Bootstrap(ctx context.Context, config *config.Config) error {
 	secretsPath := path.Join(config.Storage.Path, "secrets")
 
-	pkFile, err := os.Open(secretsPath + "/local-jwk.json")
+	pkFile, err := os.Open(secretsPath + "/key.json")
 
 	if err != nil && !os.IsNotExist(err) {
 		slog.Error("Could not open JWK file", "path", secretsPath, "err", err)
@@ -73,7 +73,7 @@ func createPrivateKey(ctx context.Context, secretsPath string) error {
 		return err
 	}
 
-	fi, err := os.Create(secretsPath + "/local-jwk.json")
+	fi, err := os.Create(secretsPath + "/key.json")
 
 	if err != nil {
 		slog.Error("Could not create jwk in internal secrets repository", "path", secretsPath, "err", err)

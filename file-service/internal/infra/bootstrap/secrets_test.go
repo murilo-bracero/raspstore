@@ -34,7 +34,7 @@ func TestValidate(t *testing.T) {
 
 		bt.Bootstrap(ctx, config)
 
-		filename := os.TempDir() + "/secrets/local-jwk.json"
+		filename := os.TempDir() + "/secrets/key.json"
 
 		fi, err := os.Stat(filename)
 

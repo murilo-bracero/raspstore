@@ -89,7 +89,7 @@ func (l *loginPAMUseCase) Execute(username, password string) (string, error) {
 }
 
 func (l *loginPAMUseCase) readPrivateKey() (*jwk.Key, error) {
-	pkPath := path.Join(l.config.Storage.Path, "secrets", "local-jwk.json")
+	pkPath := path.Join(l.config.Storage.Path, "secrets", "key.json")
 
 	fpk, err := os.ReadFile(pkPath)
 

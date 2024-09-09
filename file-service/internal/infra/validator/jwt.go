@@ -50,7 +50,7 @@ func NewJWTValidator(ctx context.Context, config *config.Config) (*JWTValidator,
 }
 
 func readPublicKey(c *config.Config) (*jwk.Key, error) {
-	pkFilePath := path.Join(c.Storage.Path, "secrets", "local-jwk.json")
+	pkFilePath := path.Join(c.Storage.Path, "secrets", "key.json")
 
 	fpk, err := os.ReadFile(pkFilePath)
 
