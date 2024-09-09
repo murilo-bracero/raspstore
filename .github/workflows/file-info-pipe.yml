@@ -14,6 +14,9 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Install dependencies
+        run: sudo apt-get install libpam0g-dev
+
       - name: Test
         working-directory: file-service
         run: go test -v ./...
