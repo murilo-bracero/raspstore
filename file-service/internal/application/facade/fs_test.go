@@ -3,6 +3,7 @@ package facade_test
 import (
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -20,7 +21,21 @@ func TestUploadFileUseCase(t *testing.T) {
 		FileId: uuid.NewString(),
 	}
 
-	file, err := os.CreateTemp(os.TempDir()+"/storage/", "upload.*.txt")
+	storagePath := path.Join(os.TempDir(), "storage")
+
+	err := os.MkdirAll(storagePath, os.ModePerm)
+
+	if err != nil && !os.IsExist(err) {
+		assert.Fail(t, "os.MkdirAll")
+	}
+
+	t.Cleanup(func() {
+		err := os.RemoveAll(os.TempDir() + "/storage")
+
+		assert.NoError(t, err, "os.RemoveAll")
+	})
+
+	file, err := os.CreateTemp(storagePath, "upload.*.txt")
 
 	assert.NoError(t, err)
 
