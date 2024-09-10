@@ -3,6 +3,8 @@ package handler
 import (
 	"net/http"
 	"time"
+
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 )
 
 func (l *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
@@ -20,13 +22,11 @@ func (l *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenCookie := http.Cookie{
-		Name:     "JWT-TOKEN",
-		Value:    token,
-		Expires:  time.Now().Add(1 * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, &tokenCookie)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	send(w, &model.LoginResponse{
+		AccessToken: token,
+		ExpiresIn:   int(time.Now().Add(1 * time.Hour).Unix()),
+		Prefix:      "Bearer ",
+	})
 }
