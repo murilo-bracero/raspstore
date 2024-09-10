@@ -32,7 +32,9 @@ func TestValidate(t *testing.T) {
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
 		bt := &bootstrap.SecretsBootstraper{}
 
-		bt.Bootstrap(ctx, config)
+		err := bt.Bootstrap(ctx, config)
+
+		assert.NoError(t, err, "bt.Bootstrap")
 
 		filename := os.TempDir() + "/secrets/key.json"
 

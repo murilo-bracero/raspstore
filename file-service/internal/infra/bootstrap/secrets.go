@@ -58,7 +58,10 @@ func createPrivateKey(ctx context.Context, secretsPath string) error {
 		return err
 	}
 
-	privkey.FromRaw(rsaPk)
+	if err := privkey.FromRaw(rsaPk); err != nil {
+		slog.Error("Could not read generated RSA private key", "err", err)
+		return err
+	}
 
 	mpk, err := privkey.AsMap(ctx)
 

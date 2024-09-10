@@ -23,6 +23,7 @@ docker-build:
 install-tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(sqlc_version)
 	go install go.uber.org/mock/mockgen@$(mockgen_version)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin $(golangci_version)
 
 generate:
 	sqlc generate -f config/sqlc.yaml
@@ -32,8 +33,4 @@ generate:
 	mockgen -source=internal/application/usecase/login-pam.go -destination=internal/application/usecase/mocks/fs.go -package=mocks
 
 go-lint:
-	docker run -t --rm \
-		-v $(shell pwd):/app \
-		-w /app \
-		golangci/golangci-lint:$(golangci_version) \
-		golangci-lint run --enable gosec  -v
+	golangci-lint run --enable gosec  -v

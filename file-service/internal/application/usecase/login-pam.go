@@ -99,7 +99,10 @@ func (l *loginPAMUseCase) readPrivateKey() (*jwk.Key, error) {
 	}
 
 	jPrivateKey, err := jwk.ParseKey(fpk)
-	jPrivateKey.Set(jwk.KeyIDKey, "rstore")
+	if err := jPrivateKey.Set(jwk.KeyIDKey, "rstore"); err != nil {
+		slog.Error("Could not set KeyId in private key", "err", err)
+		return nil, err
+	}
 
 	if err != nil {
 		slog.Error("Could not parse private key", "err", err)

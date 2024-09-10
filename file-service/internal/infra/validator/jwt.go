@@ -67,8 +67,16 @@ func readPublicKey(c *config.Config) (*jwk.Key, error) {
 	}
 
 	jPublicKey, err := jpk.PublicKey()
-	jPublicKey.Set(jwk.KeyIDKey, "rstore")
-	jPublicKey.Set(jwk.AlgorithmKey, jwa.RS256)
+
+	if err := jPublicKey.Set(jwk.KeyIDKey, "rstore"); err != nil {
+		slog.Error("Could not set KeyID in generated public key", "err", err)
+		return nil, err
+	}
+
+	if err := jPublicKey.Set(jwk.AlgorithmKey, jwa.RS256); err != nil {
+		slog.Error("Could not set AlgorithmKey in generated public key", "err", err)
+		return nil, err
+	}
 
 	if err != nil {
 		slog.Error("Could not generate Public Key from Private Key", "err", err)
