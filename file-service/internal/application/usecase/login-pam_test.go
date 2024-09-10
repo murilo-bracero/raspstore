@@ -45,7 +45,7 @@ func TestExecute(t *testing.T) {
 
 	assert.NoError(t, err, "os.MkdirAll")
 
-	sbs := &bootstrap.SecretsBootstrap{}
+	sbs := &bootstrap.SecretsBootstraper{}
 
 	err = sbs.Bootstrap(context.Background(), mc)
 

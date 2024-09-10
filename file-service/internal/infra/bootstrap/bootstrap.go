@@ -12,7 +12,7 @@ type Bootstraper interface {
 
 var bootstrapers []Bootstraper = []Bootstraper{
 	&FolderBootstraper{},
-	&SecretsBootstrap{},
+	&SecretsBootstraper{},
 	&SQLiteBootstraper{},
 }
 

@@ -77,7 +77,8 @@ func NewApiTest(ctx context.Context) (*ApiTest, error) {
 		Env: map[string]string{
 			"PUBLIC_KEY_URL": "http://keycloak.rstore.com:8080/realms/master/protocol/openid-connect/certs",
 		},
-		Networks: []string{net.Name},
+		Networks:   []string{net.Name},
+		WaitingFor: wait.ForExposedPort(),
 	}
 	ac, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: acr,

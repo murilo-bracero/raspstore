@@ -14,13 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-type SecretsBootstrap struct{}
+type SecretsBootstraper struct{}
 
-var _ Bootstraper = (*SecretsBootstrap)(nil)
+var _ Bootstraper = (*SecretsBootstraper)(nil)
 
 const bitsize = 4096
 
-func (b *SecretsBootstrap) Bootstrap(ctx context.Context, config *config.Config) error {
+func (b *SecretsBootstraper) Bootstrap(ctx context.Context, config *config.Config) error {
 	secretsPath := path.Join(config.Storage.Path, "secrets")
 
 	pkFile, err := os.Open(secretsPath + "/key.json")

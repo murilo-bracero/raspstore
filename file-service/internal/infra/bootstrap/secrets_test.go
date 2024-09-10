@@ -30,7 +30,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
-		bt := &bootstrap.SecretsBootstrap{}
+		bt := &bootstrap.SecretsBootstraper{}
 
 		bt.Bootstrap(ctx, config)
 
