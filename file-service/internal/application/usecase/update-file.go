@@ -6,9 +6,9 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 )
 
 type UpdateFileUseCase interface {

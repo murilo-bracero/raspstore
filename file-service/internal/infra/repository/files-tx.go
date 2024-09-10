@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/db/gen"
 )
@@ -19,7 +18,7 @@ type txFilesRepository struct {
 
 var ErrTransactionNotInitialized = errors.New("transaction not initialized for this operation")
 
-var _ repository.TxFilesRepository = (*txFilesRepository)(nil)
+var _ TxFilesRepository = (*txFilesRepository)(nil)
 
 func NewTxFilesRepository(ctx context.Context, db *sql.DB) *txFilesRepository {
 	return &txFilesRepository{ctx: ctx, queries: gen.New(db), db: db}
@@ -43,7 +42,7 @@ func (t *txFilesRepository) FindById(tx *sql.Tx, userId string, fileId string) (
 	}
 
 	if len(rows) == 0 {
-		return nil, repository.ErrFileDoesNotExists
+		return nil, ErrFileDoesNotExists
 	}
 
 	ref := rows[0]

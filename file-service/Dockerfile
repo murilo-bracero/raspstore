@@ -4,11 +4,15 @@ WORKDIR /app
 
 COPY --chown=185 . ./
 
+RUN apk add build-base linux-pam-dev
+
 RUN go mod download
 
-RUN go build -o file-service ./cmd
+RUN CGO_ENABLED=1 go build -o file-service ./cmd
 
 FROM alpine:3.16
+
+RUN apk add linux-pam
 
 RUN addgroup -S rstoregroup && adduser -S rstoreuser -G rstoregroup
 

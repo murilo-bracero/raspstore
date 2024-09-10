@@ -14,21 +14,20 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 const testFilename = "test.txt"
 const defaultUserId = "e9e28c79-a5e8-4545-bd32-e536e690bd4a"
 
 func TestUpload(t *testing.T) {
-	config := &config.Config{Storage: struct {
-		Path  string
-		Limit string
-	}{Path: "./"}}
+	config := &config.Config{Storage: config.StorageConfig{Path: os.TempDir()}}
 
 	token := jwt.New()
 	err := token.Set("sub", defaultUserId)
@@ -44,9 +43,15 @@ func TestUpload(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+
+		mockCtrl := gomock.NewController(t)
+
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
+
+		ctr := handler.New(cFileUseCase, nil, nil, nil, ffc, config)
+
+		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any())
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -77,9 +82,13 @@ func TestUpload(t *testing.T) {
 	})
 
 	t.Run("should return bad request when form without file", func(t *testing.T) {
-		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+
+		mockCtrl := gomock.NewController(t)
+
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
+
+		ctr := handler.New(cFileUseCase, nil, nil, nil, ffc, config)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -98,9 +107,13 @@ func TestUpload(t *testing.T) {
 	})
 
 	t.Run("should return bad request when form without file", func(t *testing.T) {
-		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+
+		mockCtrl := gomock.NewController(t)
+
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
+
+		ctr := handler.New(cFileUseCase, nil, nil, nil, ffc, config)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -119,9 +132,15 @@ func TestUpload(t *testing.T) {
 	})
 
 	t.Run("should return internal server error when upload use case returns error", func(t *testing.T) {
-		uploadUseCase := &uploadFileUseCaseMock{shouldReturnError: true}
 		cFileUseCase := &createUseCaseMock{}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+
+		mockCtrl := gomock.NewController(t)
+
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
+
+		ctr := handler.New(cFileUseCase, nil, nil, nil, ffc, config)
+
+		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any()).Return(errors.New("generic error"))
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -152,9 +171,15 @@ func TestUpload(t *testing.T) {
 	})
 
 	t.Run("should return internal server error when create use case returns error", func(t *testing.T) {
-		uploadUseCase := &uploadFileUseCaseMock{}
 		cFileUseCase := &createUseCaseMock{shouldReturnErr: true}
-		ctr := handler.NewUploadHandler(config, uploadUseCase, cFileUseCase)
+
+		mockCtrl := gomock.NewController(t)
+
+		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
+
+		ctr := handler.New(cFileUseCase, nil, nil, nil, ffc, config)
+
+		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any())
 
 		tempFile, err := createTempFile()
 		assert.NoError(t, err)
@@ -190,18 +215,6 @@ func createTempFile() (string, error) {
 	tempFile := filepath.Join(tempDir, testFilename)
 	err := os.WriteFile(tempFile, []byte("test content"), 0600)
 	return tempFile, err
-}
-
-type uploadFileUseCaseMock struct {
-	shouldReturnError bool
-}
-
-func (u *uploadFileUseCaseMock) Execute(ctx context.Context, file *entity.File, src io.Reader) (err error) {
-	if u.shouldReturnError {
-		return errors.New("generic error")
-	}
-
-	return nil
 }
 
 type createUseCaseMock struct {

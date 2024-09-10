@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,22 +12,41 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
 
-func StartApiServer(config *config.Config, fileFacade facade.FileFacade, useCases *usecase.UseCases) {
-	filesHandler := handler.NewFilesHandler(fileFacade, useCases.UpdateFileUseCase)
+type ApiServerParams struct {
+	Config            *config.Config
+	FileFacade        facade.FileFacade
+	FileSystemFacade  facade.FileSystemFacade
+	CreateFileUseCase usecase.CreateFileUseCase
+	UpdateFileUseCase usecase.UpdateFileUseCase
+	LoginPAMUseCase   usecase.LoginPAMUseCase
+}
 
-	uploadHanler := handler.NewUploadHandler(config, useCases.UploadUseCase, useCases.CreateFileUseCase)
+func StartApiServer(params *ApiServerParams) {
+	appHandler := handler.New(
+		params.CreateFileUseCase,
+		params.UpdateFileUseCase,
+		params.LoginPAMUseCase,
+		params.FileFacade,
+		params.FileSystemFacade,
+		params.Config)
 
-	downloadHandler := handler.NewDownloadHandler(useCases.DownloadFileUseCase, fileFacade)
+	jwtValidator, err := validator.NewJWTValidator(context.Background(), params.Config)
 
-	router := NewFilesRouter(config, filesHandler, uploadHanler, downloadHandler).MountRoutes()
+	if err != nil {
+		slog.Error("Could not setup JWT validator", "err", err)
+		os.Exit(1)
+	}
+
+	router := NewFilesRouter(params.Config, appHandler, jwtValidator).MountRoutes()
 	http.Handle("/", router)
-	slog.Info("File Manager REST API runing", "port", config.Server.Port)
+	slog.Info("File Manager REST API runing", "port", params.Config.Server.Port)
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", config.Server.Port),
-		ReadHeaderTimeout: time.Duration(config.Server.ReadHeaderTimeout) * time.Second,
+		Addr:              fmt.Sprintf(":%d", params.Config.Server.Port),
+		ReadHeaderTimeout: time.Duration(params.Config.Server.ReadHeaderTimeout) * time.Second,
 		Handler:           router,
 	}
 

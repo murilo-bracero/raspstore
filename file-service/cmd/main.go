@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/bootstrap"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/db"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
@@ -24,18 +25,14 @@ func main() {
 		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
-	config := config.NewConfig("config/config.yaml")
+	config := config.New("config/config.yaml")
 
-	slog.Info("creating required folders")
+	slog.Info("Bootstrapping Application")
 
-	if err := os.MkdirAll(config.Storage.Path+"/internal", os.ModePerm); err != nil {
-		slog.Error("could not create required internal folder", "error", err)
-		os.Exit(1)
-	}
+	err := bootstrap.Run(ctx, config)
 
-	if err := os.MkdirAll(config.Storage.Path+"/storage", os.ModePerm); err != nil {
-		slog.Error("could not create required storage folder", "error", err)
-		os.Exit(1)
+	if err != nil {
+		slog.Error("Could not bootstrap the application", "err", err)
 	}
 
 	conn, err := db.NewSqliteDatabaseConnection(config)
@@ -51,9 +48,15 @@ func main() {
 
 	txFileRepo := repository.NewTxFilesRepository(ctx, conn.Db())
 
-	useCases := usecase.InitUseCases(config, fileRepo, txFileRepo)
+	loginPAMUseCase := usecase.NewLoginPAMUseCase(config)
+
+	createFileUseCase := usecase.NewCreateFileUseCase(config, fileRepo)
+
+	updateFileUseCase := usecase.NewUpdateFileUseCase(txFileRepo)
 
 	fileFacade := facade.NewFileFacade(fileRepo)
+
+	fileSystemFacade := facade.NewFileSystemFacade(config)
 
 	if err != nil {
 		slog.Error("Error initializing database", "err", err)
@@ -76,5 +79,13 @@ func main() {
 	}()
 
 	slog.Info("Bootstraping servers")
-	server.StartApiServer(config, fileFacade, useCases)
+
+	server.StartApiServer(&server.ApiServerParams{
+		Config:            config,
+		CreateFileUseCase: createFileUseCase,
+		FileFacade:        fileFacade,
+		FileSystemFacade:  fileSystemFacade,
+		LoginPAMUseCase:   loginPAMUseCase,
+		UpdateFileUseCase: updateFileUseCase,
+	})
 }

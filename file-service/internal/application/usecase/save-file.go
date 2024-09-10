@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/parser"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 )
 
 var (

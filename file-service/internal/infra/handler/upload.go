@@ -7,34 +7,17 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/response"
 )
 
-type UploadHandler interface {
-	Upload(w http.ResponseWriter, r *http.Request)
-}
-
-type uploadHandler struct {
-	config            *config.Config
-	uploadUseCase     usecase.UploadFileUseCase
-	createFileUseCase usecase.CreateFileUseCase
-}
-
-func NewUploadHandler(config *config.Config, uploadUseCase usecase.UploadFileUseCase, createFileUseCase usecase.CreateFileUseCase) UploadHandler {
-	return &uploadHandler{config: config, uploadUseCase: uploadUseCase, createFileUseCase: createFileUseCase}
-}
-
-func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	usr := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		slog.Error("Could not allocate MultipartForm parser", "traceId", traceId, "error", err)
-		response.UnprocessableEntity(w, traceId)
+		unprocessableEntity(w, traceId)
 		return
 	}
 
@@ -42,7 +25,7 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		slog.Error("Could not open Multipart Form file", "traceId", traceId, "error", err)
-		response.UnprocessableEntity(w, traceId)
+		unprocessableEntity(w, traceId)
 		return
 	}
 
@@ -50,8 +33,8 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	fm := entity.NewFile(header.Filename, header.Size, false, usr.Subject())
 
-	if err := h.uploadUseCase.Execute(r.Context(), fm, file); err != nil {
-		response.InternalServerError(w, traceId)
+	if err := h.fileSystemFacade.Upload(traceId, fm, file); err != nil {
+		internalServerError(w, traceId)
 		return
 	}
 
@@ -60,17 +43,17 @@ func (h *uploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Created(w, &model.UploadSuccessResponse{
+	created(w, &model.UploadSuccessResponse{
 		FileId:   fm.FileId,
 		Filename: fm.Filename,
 		OwnerId:  fm.Owner,
 	}, traceId)
 }
 
-func (h *uploadHandler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File, traceId string) {
+func (h *Handler) handleCreateUseCaseError(w http.ResponseWriter, file *entity.File, traceId string) {
 	if err := os.Remove(h.config.Storage.Path + "/storage/" + file.FileId); err != nil {
 		slog.Error("Could not remove file from fs", "fileId", file.FileId)
 	}
 
-	response.InternalServerError(w, traceId)
+	internalServerError(w, traceId)
 }

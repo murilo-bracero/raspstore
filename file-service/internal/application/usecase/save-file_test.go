@@ -3,20 +3,17 @@ package usecase_test
 import (
 	"testing"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/repository/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository/mocks"
 	"go.uber.org/mock/gomock"
 )
 
-var mockConfig = &config.Config{Storage: struct {
-	Path  string
-	Limit string
-}{Path: "./", Limit: "1000M"}}
-
 func TestCreateFileUseCase(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+
+	mockConfig := &config.Config{Storage: config.StorageConfig{Path: "./", Limit: "1000M"}}
 
 	t.Run("happy path", func(t *testing.T) {
 		mockObj := mocks.NewMockFilesRepository(mockCtrl)

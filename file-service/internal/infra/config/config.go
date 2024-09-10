@@ -11,24 +11,27 @@ import (
 )
 
 type Config struct {
-	Storage struct {
-		Path  string
-		Limit string
-	}
-	Server struct {
-		ReadHeaderTimeout int `yaml:"read-header-timeout"`
-		Port              int
-	}
-	Auth struct {
-		PublicKeyUrl string `yaml:"public-key-url"`
-	}
+	Storage StorageConfig
+	Server  ServerConfig
+	Auth    AuthConfig
 }
 
-func NewConfig(path string) *Config {
-	if path == "" {
-		path = "./config.yaml"
-	}
+type StorageConfig struct {
+	Path  string
+	Limit string
+}
 
+type ServerConfig struct {
+	ReadHeaderTimeout int `yaml:"read-header-timeout"`
+	Port              int
+}
+
+type AuthConfig struct {
+	PAMEnabled   bool   `yaml:"enable-pam"`
+	PublicKeyURL string `yaml:"public-key-url"`
+}
+
+func New(path string) *Config {
 	file, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("could not find config yaml file with the provided path", "error", err, "path", path)
@@ -36,8 +39,9 @@ func NewConfig(path string) *Config {
 	}
 
 	t := template.New("configParser").Funcs(template.FuncMap{
-		"envOrKey":    envOrKey,
-		"envOrKeyInt": envOrKeyInt,
+		"envOrKey":        envOrKey,
+		"envOrKeyInt":     envOrKeyInt,
+		"envOrKeyBoolean": envOrKeyBoolean,
 	})
 
 	t, err = t.Parse(string(file))
@@ -75,6 +79,14 @@ func envOrKeyInt(envVar string, defaultValue int) (int, error) {
 	}
 
 	return cvt, nil
+}
+
+func envOrKeyBoolean(envVar string, defaultValue bool) (bool, error) {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue, nil
+	}
+	return strconv.ParseBool(value)
 }
 
 func envOrKey(envVar, defaultValue string) (string, error) {
