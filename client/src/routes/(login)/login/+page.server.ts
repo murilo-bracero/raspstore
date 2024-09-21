@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { LoginForm } from '../../../stores/login.js';
-import { login } from '../../../service/login-service.js';
+import { login } from '../../../services/auth.service.js';
 
 export const actions = {
   default: async ({ cookies, request }) => {
