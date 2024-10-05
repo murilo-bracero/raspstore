@@ -1,5 +1,5 @@
 import { pamSignIn } from '$lib/services/pam.service';
-import { LoginForm } from '$lib/stores/login';
+import { type LoginForm } from '$lib/stores/login';
 import { fail } from '@sveltejs/kit';
 
 export const actions = {

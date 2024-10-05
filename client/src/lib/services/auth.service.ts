@@ -1,4 +1,4 @@
-import { BaseClient, Issuer, TokenSet } from 'openid-client';
+import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 import { settings } from '../config/oidc';
 
 export class AuthService {

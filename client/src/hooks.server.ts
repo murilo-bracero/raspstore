@@ -1,6 +1,6 @@
 import { cookieKeys } from '$lib/config/cookies';
 import { AuthService } from '$lib/services/auth.service';
-import { Cookies, redirect, RequestEvent } from '@sveltejs/kit';
+import { type Cookies, redirect, type RequestEvent } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = [
   {

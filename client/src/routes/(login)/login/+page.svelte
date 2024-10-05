@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { NotificationType, toast } from '$lib/stores/toast';
-  import { onMount } from 'svelte';
 
   async function handleSubmit(this: any) {
     toast({

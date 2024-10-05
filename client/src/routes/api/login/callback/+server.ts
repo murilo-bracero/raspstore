@@ -1,5 +1,5 @@
 import { settings } from '../../../../lib/config/oidc';
-import { Cookies, redirect } from '@sveltejs/kit';
+import { type Cookies, redirect } from '@sveltejs/kit';
 import { AuthService } from '$lib/services/auth.service';
 import { cookieKeys } from '$lib/config/cookies';
 

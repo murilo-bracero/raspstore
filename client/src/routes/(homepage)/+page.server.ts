@@ -1,8 +1,8 @@
 import { cookieKeys } from '$lib/config/cookies.js';
 import { getPageFiles } from '$lib/services/file.service';
 import { uploadFile } from '$lib/services/fs.service';
-import { PageData } from '$lib/stores/file';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { type PageData } from '$lib/stores/file';
+import { fail, redirect } from '@sveltejs/kit';
 
 export async function load({ cookies, request, locals }): Promise<PageData> {
   const token = cookies.get(cookieKeys.accessToken);

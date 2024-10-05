@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { LoginForm, LoginResponse } from '../stores/login';
+import { type LoginForm, type LoginResponse } from '../stores/login';
 import { coreURLs } from '../config/urls';
 
 export async function pamSignIn(form: LoginForm): Promise<LoginResponse> {
