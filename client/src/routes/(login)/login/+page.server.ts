@@ -1,6 +1,6 @@
+import { pamSignIn } from '$lib/services/pam.service';
+import { LoginForm } from '$lib/stores/login';
 import { fail } from '@sveltejs/kit';
-import type { LoginForm } from '../../../stores/login.js';
-import { login } from '../../../services/auth.service.js';
 
 export const actions = {
   default: async ({ cookies, request }) => {
@@ -11,7 +11,7 @@ export const actions = {
       return fail(400, { invalid: true });
     }
 
-    const response = await login(loginForm);
+    const response = await pamSignIn(loginForm);
 
     cookies.set('jwt-token', response.accessToken, {
       httpOnly: true,

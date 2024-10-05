@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
-import type { LoginForm, LoginResponse } from '../stores/login';
-import { coreURLs } from '../config/urls';
+import { LoginForm, LoginResponse } from '../stores/login';
+import { coreURLs } from '../../config/urls';
 
-export async function login(form: LoginForm): Promise<LoginResponse> {
+export async function pamSignIn(form: LoginForm): Promise<LoginResponse> {
   const response = await fetch(coreURLs.loginPAM, {
     method: 'POST',
     headers: { Authorization: 'Basic ' + btoa(`${form.username}:${form.password}`) }

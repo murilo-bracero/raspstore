@@ -1,9 +1,10 @@
+import { getPageFiles } from '$lib/services/file.service';
+import { uploadFile } from '$lib/services/fs.service';
+import { PageData } from '$lib/stores/file';
 import { fail, redirect } from '@sveltejs/kit';
-import { getPageFiles } from '../../services/file.service';
-import type { PageData } from '../../stores/file';
-import { uploadFile } from '../../services/fs.service';
 
-export async function load({ cookies }): Promise<PageData> {
+export async function load({ cookies, request, locals }): Promise<PageData> {
+  console.log(locals);
   const token = cookies.get('jwt-token');
 
   if (!token) {

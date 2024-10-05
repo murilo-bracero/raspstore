@@ -1,11 +1,10 @@
 <script lang="ts">
-  import FileItem from '../../components/FileItem.svelte';
-  import Footer from '../../components/Footer.svelte';
-  import Header from '../../components/Header.svelte';
-  import SearchBar from '../../components/SearchBar.svelte';
-  import Toast from '../../components/Toast.svelte';
-  import type { PageData } from '../../stores/file';
-  import { NotificationType, toast } from '../../stores/toast';
+  import FileItem from '$lib/components/FileItem.svelte';
+  import Footer from '$lib/components/Footer.svelte';
+  import Header from '$lib/components/Header.svelte';
+  import SearchBar from '$lib/components/SearchBar.svelte';
+  import { PageData } from '$lib/stores/file';
+  import { NotificationType, toast } from '$lib/stores/toast';
 
   export let data: PageData;
 
@@ -77,7 +76,6 @@
 
 <svelte:window on:drop|preventDefault={onDocumentDrop} on:dragover|preventDefault />
 
-<Toast />
 <Header />
 <main class="mb-24 flex flex-col items-center justify-center overflow-x-hidden">
   <article class="my-2">

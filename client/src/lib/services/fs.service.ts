@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { coreURLs } from '../config/urls';
+import { coreURLs } from '../../config/urls';
 
 export async function uploadFile(body: FormData, token: string) {
   const response = await fetch(coreURLs.upload, {

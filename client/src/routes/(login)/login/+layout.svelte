@@ -1,6 +1,6 @@
 <script>
+  import Toast from '$lib/components/Toast.svelte';
   import '../../../app.css';
-  import Toast from '../../../components/Toast.svelte';
 </script>
 
 <Toast />

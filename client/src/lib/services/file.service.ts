@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageData } from '../stores/file';
-import { coreURLs } from '../config/urls';
+import { coreURLs } from '../../config/urls';
 
 export async function getPageFiles(token: string): Promise<PageData> {
   if (token === null) {
