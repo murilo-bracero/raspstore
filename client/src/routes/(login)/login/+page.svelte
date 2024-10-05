@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { UserManager, WebStorageStateStore } from 'oidc-client-ts';
-  import { settings } from '../../../config/oidc';
+  import { goto } from '$app/navigation';
   import { NotificationType, toast } from '$lib/stores/toast';
+  import { onMount } from 'svelte';
 
   async function handleSubmit(this: any) {
     toast({
@@ -11,19 +11,11 @@
   }
 
   async function handleOidcClick() {
-    const mgt = new UserManager({
-      ...settings,
-      userStore: new WebStorageStateStore({ store: localStorage })
-    });
+    const res = await fetch('/api/login');
 
-    await mgt.signinRedirect().catch((err) => {
-      console.error(err);
+    const body = await res.json();
 
-      toast({
-        message: 'Could not sign in',
-        type: NotificationType.ERROR
-      });
-    });
+    goto(body.authUrl);
   }
 </script>
 
@@ -42,7 +34,7 @@
       name="password"
     />
     <button
-      class="my-3 w-full self-center rounded-full border-2 border-black bg-sky-200 px-3 py-1 font-bold"
+      class="my-3 w-full cursor-not-allowed self-center rounded-full border-2 border-black bg-sky-200 px-3 py-1 font-bold opacity-50"
       type="submit">PAM Sign In</button
     >
 

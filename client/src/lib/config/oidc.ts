@@ -1,5 +1,3 @@
-import * as oidc from 'oidc-client-ts';
-
 const UIHost = import.meta.env.UI_HOST || 'http://localhost:5173';
 const clientId = process.env.RS_CLIENT_ID || import.meta.env.VITE_CLIENT_ID;
 const clientSecret = process.env.RS_CLIENT_SECRET || import.meta.env.VITE_CLIENT_SECRET;
@@ -11,7 +9,7 @@ export const settings = {
   authority: authorityURL,
   client_id: clientId,
   client_secret: clientSecret,
-  redirect_uri: UIHost + '/auth-callback',
+  redirect_uri: UIHost + '/api/login/callback',
   post_logout_redirect_uri: UIHost + '/login',
   response_type: 'code',
   scope: 'openid email roles ' + additionalScopes,
@@ -19,4 +17,4 @@ export const settings = {
   filterProtocolClaims: true,
   loadUserInfo: true,
   response_mode: 'fragment'
-} as oidc.UserManagerSettings;
+};

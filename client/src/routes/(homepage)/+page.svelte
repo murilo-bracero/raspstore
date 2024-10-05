@@ -3,7 +3,7 @@
   import Footer from '$lib/components/Footer.svelte';
   import Header from '$lib/components/Header.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
-  import { PageData } from '$lib/stores/file';
+  import { type PageData } from '$lib/stores/file';
   import { NotificationType, toast } from '$lib/stores/toast';
 
   export let data: PageData;
