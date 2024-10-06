@@ -32,3 +32,9 @@ type UploadSuccessResponse struct {
 	Filename string `json:"filename,omitempty"`
 	OwnerId  string `json:"ownerId,omitempty"`
 }
+
+type LoginResponse struct {
+	AccessToken string `json:"accessToken,omitempty"`
+	ExpiresIn   int    `json:"expiresIn,omitempty"`
+	Prefix      string `json:"prefix,omitempty"`
+}

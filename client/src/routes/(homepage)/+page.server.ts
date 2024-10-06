@@ -1,10 +1,11 @@
+import { cookieKeys } from '$lib/config/cookies.js';
+import { getPageFiles } from '$lib/services/file.service';
+import { uploadFile } from '$lib/services/fs.service';
+import { type PageData } from '$lib/stores/file';
 import { fail, redirect } from '@sveltejs/kit';
-import { getPageFiles } from '../../service/file-info-service';
-import type { PageData } from '../../stores/file';
-import { uploadFile } from '../../service/fs-service';
 
 export async function load({ cookies }): Promise<PageData> {
-  const token = cookies.get('jwt-token');
+  const token = cookies.get(cookieKeys.accessToken);
 
   if (!token) {
     throw redirect(307, '/login');
@@ -22,10 +23,11 @@ export async function load({ cookies }): Promise<PageData> {
 
 export const actions = {
   upload: async ({ cookies, request }) => {
-    const token = cookies.get('jwt-token');
+    const token = cookies.get(cookieKeys.accessToken);
 
     if (!token) {
-      throw redirect(307, '/login');
+      //throw redirect(307, '/login');
+      return;
     }
 
     const data = await request.formData();

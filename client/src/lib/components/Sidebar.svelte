@@ -1,10 +1,24 @@
-<script>
-  import { clickOutside } from '../directives/clickOutsideDirective';
-
+<script lang="ts">
   export let open = false;
 
   function handleCloseSidebar() {
     open = false;
+  }
+
+  export function clickOutside(node: HTMLElement) {
+    const handleClick = (event: MouseEvent) => {
+      if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
+        node.dispatchEvent(new CustomEvent('click_outside', { detail: node }));
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+
+    return {
+      destroy() {
+        document.removeEventListener('click', handleClick, true);
+      }
+    };
   }
 </script>
 
