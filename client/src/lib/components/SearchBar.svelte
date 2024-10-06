@@ -1,9 +1,7 @@
 <script>
   import { search } from '../stores/search';
 
-  function handleSearchClick() {
-    search.subscribe(({ predicate }) => console.log(predicate));
-  }
+  function handleSearchClick() {}
 </script>
 
 <fieldset class="flex w-80 flex-row rounded-xl border-2 border-black bg-white py-1 pr-5">

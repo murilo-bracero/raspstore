@@ -1,4 +1,4 @@
-const UIHost = import.meta.env.UI_HOST || 'http://localhost:5173';
+const UIHost = process.env.RS_UI_HOST || import.meta.env.UI_HOST || 'http://localhost:5173';
 const clientId = process.env.RS_CLIENT_ID || import.meta.env.VITE_CLIENT_ID;
 const clientSecret = process.env.RS_CLIENT_SECRET || import.meta.env.VITE_CLIENT_SECRET;
 const additionalScopes =

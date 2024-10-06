@@ -4,7 +4,7 @@ import { uploadFile } from '$lib/services/fs.service';
 import { type PageData } from '$lib/stores/file';
 import { fail, redirect } from '@sveltejs/kit';
 
-export async function load({ cookies, request, locals }): Promise<PageData> {
+export async function load({ cookies }): Promise<PageData> {
   const token = cookies.get(cookieKeys.accessToken);
 
   if (!token) {

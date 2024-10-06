@@ -65,8 +65,6 @@ async function refreshUserToken(event: RequestEvent) {
   const newTokenSet = await AuthService.instance
     .refresh(event.cookies.get(cookieKeys.refreshToken)!)
     .catch((err) => {
-      console.error('error refreshing token', err);
-
       clearAuthCookies(event.cookies);
 
       throw redirect(307, '/login');
@@ -94,6 +92,7 @@ function setCookie(cookies: Cookies, key: string, value: string): void {
 
 function clearAuthCookies(cookies: Cookies) {
   Object.keys(cookieKeys).forEach((key) => {
+    // @ts-ignore
     cookies.delete(key);
   });
 }

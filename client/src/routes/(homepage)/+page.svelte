@@ -50,7 +50,6 @@
         return response.json();
       })
       .catch((error) => {
-        console.error(error);
         toast({
           message: 'Could not upload file',
           type: NotificationType.ERROR
