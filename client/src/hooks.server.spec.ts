@@ -1,7 +1,6 @@
 import { assert, describe, it } from 'vitest';
 import { handle } from './hooks.server';
 import { cookieKeys } from '$lib/config/cookies';
-import { RequestEvent } from '@sveltejs/kit';
 
 describe('test handle', () => {
   it('should handle public endpoints', async () => {
