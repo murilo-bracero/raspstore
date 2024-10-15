@@ -1,15 +1,27 @@
-<script>
-  import UploadFormBar from './UploadFormBar.svelte';
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
 
-  let open = false;
+  let input: HTMLInputElement;
+
+  const dispatcher = createEventDispatcher();
 
   function handleUploadClick() {
-    open = !open;
+    input.click();
+  }
+
+  function handleUploadEvent() {
+    if (!input.files) {
+      return;
+    }
+
+    dispatcher('upload', {
+      file: input.files[0]
+    });
   }
 </script>
 
 <footer class="container fixed bottom-0 flex min-w-full flex-col items-center">
-  <UploadFormBar bind:open on:upload />
+  <input type="file" class="hidden" bind:this={input} on:change={handleUploadEvent} />
   <button
     on:click={handleUploadClick}
     class="z-10 -mb-5 mr-2 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-sky-500"

@@ -1,12 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { PageData } from '../stores/file';
+import { coreURLs } from '../config/urls';
 
 export async function getPageFiles(token: string): Promise<PageData> {
-  if (token === null) {
-    throw new Error('Unauthorized');
-  }
-
-  const response = await fetch(import.meta.env.VITE_FILES_SERVICE_URL, {
+  const response = await fetch(coreURLs.files, {
     headers: {
       Authorization: `Bearer ${token}`
     }
