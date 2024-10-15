@@ -1,6 +1,7 @@
 import { cookieKeys } from '$lib/config/cookies';
 import { AuthService } from '$lib/services/auth.service';
-import { type Cookies, redirect, type RequestEvent } from '@sveltejs/kit';
+import { clearAuthCookies, parseFromCookies, populateAuthCookies } from '$lib/utils/cookies.util';
+import { redirect, type RequestEvent } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = [
   {
@@ -20,35 +21,21 @@ const PUBLIC_PATHS = [
 export const handle = async ({ event, resolve }) => {
   if (
     PUBLIC_PATHS.some(
-      (path) => event.url.pathname.startsWith(path.path) && path.method === event.request.method
+      (path) => event.url.pathname === path.path && path.method === event.request.method
     )
   ) {
     return resolve(event);
   }
 
-  if (!hasAccessTokenCookie(event)) {
+  const tokenSet = parseFromCookies(event.cookies);
+
+  if (!tokenSet.accessToken) {
     throw redirect(307, '/login');
   }
 
-  const client = await AuthService.instance.getClient();
-
-  await client
-    .userinfo(event.cookies.get(cookieKeys.accessToken)!)
-    .then((user) => {
-      event.locals.user = user;
-    })
-    .catch(async (err) => {
-      if (err.status === 401 && hasRefreshTokenCookie(event)) {
-        await refreshUserToken(event);
-        return handle({ event, resolve });
-      }
-
-      throw redirect(307, '/login');
-    });
-
   const response = await resolve(event);
 
-  if (response.status === 401 && hasRefreshTokenCookie(event)) {
+  if (response.status === 401 && tokenSet.refreshToken) {
     await refreshUserToken(event);
 
     return handle({ event, resolve });
@@ -57,42 +44,18 @@ export const handle = async ({ event, resolve }) => {
   return response;
 };
 
-function hasAccessTokenCookie(event: RequestEvent) {
-  return event.cookies.get(cookieKeys.accessToken);
-}
-
 async function refreshUserToken(event: RequestEvent) {
   const newTokenSet = await AuthService.instance
     .refresh(event.cookies.get(cookieKeys.refreshToken)!)
-    .catch((err) => {
+    .catch(() => {
       clearAuthCookies(event.cookies);
 
       throw redirect(307, '/login');
     });
 
-  setCookie(event.cookies, cookieKeys.accessToken, newTokenSet.access_token!);
-
-  setCookie(event.cookies, cookieKeys.refreshToken, newTokenSet.refresh_token!);
-
-  setCookie(event.cookies, cookieKeys.idToken, newTokenSet.id_token!);
-}
-
-function hasRefreshTokenCookie(event: RequestEvent) {
-  return event.cookies.get(cookieKeys.refreshToken);
-}
-
-function setCookie(cookies: Cookies, key: string, value: string): void {
-  cookies.set(key, value, {
-    httpOnly: true,
-    secure: true,
-    sameSite: true,
-    path: '/'
-  });
-}
-
-function clearAuthCookies(cookies: Cookies) {
-  Object.keys(cookieKeys).forEach((key) => {
-    // @ts-ignore
-    cookies.delete(key);
+  populateAuthCookies(event.cookies, {
+    accessToken: newTokenSet.access_token!,
+    idToken: newTokenSet.id_token!,
+    refreshToken: newTokenSet.refresh_token!
   });
 }

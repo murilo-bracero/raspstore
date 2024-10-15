@@ -3,10 +3,6 @@ import type { PageData } from '../stores/file';
 import { coreURLs } from '../config/urls';
 
 export async function getPageFiles(token: string): Promise<PageData> {
-  if (token === null) {
-    throw new Error('Unauthorized');
-  }
-
   const response = await fetch(coreURLs.files, {
     headers: {
       Authorization: `Bearer ${token}`

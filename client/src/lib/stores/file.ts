@@ -26,5 +26,3 @@ export interface FileUserData {
   userId: string;
   username: string;
 }
-
-export const files = writable<FileData[]>([]);

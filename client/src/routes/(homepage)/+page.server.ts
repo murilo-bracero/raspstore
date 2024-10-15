@@ -2,23 +2,16 @@ import { cookieKeys } from '$lib/config/cookies.js';
 import { getPageFiles } from '$lib/services/file.service';
 import { uploadFile } from '$lib/services/fs.service';
 import { type PageData } from '$lib/stores/file';
-import { fail, redirect } from '@sveltejs/kit';
+import { ActionFailure, fail } from '@sveltejs/kit';
 
-export async function load({ cookies }): Promise<PageData> {
+export async function load({ cookies }): Promise<PageData | ActionFailure> {
   const token = cookies.get(cookieKeys.accessToken);
 
   if (!token) {
-    throw redirect(307, '/login');
+    return fail(401);
   }
 
-  return getPageFiles(token).catch((err) => {
-    if (err.status === 401) {
-      //TODO:try refresh
-      throw redirect(307, '/login');
-    }
-
-    throw err;
-  });
+  return getPageFiles(token).catch((err) => fail(err.status, err));
 }
 
 export const actions = {
@@ -26,19 +19,11 @@ export const actions = {
     const token = cookies.get(cookieKeys.accessToken);
 
     if (!token) {
-      //throw redirect(307, '/login');
-      return;
+      return fail(401);
     }
 
     const data = await request.formData();
 
-    uploadFile(data, token).catch((err) => {
-      if (err.status === 401) {
-        //TODO: try refresh
-        throw redirect(307, '/login');
-      }
-
-      return fail(err.status, { error: true });
-    });
+    uploadFile(data, token);
   }
 };

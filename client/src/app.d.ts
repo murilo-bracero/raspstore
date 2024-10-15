@@ -6,9 +6,7 @@ import { UserinfoResponse } from 'openid-client';
 declare global {
   namespace App {
     // interface Error {}
-    interface Locals {
-      user: UserinfoResponse;
-    }
+    interface Locals {}
     // interface PageData {}
     // interface Platform {}
   }
