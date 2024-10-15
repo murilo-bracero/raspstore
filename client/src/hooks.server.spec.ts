@@ -1,6 +1,9 @@
 import { assert, describe, it } from 'vitest';
 import { handle } from './hooks.server';
 import { cookieKeys } from '$lib/config/cookies';
+import { AuthService } from '$lib/services/auth.service';
+import { RequestEvent } from '@sveltejs/kit';
+import { BaseClient, TokenSet } from 'openid-client';
 
 describe('test handle', () => {
   it('should handle public endpoints', async () => {
@@ -114,7 +117,23 @@ describe('test handle', () => {
     }
   });
 
-  it('should fail if resolve returns 401 and tokens were provided', async () => {
+  it('should success refresh tokens if resolve returns 401 and refresh/access tokens were provided', async () => {
+    AuthService.instance.getClient = async () => {
+      return {
+        refresh: (rt: string) => {
+          if (rt === 'refreshToken') {
+            return {
+              access_token: 'new_accessToken',
+              id_token: 'new_idToken',
+              refresh_token: 'new_refreshToken'
+            } as TokenSet | undefined;
+          }
+
+          assert.fail('wrong refresh token');
+        }
+      } as unknown as BaseClient;
+    };
+
     const event = {
       url: {
         pathname: '/'
@@ -133,6 +152,55 @@ describe('test handle', () => {
         },
         delete: (key: string) => {
           delete event.cookies._cookies[key];
+        },
+        set(key: string, value: string) {
+          event.cookies._cookies[key] = value;
+          assert.oneOf(key, Object.values(cookieKeys));
+        }
+      }
+    };
+
+    const resolve = (event: RequestEvent) => {
+      if (event.cookies.get(cookieKeys.accessToken) === 'accessToken') {
+        return { status: 401 };
+      }
+
+      return { status: 200 };
+    };
+
+    await handle({ event, resolve });
+  });
+
+  it('should fail and redirect to login if refresh tokens failed', async () => {
+    AuthService.instance.getClient = async () => {
+      return {
+        refresh: (_: string) => {
+          throw new Error('failed');
+        }
+      } as unknown as BaseClient;
+    };
+
+    const event = {
+      url: {
+        pathname: '/'
+      },
+      request: {
+        method: 'GET'
+      },
+      cookies: {
+        _cookies: {
+          [cookieKeys.accessToken]: 'accessToken',
+          [cookieKeys.idToken]: 'idToken',
+          [cookieKeys.refreshToken]: 'refreshToken'
+        },
+        get: (key: string) => {
+          return event.cookies._cookies[key];
+        },
+        delete: (key: string) => {
+          delete event.cookies._cookies[key];
+        },
+        set(_: string, __: string) {
+          assert.fail('should not set cookies');
         }
       }
     };
@@ -143,8 +211,6 @@ describe('test handle', () => {
 
     try {
       await handle({ event, resolve });
-
-      assert.fail('should not resolve');
     } catch (e: any) {
       assert.equal(e.status, 307);
       assert.equal(e.location, '/login');
