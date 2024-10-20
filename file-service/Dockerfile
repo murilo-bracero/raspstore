@@ -21,7 +21,5 @@ USER rstoreuser
 WORKDIR /home/rstoreuser
 
 COPY --chown=185 --from=build /app/file-service .
-COPY --chown=185 --from=build /app/config ./config
-COPY --chown=185 --from=build /app/sql ./sql
 
 CMD ["./file-service"]

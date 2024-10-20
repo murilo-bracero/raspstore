@@ -25,7 +25,7 @@ func main() {
 		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
-	config := config.New("config/config.yaml")
+	config := config.New()
 
 	slog.Info("Bootstrapping Application")
 
@@ -57,10 +57,6 @@ func main() {
 	fileFacade := facade.NewFileFacade(fileRepo)
 
 	fileSystemFacade := facade.NewFileSystemFacade(config)
-
-	if err != nil {
-		slog.Error("Error initializing database", "err", err)
-	}
 
 	sigc := make(chan os.Signal, 1)
 
