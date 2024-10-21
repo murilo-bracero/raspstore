@@ -22,8 +22,6 @@ func (l *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	send(w, &model.LoginResponse{
 		AccessToken: token,
 		ExpiresIn:   int(time.Now().Add(1 * time.Hour).Unix()),
