@@ -2,12 +2,14 @@ package handler_test
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase/mocks"
+	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -40,16 +42,15 @@ func TestAuthenticate(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 
-		jar := rr.Result().Cookies()
+		var res model.LoginResponse
 
-		assert.NotNil(t, jar, "Cookie Jar is nil")
+		err := json.Unmarshal(rr.Body.Bytes(), &res)
 
-		ck := jar[0]
+		assert.NoError(t, err)
 
-		assert.Equal(t, "JWT-TOKEN", ck.Name)
-		assert.Equal(t, "token", ck.Value)
-		assert.True(t, ck.HttpOnly)
-		assert.True(t, ck.Secure)
+		assert.Equal(t, "token", res.AccessToken)
+		assert.NotEmpty(t, res.ExpiresIn)
+		assert.Equal(t, "Bearer", res.Prefix)
 	})
 
 	t.Run("should return 401 Unauthenticated if usecase returns error", func(t *testing.T) {
@@ -71,10 +72,6 @@ func TestAuthenticate(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusUnauthorized, rr.Code)
-
-		jar := rr.Result().Cookies()
-
-		assert.Empty(t, jar)
 	})
 
 	t.Run("should return 401 Unauthenticated if credentials not present", func(t *testing.T) {
@@ -91,9 +88,5 @@ func TestAuthenticate(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusUnauthorized, rr.Code)
-
-		jar := rr.Result().Cookies()
-
-		assert.Empty(t, jar)
 	})
 }

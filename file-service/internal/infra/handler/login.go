@@ -27,6 +27,6 @@ func (l *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	send(w, &model.LoginResponse{
 		AccessToken: token,
 		ExpiresIn:   int(time.Now().Add(1 * time.Hour).Unix()),
-		Prefix:      "Bearer ",
+		Prefix:      "Bearer",
 	})
 }

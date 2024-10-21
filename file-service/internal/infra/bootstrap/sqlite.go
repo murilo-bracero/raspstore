@@ -7,8 +7,9 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
-	"github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
+	rssql "github.com/murilo-bracero/raspstore/file-service/sql"
 )
 
 type SQLiteBootstraper struct {
@@ -37,7 +38,7 @@ func (b *SQLiteBootstraper) Bootstrap(ctx context.Context, config *config.Config
 		return err
 	}
 
-	fileSource, err := (&file.File{}).Open("file://sql/migrations")
+	fileSource, err := iofs.New(rssql.Migrations, "migrations")
 
 	if err != nil {
 		slog.Error("error referencing migrations directory", "err", err)

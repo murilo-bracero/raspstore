@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"text/template"
 
+	rc "github.com/murilo-bracero/raspstore/file-service/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,20 +32,14 @@ type AuthConfig struct {
 	PublicKeyURL string `yaml:"public-key-url"`
 }
 
-func New(path string) *Config {
-	file, err := os.ReadFile(path)
-	if err != nil {
-		slog.Error("could not find config yaml file with the provided path", "error", err, "path", path)
-		os.Exit(1)
-	}
-
+func New() *Config {
 	t := template.New("configParser").Funcs(template.FuncMap{
 		"envOrKey":        envOrKey,
 		"envOrKeyInt":     envOrKeyInt,
 		"envOrKeyBoolean": envOrKeyBoolean,
 	})
 
-	t, err = t.Parse(string(file))
+	t, err := t.Parse(string(rc.ConfigYaml))
 	if err != nil {
 		slog.Error("error while parsing template against yaml file", "error", err)
 		os.Exit(1)
