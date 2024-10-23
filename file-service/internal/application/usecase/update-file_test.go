@@ -1,18 +1,14 @@
 package usecase_test
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	"github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository/mocks"
 	"github.com/stretchr/testify/assert"
@@ -22,16 +18,11 @@ import (
 func TestUpdateFileUseCase_Execute(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	token := jwt.New()
-	err := token.Set("sub", "userId")
+	_, err := createFile(uuid.NewString())
 	assert.NoError(t, err)
 
-	_, err = createFile(uuid.NewString())
-	assert.NoError(t, err)
-
-	ctx := context.WithValue(context.WithValue(context.Background(),
-		chiMiddleware.RequestIDKey, "trace12345"),
-		middleware.UserClaimsCtxKey, token)
+	traceId := "trace12345"
+	userId := "userId"
 
 	t.Run("ValidFileUpdate", func(t *testing.T) {
 		mockObj := mocks.NewMockTxFilesRepository(mockCtrl)
@@ -51,7 +42,7 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 			Filename: "updated.txt",
 		}
 
-		fileMetadata, err := useCase.Execute(ctx, file)
+		fileMetadata, err := useCase.Execute(file, userId, traceId)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, fileMetadata)
@@ -71,7 +62,7 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 			Filename: "updated.txt",
 		}
 
-		fileMetadata, err := useCase.Execute(ctx, file)
+		fileMetadata, err := useCase.Execute(file, userId, traceId)
 
 		assert.Error(t, err)
 		assert.Nil(t, fileMetadata)
@@ -94,7 +85,7 @@ func TestUpdateFileUseCase_Execute(t *testing.T) {
 			Filename: "updated.txt",
 		}
 
-		fileMetadata, err := useCase.Execute(ctx, file)
+		fileMetadata, err := useCase.Execute(file, userId, traceId)
 
 		assert.Error(t, err)
 		assert.Nil(t, fileMetadata)

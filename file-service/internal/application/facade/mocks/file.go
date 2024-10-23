@@ -81,3 +81,17 @@ func (mr *MockFileFacadeMockRecorder) FindById(requesterId, fileId any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockFileFacade)(nil).FindById), requesterId, fileId)
 }
+
+// Save mocks base method.
+func (m *MockFileFacade) Save(file *entity.File) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Save indicates an expected call of Save.
+func (mr *MockFileFacadeMockRecorder) Save(file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockFileFacade)(nil).Save), file)
+}

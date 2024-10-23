@@ -19,16 +19,12 @@ type ApiServerParams struct {
 	Config            *config.Config
 	FileFacade        facade.FileFacade
 	FileSystemFacade  facade.FileSystemFacade
-	CreateFileUseCase usecase.CreateFileUseCase
 	UpdateFileUseCase usecase.UpdateFileUseCase
-	LoginPAMUseCase   usecase.LoginPAMUseCase
 }
 
 func StartApiServer(params *ApiServerParams) {
 	appHandler := handler.New(
-		params.CreateFileUseCase,
 		params.UpdateFileUseCase,
-		params.LoginPAMUseCase,
 		params.FileFacade,
 		params.FileSystemFacade,
 		params.Config)

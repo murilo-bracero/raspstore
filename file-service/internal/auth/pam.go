@@ -1,4 +1,4 @@
-package usecase
+package auth
 
 import (
 	"errors"
@@ -21,22 +21,8 @@ var (
 	ErrPAMNotEnabled      = errors.New("pam not enable for this domain")
 )
 
-type LoginPAMUseCase interface {
-	Execute(username, password string) (string, error)
-}
-
-type loginPAMUseCase struct {
-	config *config.Config
-}
-
-var _ LoginPAMUseCase = (*loginPAMUseCase)(nil)
-
-func NewLoginPAMUseCase(config *config.Config) *loginPAMUseCase {
-	return &loginPAMUseCase{config: config}
-}
-
-func (l *loginPAMUseCase) Execute(username, password string) (string, error) {
-	if !l.config.Auth.PAMEnabled {
+func LoginPAM(config *config.Config, username, password string) (string, error) {
+	if !config.Auth.PAMEnabled {
 		return "", ErrPAMNotEnabled
 	}
 
@@ -71,14 +57,14 @@ func (l *loginPAMUseCase) Execute(username, password string) (string, error) {
 		return "", ErrNotAuthenticated
 	}
 
-	privateKey, err := l.readPrivateKey()
+	privateKey, err := readPrivateKey(config.Storage.Path)
 
 	if err != nil {
 		slog.Error("could not read Private Key", "err", err)
 		return "", ErrNotAuthenticated
 	}
 
-	token, err := l.generateJWT(username, privateKey)
+	token, err := generateJWT(username, privateKey)
 
 	if err != nil {
 		slog.Error("could not generate JWT", "err", nil)
@@ -88,8 +74,8 @@ func (l *loginPAMUseCase) Execute(username, password string) (string, error) {
 	return token, nil
 }
 
-func (l *loginPAMUseCase) readPrivateKey() (*jwk.Key, error) {
-	pkPath := path.Join(l.config.Storage.Path, "secrets", "key.json")
+func readPrivateKey(storagePath string) (*jwk.Key, error) {
+	pkPath := path.Join(storagePath, "secrets", "key.json")
 
 	fpk, err := os.ReadFile(pkPath)
 
@@ -112,7 +98,7 @@ func (l *loginPAMUseCase) readPrivateKey() (*jwk.Key, error) {
 	return &jPrivateKey, nil
 }
 
-func (l *loginPAMUseCase) generateJWT(subject string, pk *jwk.Key) (string, error) {
+func generateJWT(subject string, pk *jwk.Key) (string, error) {
 	tkn, err := jwt.NewBuilder().
 		Issuer("rstore").
 		IssuedAt(time.Now()).

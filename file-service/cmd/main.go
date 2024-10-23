@@ -48,13 +48,9 @@ func main() {
 
 	txFileRepo := repository.NewTxFilesRepository(ctx, conn.Db())
 
-	loginPAMUseCase := usecase.NewLoginPAMUseCase(config)
-
-	createFileUseCase := usecase.NewCreateFileUseCase(config, fileRepo)
-
 	updateFileUseCase := usecase.NewUpdateFileUseCase(txFileRepo)
 
-	fileFacade := facade.NewFileFacade(fileRepo)
+	fileFacade := facade.NewFileFacade(config, fileRepo)
 
 	fileSystemFacade := facade.NewFileSystemFacade(config)
 
@@ -78,10 +74,8 @@ func main() {
 
 	server.StartApiServer(&server.ApiServerParams{
 		Config:            config,
-		CreateFileUseCase: createFileUseCase,
 		FileFacade:        fileFacade,
 		FileSystemFacade:  fileSystemFacade,
-		LoginPAMUseCase:   loginPAMUseCase,
 		UpdateFileUseCase: updateFileUseCase,
 	})
 }

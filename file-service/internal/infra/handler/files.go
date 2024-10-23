@@ -12,7 +12,6 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/mapper"
-	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
@@ -25,7 +24,7 @@ func (f *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	secretQuery := r.URL.Query().Get("secret")
 
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
 
 	secret, _ := strconv.ParseBool(secretQuery)
 
@@ -41,7 +40,7 @@ func (f *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 
 func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
 
 	fileId := chi.URLParam(r, "id")
 
@@ -57,6 +56,7 @@ func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
 
 func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
+	token := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
 
 	var req model.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -79,7 +79,7 @@ func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		Filename: req.Filename,
 	}
 
-	fileMetadata, err := f.updateFileUseCase.Execute(r.Context(), file)
+	fileMetadata, err := f.updateFileUseCase.Execute(file, token.Subject(), traceId)
 
 	if err == repository.ErrFileDoesNotExists {
 		notFound(w, traceId)
@@ -100,7 +100,7 @@ func (f *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	slog.Info(fileId)
 
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
 
 	if err := f.fileFacade.DeleteById(traceId, user.Subject(), fileId); err != nil {
 		internalServerError(w, traceId)

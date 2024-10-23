@@ -1,18 +1,14 @@
 package usecase
 
 import (
-	"context"
 	"log/slog"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
-	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 )
 
 type UpdateFileUseCase interface {
-	Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error)
+	Execute(file *entity.File, userId, traceId string) (fileMetadata *entity.File, err error)
 }
 
 type updateFileUseCase struct {
@@ -23,10 +19,7 @@ func NewUpdateFileUseCase(repo repository.TxFilesRepository) *updateFileUseCase 
 	return &updateFileUseCase{repo: repo}
 }
 
-func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error) {
-	user := ctx.Value(m.UserClaimsCtxKey).(jwt.Token)
-	traceId := ctx.Value(chiMiddleware.RequestIDKey).(string)
-
+func (c *updateFileUseCase) Execute(file *entity.File, userId, traceId string) (fileMetadata *entity.File, err error) {
 	tx, err := c.repo.Begin()
 
 	if err != nil {
@@ -34,7 +27,7 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 		return nil, err
 	}
 
-	fileMetadata, err = c.repo.FindById(tx, user.Subject(), file.FileId)
+	fileMetadata, err = c.repo.FindById(tx, userId, file.FileId)
 
 	if err != nil {
 		slog.Error("Could not find file", "traceId", traceId, "fileId", file.FileId, "error", err)
@@ -52,7 +45,7 @@ func (c *updateFileUseCase) Execute(ctx context.Context, file *entity.File) (fil
 		}
 	}
 
-	if err = c.repo.Update(tx, user.Subject(), fileMetadata); err != nil {
+	if err = c.repo.Update(tx, userId, fileMetadata); err != nil {
 		slog.Error("Could not update file", "traceId", traceId, "fileId", file.FileId, "error", err)
 		return nil, err
 	}
