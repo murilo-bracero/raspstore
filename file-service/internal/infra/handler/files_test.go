@@ -18,7 +18,6 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	apiHandler "github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
-	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -38,12 +37,12 @@ func TestGetAllFilesSuccess(t *testing.T) {
 		Count:   0,
 	}, nil)
 
-	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
+	ctr := apiHandler.New(nil, ff, nil, nil)
 
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, token)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -68,7 +67,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 		Count:   0,
 	}, nil)
 
-	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
+	ctr := apiHandler.New(nil, ff, nil, nil)
 
 	page := 0
 	size := 3
@@ -76,7 +75,7 @@ func TestGetAllFilesPaginatedSuccess(t *testing.T) {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, token)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -98,7 +97,7 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 
 	ff.EXPECT().FindAll(gomock.Any(), gomock.Any(), 0, 3, "", false).Return(nil, errors.New("generic error"))
 
-	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
+	ctr := apiHandler.New(nil, ff, nil, nil)
 
 	page := 0
 	size := 3
@@ -106,7 +105,7 @@ func TestGetAllFilesPaginatedInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, token)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -130,7 +129,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 
 	ff.EXPECT().DeleteById(gomock.Any(), gomock.Any(), random).Return(nil)
 
-	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
+	ctr := apiHandler.New(nil, ff, nil, nil)
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", random)
@@ -138,7 +137,7 @@ func TestDeleteFileSuccess(t *testing.T) {
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, token)
 	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 	req = req.WithContext(ctx)
 
@@ -163,7 +162,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 	ff.EXPECT().DeleteById("test-trace-id", "userId", random).Return(errors.New("generic error"))
 
-	ctr := apiHandler.New(nil, nil, nil, ff, nil, nil)
+	ctr := apiHandler.New(nil, ff, nil, nil)
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", random)
@@ -171,7 +170,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-	ctx = context.WithValue(ctx, m.UserClaimsCtxKey, token)
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, token)
 	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 	req = req.WithContext(ctx)
 
@@ -185,7 +184,7 @@ func TestDeleteFileInternalServerError(t *testing.T) {
 
 func TestUpdateFileSuccess(t *testing.T) {
 	uc := &updateUseCaseMock{}
-	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
+	ctr := apiHandler.New(uc, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -197,6 +196,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, jwt.New())
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -225,7 +225,7 @@ func TestUpdateFileSuccess(t *testing.T) {
 
 func TestUpdateFileNotFound(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowNotFound: true}
-	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
+	ctr := apiHandler.New(uc, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -237,6 +237,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, jwt.New())
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -249,7 +250,7 @@ func TestUpdateFileNotFound(t *testing.T) {
 
 func TestUpdateFileInternalServerError(t *testing.T) {
 	uc := &updateUseCaseMock{shouldThrowError: true}
-	ctr := apiHandler.New(nil, uc, nil, nil, nil, nil)
+	ctr := apiHandler.New(uc, nil, nil, nil)
 
 	random := uuid.NewString()
 	reqBody := []byte(`{
@@ -261,6 +262,7 @@ func TestUpdateFileInternalServerError(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
+	ctx = context.WithValue(ctx, apiHandler.UserClaimsCtxKey, jwt.New())
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -276,7 +278,7 @@ type updateUseCaseMock struct {
 	shouldThrowNotFound bool
 }
 
-func (c *updateUseCaseMock) Execute(ctx context.Context, file *entity.File) (fileMetadata *entity.File, err error) {
+func (c *updateUseCaseMock) Execute(file *entity.File, userId, traceId string) (fileMetadata *entity.File, err error) {
 	if c.shouldThrowError {
 		return nil, errors.New("generic error")
 	}

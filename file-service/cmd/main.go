@@ -25,7 +25,7 @@ func main() {
 		slog.Warn("Could not load .env file. Using system variables instead")
 	}
 
-	config := config.New("config/config.yaml")
+	config := config.New()
 
 	slog.Info("Bootstrapping Application")
 
@@ -48,19 +48,11 @@ func main() {
 
 	txFileRepo := repository.NewTxFilesRepository(ctx, conn.Db())
 
-	loginPAMUseCase := usecase.NewLoginPAMUseCase(config)
-
-	createFileUseCase := usecase.NewCreateFileUseCase(config, fileRepo)
-
 	updateFileUseCase := usecase.NewUpdateFileUseCase(txFileRepo)
 
-	fileFacade := facade.NewFileFacade(fileRepo)
+	fileFacade := facade.NewFileFacade(config, fileRepo)
 
 	fileSystemFacade := facade.NewFileSystemFacade(config)
-
-	if err != nil {
-		slog.Error("Error initializing database", "err", err)
-	}
 
 	sigc := make(chan os.Signal, 1)
 
@@ -82,10 +74,8 @@ func main() {
 
 	server.StartApiServer(&server.ApiServerParams{
 		Config:            config,
-		CreateFileUseCase: createFileUseCase,
 		FileFacade:        fileFacade,
 		FileSystemFacade:  fileSystemFacade,
-		LoginPAMUseCase:   loginPAMUseCase,
 		UpdateFileUseCase: updateFileUseCase,
 	})
 }

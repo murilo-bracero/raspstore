@@ -1,16 +1,16 @@
-package usecase_test
+package facade_test
 
 import (
 	"testing"
 
-	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository/mocks"
 	"go.uber.org/mock/gomock"
 )
 
-func TestCreateFileUseCase(t *testing.T) {
+func TestSave(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	mockConfig := &config.Config{Storage: config.StorageConfig{Path: "./", Limit: "1000M"}}
@@ -20,14 +20,14 @@ func TestCreateFileUseCase(t *testing.T) {
 		mockObj.EXPECT().Save(gomock.Any()).Return(nil)
 		mockObj.EXPECT().FindUsageByUserId("user1").Return(int64(100), nil)
 
-		useCase := usecase.NewCreateFileUseCase(mockConfig, mockObj)
+		ff := facade.NewFileFacade(mockConfig, mockObj)
 
 		file := &entity.File{
 			Owner: "user1",
 			Size:  toMb(100),
 		}
 
-		err := useCase.Execute(file)
+		err := ff.Save(file)
 
 		if err != nil {
 			t.Errorf("Expected no error, but got: %v", err)
@@ -38,16 +38,16 @@ func TestCreateFileUseCase(t *testing.T) {
 		mockObj := mocks.NewMockFilesRepository(mockCtrl)
 		mockObj.EXPECT().FindUsageByUserId("user2").Return(int64(100), nil)
 
-		useCase := usecase.NewCreateFileUseCase(mockConfig, mockObj)
+		ff := facade.NewFileFacade(mockConfig, mockObj)
 
 		file := &entity.File{
 			Owner: "user2",
 			Size:  toMb(1001),
 		}
 
-		err := useCase.Execute(file)
+		err := ff.Save(file)
 
-		if err != usecase.ErrNotAvailableSpace {
+		if err != facade.ErrNotAvailableSpace {
 			t.Errorf("Expected ErrNotAvailableSpace, but got: %v", err)
 		}
 	})

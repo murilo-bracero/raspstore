@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"os"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 type SecretsBootstraper struct{}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/usecase"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 )
@@ -14,23 +15,22 @@ import (
 const traceIdHeaderKey = "X-Trace-Id"
 
 type Handler struct {
-	createFileUseCase usecase.CreateFileUseCase
 	updateFileUseCase usecase.UpdateFileUseCase
-	loginPAMUseCase   usecase.LoginPAMUseCase
 	fileFacade        facade.FileFacade
 	fileSystemFacade  facade.FileSystemFacade
 	config            *config.Config
+	// Public to make testing easier
+	LoginFunc func(*config.Config, string, string) (string, error)
 }
 
 func New(
-	createFileUseCase usecase.CreateFileUseCase,
 	updateFileUseCase usecase.UpdateFileUseCase,
-	loginPAMUseCase usecase.LoginPAMUseCase,
 	fileFacade facade.FileFacade,
 	fileSystemFacade facade.FileSystemFacade,
 	config *config.Config,
+
 ) *Handler {
-	return &Handler{createFileUseCase, updateFileUseCase, loginPAMUseCase, fileFacade, fileSystemFacade, config}
+	return &Handler{updateFileUseCase, fileFacade, fileSystemFacade, config, auth.LoginPAM}
 }
 
 func badRequest(w http.ResponseWriter, body model.ErrorResponse, traceId string) {
@@ -69,13 +69,9 @@ func ok(w http.ResponseWriter, body interface{}, traceId string) {
 
 func send(w http.ResponseWriter, obj interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	if jsonResponse, err := json.Marshal(obj); err == nil {
-		write(w, jsonResponse)
-	}
-}
-
-func write(w http.ResponseWriter, body []byte) {
-	if _, err := w.Write(body); err != nil {
-		slog.Error("error while writing message to response body", "error", err)
+	if body, err := json.Marshal(obj); err == nil {
+		if _, err := w.Write(body); err != nil {
+			slog.Error("error while writing message to response body", "error", err)
+		}
 	}
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
-	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -29,7 +28,7 @@ func TestDownload(t *testing.T) {
 
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
-		ctx := context.WithValue(req.Context(), m.UserClaimsCtxKey, token)
+		ctx := context.WithValue(req.Context(), handler.UserClaimsCtxKey, token)
 		ctx = context.WithValue(ctx, chim.RequestIDKey, "trace-id")
 		return req.WithContext(ctx)
 	}
@@ -59,7 +58,7 @@ func TestDownload(t *testing.T) {
 
 		ffc.EXPECT().Download("trace-id", defaultUserId, "4e2bc94b-a6b6-4c44-9512-79b5eb654524").Return(fileMock, nil)
 
-		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
+		ctr := handler.New(nil, ff, ffc, nil)
 
 		req := createReq()
 
@@ -81,7 +80,7 @@ func TestDownload(t *testing.T) {
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, repository.ErrFileDoesNotExists)
 
-		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
+		ctr := handler.New(nil, ff, ffc, nil)
 
 		req := createReq()
 
@@ -101,7 +100,7 @@ func TestDownload(t *testing.T) {
 
 		ff.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(nil, errors.New("generic error"))
 
-		ctr := handler.New(nil, nil, nil, ff, ffc, nil)
+		ctr := handler.New(nil, ff, ffc, nil)
 
 		req := createReq()
 

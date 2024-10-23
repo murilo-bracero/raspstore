@@ -9,11 +9,10 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
-	m "github.com/murilo-bracero/raspstore/file-service/internal/infra/middleware"
 )
 
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
-	usr := r.Context().Value(m.UserClaimsCtxKey).(jwt.Token)
+	usr := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
 	traceId := r.Context().Value(middleware.RequestIDKey).(string)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		slog.Error("Could not allocate MultipartForm parser", "traceId", traceId, "error", err)
@@ -38,7 +37,7 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.createFileUseCase.Execute(fm); err != nil {
+	if err := h.fileFacade.Save(fm); err != nil {
 		h.handleCreateUseCaseError(w, fm, traceId)
 		return
 	}
