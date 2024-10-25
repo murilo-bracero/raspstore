@@ -1,6 +1,0 @@
-.env*
-tmp/
-.air.*
-*.db
-.vscode
-*.swp
