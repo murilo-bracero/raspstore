@@ -1,0 +1,362 @@
+openapi: 3.0.3
+info:
+  title: Raspstore File Service
+  description: Microservice REST specification of file-service endpoints.
+  contact:
+    email: soon@todo.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:9090/file-service
+tags:
+  - name: files
+    description: File Metadata workflow
+  - name: upload
+    description: Upload a file
+  - name: download
+    description: Download a file
+
+paths:
+  /v1/files:
+    get:
+      tags:
+        - files
+      summary: Get All File Metadata from logged in user
+      description: |- 
+        Get all file metadata based on parameters and accessToken provided.
+        This can only be done by the logged in user.
+        
+        Secret files will only be sent when the query parameter "secret" is set to true.
+      operationId: findAllFileInfoByLoggedUser
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParameter'
+        - $ref: '#/components/parameters/SizeQueryParameter'
+        - $ref: '#/components/parameters/FilenameQueryParameter'
+        - $ref: '#/components/parameters/SecretQueryParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessFileMetadataListResponse'
+        '500':
+          description: Internal Server Error
+  /v1/files/{fileId}:
+    get:
+      tags:
+        - files
+      summary: Find file metadata by ID
+      description: |-
+        Find file metada by file ID.
+        This action can only be done by the logged in user.
+        
+        If "secret" tag is true, only the owner of the resource can see it.
+      operationId: getFileById
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessFindFileMetadataResponse'
+        '404':
+          headers:
+            schema:
+              $ref: '#/components/headers/X-Trace-Id'
+          description: File with provided ID not found.
+        '500':
+          headers:
+            schema:
+              $ref: '#/components/headers/X-Trace-Id'
+          description: Internal Server Error.
+    put:
+      tags:
+        - files
+      summary: Update file metadata
+      description: |- 
+        Update file metadata. 
+        This action can only be done by the logged in user.
+        
+        If "secret" tag is true, viewers/editors are ignored.
+      operationId: updateFileMetadata
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateFileMetadataRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessUpdateFileMetadataResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestUpdateFileMetadataResponse'
+        '404':
+          description: file info with provided id not found
+        '409':
+          description: file with provided info already exists
+        '500':
+          description: Internal Server Error
+    delete:
+      tags:
+        - files
+      summary: Delete file
+      description: |- 
+        Removes file metadata and the file itself from the system.
+        
+        This can only be done by the logged in user, that should be the owner of
+        the file and cannot be undone.
+      operationId: deleteFile
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      responses:
+        '204':
+          description: File removed successfully
+        '400':
+          description: Invalid fileId
+        '404':
+          description: File not found
+        '500':
+          description: Internal Server Error
+  /v1/uploads:
+    post:
+      tags:
+        - upload
+      summary: Upload File
+      description: |-
+        Upload file to server. This can only be done by the logged in user.
+      operationId: fileUpload
+      requestBody:
+        $ref: '#/components/requestBodies/UploadFileRequest'
+      responses:
+        '204':
+          description: 'File uploaded successfully'
+        '400':
+          $ref: '#/components/responses/BadRequestFileUpload'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+        '500':
+          description: Internal Server Error
+  /v1/downloads/{fileId}:
+    get:
+      tags:
+        - download
+      summary: Download file
+      description: |-
+        Download file that logged in user has access.
+        This action can only be done by the logged in user.
+      operationId: downloadFile
+      parameters:
+        - $ref: '#/components/parameters/FileIdPathParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessFileResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: file info with provided id not found
+        '500':
+          description: Internal Server Error
+components:
+  schemas:
+    UploadFileRepresentation:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+    UserInfoRepresentation:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: 63d14f9e9f76d34fa3b0a4a1
+        username:
+          type: string
+          example: cool-username
+    FileMetadataRepresentation:
+      type: object
+      properties:
+        fileId:
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
+        filename:
+          type: string
+          example: file.txt
+        size:
+          type: number
+          format: int64
+          example: 1024
+        secret:
+          type: boolean
+        owner:
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
+          description: |-
+            User representation of the owner of the file. 
+            There can exists only one owner per file
+        createdBy:
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
+        updatedBy:
+          type: string
+          example: 114c1b5f-44e6-4aa1-863f-f0e49903653b
+        createdAt:
+          type: string
+          format: datetime
+          example: '2024-07-26T16:46:10.439-03:00'
+        updatedAt:
+          type: string
+          format: datetime
+          example: '2024-07-26T16:46:10.439-03:00'
+    PageRepresentation:
+      type: object
+      properties:
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        next:
+          type: string
+          example: 'http://localhost:9000/file-service/files?page=2&size=10'
+    UpdateFileMetadataRepresentation:
+      type: object
+      properties:
+        filename:
+          type: string
+          example: coolfile.bpm
+        secret:
+          type: boolean
+    ApiErrorException:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Field email must not be null or empty'
+  requestBodies:
+    UploadFileRequest:
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/components/schemas/UploadFileRepresentation'
+    UpdateFileMetadataRequest:
+      description: |- 
+        File Metadata request object required to update a existing file info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateFileMetadataRepresentation'
+  parameters:
+    FilenameQueryParameter:
+      name: filename
+      in: query
+      schema:
+        type: string
+        example: cv.pdf
+    PageQueryParameter:
+      name: page
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    SizeQueryParameter:
+      name: size
+      required: true
+      in: query
+      schema:
+        type: integer
+        example: 1
+    SecretQueryParameter:
+      name: secret
+      in: query
+      schema:
+        type: boolean
+    FileIdPathParameter:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+        example: 2133bfe8-367c-458c-83ab-10a8d885339c
+  
+  headers:
+    X-Trace-Id:
+      schema:
+        type: string
+      description: The id of the request for debug and error tracing purposes
+      example: dff475fe-cb88-4c9e-b718-36180c634246
+
+  responses:
+    BadRequestFileUpload:
+      description: payload invalid or malformed
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+    SuccessFileResponse:
+      description: File retrieved successfully
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            example: file binary
+    SuccessUpdateFileMetadataResponse:
+      description: File metadata updated successfully
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileMetadataRepresentation'
+    SuccessFindFileMetadataResponse:
+      description: File metadata found
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileMetadataRepresentation'
+    BadRequestUpdateFileMetadataResponse:
+      description: payload invalid or malformed
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorException'
+    SuccessFileMetadataListResponse:
+      headers:
+        schema:
+          $ref: '#/components/headers/X-Trace-Id'
+      description: List of file metadata object
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PageRepresentation'
+              - type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileMetadataRepresentation'
+  
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
