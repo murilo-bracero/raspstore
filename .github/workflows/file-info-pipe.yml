@@ -2,9 +2,9 @@ name: Go package
 on:
   push:
     paths:
-    - 'file-service/**'
+    - 'raspstore-api/**'
 jobs: 
-  file-info-service-pipeline:
+  raspstore-api-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,11 +18,11 @@ jobs:
         run: sudo apt-get install libpam0g-dev
 
       - name: Test
-        working-directory: file-service
+        working-directory: raspstore-api
         run: go test -v ./...
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3.7.0
         with:
-          working-directory: file-service
+          working-directory: raspstore-api
           version: v1.54
