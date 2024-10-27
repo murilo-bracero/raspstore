@@ -26,3 +26,11 @@ type FilesPermission struct {
 	Permission   string
 	UserID       string
 }
+
+type User struct {
+	UserID       string
+	Username     string
+	PasswordHash string
+	Name         sql.NullString
+	RefreshToken sql.NullString
+}

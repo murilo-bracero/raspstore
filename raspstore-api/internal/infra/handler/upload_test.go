@@ -40,6 +40,11 @@ func TestUpload(t *testing.T) {
 		return req
 	}
 
+	newHandler := func(ff *mocks.MockFileFacade, ffc *mocks.MockFileSystemFacade) *handler.Handler {
+		ctr := handler.New(nil, ff, nil, ffc, config)
+		return ctr
+	}
+
 	t.Run("happy path", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 
@@ -47,7 +52,7 @@ func TestUpload(t *testing.T) {
 
 		ff := mocks.NewMockFileFacade(mockCtrl)
 
-		ctr := handler.New(nil, ff, ffc, config)
+		ctr := newHandler(ff, ffc)
 
 		ff.EXPECT().Save(gomock.Any()).Return(nil)
 		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any())
@@ -85,7 +90,7 @@ func TestUpload(t *testing.T) {
 
 		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
-		ctr := handler.New(nil, nil, ffc, config)
+		ctr := newHandler(nil, ffc)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -108,7 +113,7 @@ func TestUpload(t *testing.T) {
 
 		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
-		ctr := handler.New(nil, nil, ffc, config)
+		ctr := newHandler(nil, ffc)
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
@@ -131,7 +136,7 @@ func TestUpload(t *testing.T) {
 
 		ffc := mocks.NewMockFileSystemFacade(mockCtrl)
 
-		ctr := handler.New(nil, nil, ffc, config)
+		ctr := newHandler(nil, ffc)
 
 		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any()).Return(errors.New("generic error"))
 
@@ -170,7 +175,7 @@ func TestUpload(t *testing.T) {
 
 		ff := mocks.NewMockFileFacade(mockCtrl)
 
-		ctr := handler.New(nil, ff, ffc, config)
+		ctr := newHandler(ff, ffc)
 
 		ff.EXPECT().Save(gomock.Any()).Return(errors.New("generic error"))
 		ffc.EXPECT().Upload(defaultUserId, gomock.Any(), gomock.Any())

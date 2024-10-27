@@ -64,3 +64,7 @@ SELECT SUM(f.size) as totalSize
 FROM files f
 WHERE f.owner_id = ?
 GROUP BY f.owner_id;
+
+-- name: CreateUser :exec
+INSERT INTO users (user_id, username, password_hash, name, refresh_token)
+VALUES (?, ?, ?, ?, ?);

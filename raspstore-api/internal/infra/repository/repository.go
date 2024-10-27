@@ -9,8 +9,12 @@ import (
 
 var ErrFileDoesNotExists = errors.New("file with provided ID does not exists")
 
+type Repository[T any] interface {
+	Save(file *T) error
+}
+
 type FilesRepository interface {
-	Save(file *entity.File) error
+	Repository[entity.File]
 	FindById(userId string, fileId string) (*entity.File, error)
 	FindUsageByUserId(userId string) (usage int64, err error)
 	Delete(userId string, fileId string) error

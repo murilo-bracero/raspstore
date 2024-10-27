@@ -17,6 +17,7 @@ const traceIdHeaderKey = "X-Trace-Id"
 type Handler struct {
 	updateFileUseCase usecase.UpdateFileUseCase
 	fileFacade        facade.FileFacade
+	userFacade        facade.UserFacade
 	fileSystemFacade  facade.FileSystemFacade
 	config            *config.Config
 	// Public to make testing easier
@@ -26,11 +27,11 @@ type Handler struct {
 func New(
 	updateFileUseCase usecase.UpdateFileUseCase,
 	fileFacade facade.FileFacade,
+	userFacade facade.UserFacade,
 	fileSystemFacade facade.FileSystemFacade,
 	config *config.Config,
-
 ) *Handler {
-	return &Handler{updateFileUseCase, fileFacade, fileSystemFacade, config, auth.LoginPAM}
+	return &Handler{updateFileUseCase, fileFacade, userFacade, fileSystemFacade, config, auth.LoginPAM}
 }
 
 func badRequest(w http.ResponseWriter, body model.ErrorResponse, traceId string) {

@@ -18,6 +18,7 @@ import (
 type ApiServerParams struct {
 	Config            *config.Config
 	FileFacade        facade.FileFacade
+	UserFacade        facade.UserFacade
 	FileSystemFacade  facade.FileSystemFacade
 	UpdateFileUseCase usecase.UpdateFileUseCase
 }
@@ -26,6 +27,7 @@ func StartApiServer(params *ApiServerParams) {
 	appHandler := handler.New(
 		params.UpdateFileUseCase,
 		params.FileFacade,
+		params.UserFacade,
 		params.FileSystemFacade,
 		params.Config)
 

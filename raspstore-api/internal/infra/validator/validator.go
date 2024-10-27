@@ -15,3 +15,15 @@ func ValidateUpdateFileRequest(req *model.UpdateFileRequest) error {
 
 	return nil
 }
+
+func ValidateRegisterRequest(req *model.CreateUserRequest) error {
+	if req.Username == "" {
+		return errors.New("field Username must not be empty")
+	}
+
+	if req.Password == "" {
+		return errors.New("field Password must not be empty")
+	}
+
+	return nil
+}

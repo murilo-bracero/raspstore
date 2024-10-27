@@ -1,23 +1,22 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/validator"
 )
-
-const authorizationHeader = "Authorization"
 
 const serviceBaseRoute = "/file-service"
 const fileBaseRoute = serviceBaseRoute + "/v1/files"
 const uploadRoute = serviceBaseRoute + "/v1/uploads"
 const downloadRoute = serviceBaseRoute + "/v1/downloads/{fileId}"
 const loginRoute = serviceBaseRoute + "/v1/login"
+const registerRoute = serviceBaseRoute + "/v1/register"
 
 type FilesRouter interface {
 	MountRoutes() *chi.Mux
@@ -45,7 +44,7 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 
 	// private routes
 	router.Route("/", func(r chi.Router) {
-		r.Use(tokenMiddleware(fr.jwtValidator))
+		r.Use(auth.TokenMiddleware(fr.jwtValidator))
 
 		r.Route(fileBaseRoute, func(r1 chi.Router) {
 			r1.Get("/", fr.handler.ListFiles)
@@ -58,7 +57,9 @@ func (fr *filesRouter) MountRoutes() *chi.Mux {
 		r.Get(downloadRoute, fr.handler.Download)
 	})
 
+	// public routes
 	router.Post(loginRoute, fr.handler.Authenticate)
+	router.Post(registerRoute, fr.handler.Register)
 
 	return router
 }
@@ -76,22 +77,4 @@ func cors(h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(w, r)
 	})
-}
-
-func tokenMiddleware(validator *validator.JWTValidator) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tkn, err := validator.Validate(r.Context(), r.Header.Get(authorizationHeader))
-
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-				return
-			}
-
-			ctx := context.WithValue(r.Context(), handler.UserClaimsCtxKey, *tkn)
-			r = r.WithContext(ctx)
-
-			h.ServeHTTP(w, r)
-		})
-	}
 }

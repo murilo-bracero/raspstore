@@ -400,7 +400,6 @@ func TestService(t *testing.T) {
 	})
 
 	t.Run("DELETE /files - Delete file by ID should return NO CONTENT", func(t *testing.T) {
-
 		fc, err := uploadFile(apiTest, token, uuid.NewString())
 		assert.NoError(t, err, "pickOneFile")
 
