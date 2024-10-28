@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
@@ -28,7 +29,7 @@ func TestDownload(t *testing.T) {
 
 	createReq := func() (req *http.Request) {
 		req, _ = http.NewRequest("GET", "/file-service/v1/downloads/4e2bc94b-a6b6-4c44-9512-79b5eb654524", nil)
-		ctx := context.WithValue(req.Context(), handler.UserClaimsCtxKey, token)
+		ctx := context.WithValue(req.Context(), auth.UserClaimsCtxKey, token)
 		ctx = context.WithValue(ctx, middleware.RequestIDKey, "trace-id")
 		return req.WithContext(ctx)
 	}

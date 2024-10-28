@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
@@ -48,7 +49,7 @@ func TestGetAllFiles(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/files", nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, token)
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -75,7 +76,7 @@ func TestGetAllFiles(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, token)
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -99,7 +100,7 @@ func TestGetAllFiles(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("/files?page=%d&size=%d", page, size), nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, token)
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -138,7 +139,7 @@ func TestDelete(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, token)
 		ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 		req = req.WithContext(ctx)
 
@@ -165,7 +166,7 @@ func TestDelete(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", "/files/"+random, nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, token)
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, token)
 		ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 		req = req.WithContext(ctx)
 
@@ -198,7 +199,7 @@ func TestUpdate(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, jwt.New())
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, jwt.New())
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -239,7 +240,7 @@ func TestUpdate(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, jwt.New())
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, jwt.New())
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -264,7 +265,7 @@ func TestUpdate(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/files/"+random, bytes.NewBuffer(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), middleware.RequestIDKey, "test-trace-id")
-		ctx = context.WithValue(ctx, handler.UserClaimsCtxKey, jwt.New())
+		ctx = context.WithValue(ctx, auth.UserClaimsCtxKey, jwt.New())
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()

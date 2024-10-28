@@ -8,12 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/repository"
 )
 
 func (h *Handler) Download(w http.ResponseWriter, r *http.Request) {
 	fileId := chi.URLParam(r, "fileId")
-	usr := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
+	usr := r.Context().Value(auth.UserClaimsCtxKey).(jwt.Token)
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
 
 	fileRep, err := h.fileFacade.FindById(usr.Subject(), fileId)

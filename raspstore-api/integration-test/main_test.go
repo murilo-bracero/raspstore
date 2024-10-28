@@ -425,6 +425,33 @@ func TestService(t *testing.T) {
 
 		assert.Equal(t, "404 Not Found", err.Error())
 	})
+
+	t.Run("POST /register - Register should return CREATED", func(t *testing.T) {
+
+		var req model.CreateUserRequest
+		req.Username = uuid.NewString()
+		req.Password = uuid.NewString()
+
+		resource := fmt.Sprintf("%s/file-service/v1/register", apiTest.ApiUrl)
+
+		body, err := json.Marshal(req)
+
+		assert.NoError(t, err, "json.Marshal")
+
+		client := &http.Client{}
+		httpRequest, err := http.NewRequest(http.MethodPost, resource, bytes.NewBuffer(body))
+
+		assert.NoError(t, err, "NewRequest")
+
+		httpRequest.Header.Set("Accept", "application/json")
+		httpRequest.Header.Set("Content-Type", "application/json")
+
+		res, err := client.Do(httpRequest)
+
+		assert.NoError(t, err, "client.Do")
+
+		assert.Equal(t, http.StatusCreated, res.StatusCode)
+	})
 }
 
 func getToken(keycloakUrl string) (string, error) {

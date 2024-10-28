@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/murilo-bracero/raspstore/file-service/internal/auth"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/entity"
 	"github.com/murilo-bracero/raspstore/file-service/internal/domain/model"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/mapper"
@@ -24,7 +25,7 @@ func (f *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	secretQuery := r.URL.Query().Get("secret")
 
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(auth.UserClaimsCtxKey).(jwt.Token)
 
 	secret, _ := strconv.ParseBool(secretQuery)
 
@@ -40,7 +41,7 @@ func (f *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 
 func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(auth.UserClaimsCtxKey).(jwt.Token)
 
 	fileId := chi.URLParam(r, "id")
 
@@ -56,7 +57,7 @@ func (f *Handler) FindById(w http.ResponseWriter, r *http.Request) {
 
 func (f *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	token := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
+	token := r.Context().Value(auth.UserClaimsCtxKey).(jwt.Token)
 
 	var req model.UpdateFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -100,7 +101,7 @@ func (f *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	slog.Info(fileId)
 
 	traceId := r.Context().Value(chiMiddleware.RequestIDKey).(string)
-	user := r.Context().Value(UserClaimsCtxKey).(jwt.Token)
+	user := r.Context().Value(auth.UserClaimsCtxKey).(jwt.Token)
 
 	if err := f.fileFacade.DeleteById(traceId, user.Subject(), fileId); err != nil {
 		internalServerError(w, traceId)

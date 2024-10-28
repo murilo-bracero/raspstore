@@ -28,10 +28,6 @@ func TestUserSave(t *testing.T) {
 
 	assert.NoError(t, err, "SecretsBootstraper")
 
-	t.Cleanup(func() {
-		os.RemoveAll(os.TempDir() + "/secrets")
-	})
-
 	t.Run("should save user", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 
@@ -66,5 +62,9 @@ func TestUserSave(t *testing.T) {
 		err := ff.Save(user)
 
 		assert.Error(t, err)
+	})
+
+	t.Cleanup(func() {
+		os.RemoveAll(os.TempDir() + "/secrets")
 	})
 }
