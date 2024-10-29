@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/murilo-bracero/raspstore/file-service/internal/application/facade/mocks"
+	"github.com/murilo-bracero/raspstore/file-service/internal/infra/config"
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/handler"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -23,8 +24,10 @@ func TestRegister(t *testing.T) {
 		return req.WithContext(ctx)
 	}
 
+	mockConfig := &config.Config{Auth: config.AuthConfig{EnableUserRegister: true}}
+
 	newHandler := func(uf *mocks.MockUserFacade) *handler.Handler {
-		ctr := handler.New(nil, nil, uf, nil, nil)
+		ctr := handler.New(nil, nil, uf, nil, mockConfig)
 		return ctr
 	}
 
@@ -143,5 +146,31 @@ func TestRegister(t *testing.T) {
 		endpoint.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+
+	t.Run("should return unprocessable entity if user registration config is disabled", func(t *testing.T) {
+		mockConfig.Auth.EnableUserRegister = false
+
+		mockCtrl := gomock.NewController(t)
+
+		uf := mocks.NewMockUserFacade(mockCtrl)
+		uf.EXPECT().Save(gomock.Any()).Times(0)
+
+		ctr := newHandler(uf)
+
+		body := `{
+			"username": "UsrNm",
+			"password": "PssWd1",
+			"name": "My Name"
+		}`
+
+		req := createReq(strings.NewReader(body))
+
+		rr := httptest.NewRecorder()
+
+		endpoint := http.HandlerFunc(ctr.Register)
+		endpoint.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
 	})
 }
