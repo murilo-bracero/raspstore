@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidate(t *testing.T) {
+func TestSecretsBootstrap(t *testing.T) {
 	config := &config.Config{
 		Storage: config.StorageConfig{Path: os.TempDir()},
 	}
@@ -24,6 +24,10 @@ func TestValidate(t *testing.T) {
 	}
 
 	ctx := context.Background()
+
+	err = (&bootstrap.SecretsBootstraper{}).Bootstrap(ctx, config)
+
+	assert.NoError(t, err, "Bootstrap")
 
 	t.Cleanup(func() {
 		os.RemoveAll(os.TempDir() + "/secrets")
