@@ -75,7 +75,8 @@ func NewApiTest(ctx context.Context) (*ApiTest, error) {
 		},
 		ExposedPorts: []string{"9090/tcp"},
 		Env: map[string]string{
-			"PUBLIC_KEY_URL": "http://keycloak.rstore.com:8080/realms/master/protocol/openid-connect/certs",
+			"PUBLIC_KEY_URL":              "http://keycloak.rstore.com:8080/realms/master/protocol/openid-connect/certs",
+			"RS_ENABLE_USER_REGISTRATION": "true",
 		},
 		Networks:   []string{net.Name},
 		WaitingFor: wait.ForExposedPort(),
