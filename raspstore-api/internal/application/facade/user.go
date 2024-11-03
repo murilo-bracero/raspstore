@@ -42,11 +42,17 @@ func (f *userFacade) Save(req *model.CreateUserRequest) error {
 		return err
 	}
 
-	return f.userRepository.Save(&entity.User{
+	err = f.userRepository.Save(&entity.User{
 		Id:           uuid.New(),
 		Username:     req.Username,
 		Name:         req.Name,
 		PasswordHash: hash,
 		RefreshToken: rt,
 	})
+
+	if err != nil {
+		slog.Error("Could not save user", "error", err)
+	}
+
+	return err
 }
