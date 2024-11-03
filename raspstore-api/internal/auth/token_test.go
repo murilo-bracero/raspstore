@@ -18,15 +18,15 @@ func TestGenerateRefreshToken(t *testing.T) {
 
 	(&bootstrap.SecretsBootstraper{}).Bootstrap(context.Background(), mockConfig)
 
-	t.Cleanup(func() {
-		os.RemoveAll(os.TempDir() + "/secrets")
-	})
-
 	t.Run("should generate refresh token", func(t *testing.T) {
 		token, err := GenerateRefreshToken(mockConfig)
 
 		assert.NoError(t, err, "GenerateRefreshToken")
 
 		assert.NotEmpty(t, token, "GenerateRefreshToken")
+	})
+
+	t.Cleanup(func() {
+		os.RemoveAll(os.TempDir() + "/secrets")
 	})
 }

@@ -17,15 +17,9 @@ func TestSecretsBootstrap(t *testing.T) {
 		Storage: config.StorageConfig{Path: os.TempDir()},
 	}
 
-	err := os.Mkdir(os.TempDir()+"/secrets", os.ModePerm)
-
-	if err != nil && !os.IsExist(err) {
-		assert.Fail(t, "os.Makedir")
-	}
-
 	ctx := context.Background()
 
-	err = (&bootstrap.SecretsBootstraper{}).Bootstrap(ctx, config)
+	err := (&bootstrap.FolderBootstraper{}).Bootstrap(ctx, config)
 
 	assert.NoError(t, err, "Bootstrap")
 
