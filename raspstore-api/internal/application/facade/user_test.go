@@ -24,7 +24,7 @@ func TestUserSave(t *testing.T) {
 
 	assert.NoError(t, err, "FolderBootstraper")
 
-	(&bootstrap.SecretsBootstraper{}).Bootstrap(context.Background(), config)
+	err = (&bootstrap.SecretsBootstraper{}).Bootstrap(context.Background(), config)
 
 	assert.NoError(t, err, "SecretsBootstraper")
 
