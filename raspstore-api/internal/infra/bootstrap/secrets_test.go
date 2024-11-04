@@ -14,7 +14,7 @@ import (
 
 func TestSecretsBootstrap(t *testing.T) {
 	config := &config.Config{
-		Storage: config.StorageConfig{Path: os.TempDir()},
+		Storage: config.StorageConfig{Path: t.TempDir()},
 	}
 
 	ctx := context.Background()
@@ -24,7 +24,7 @@ func TestSecretsBootstrap(t *testing.T) {
 	assert.NoError(t, err, "Bootstrap")
 
 	t.Cleanup(func() {
-		os.RemoveAll(os.TempDir() + "/secrets")
+		os.RemoveAll(t.TempDir() + "/secrets")
 	})
 
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
