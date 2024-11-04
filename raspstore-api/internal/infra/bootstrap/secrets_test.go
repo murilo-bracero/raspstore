@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/bootstrap"
@@ -23,10 +24,6 @@ func TestSecretsBootstrap(t *testing.T) {
 
 	assert.NoError(t, err, "Bootstrap")
 
-	t.Cleanup(func() {
-		os.RemoveAll(t.TempDir() + "/secrets")
-	})
-
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
 		bt := &bootstrap.SecretsBootstraper{}
 
@@ -34,7 +31,7 @@ func TestSecretsBootstrap(t *testing.T) {
 
 		assert.NoError(t, err, "bt.Bootstrap")
 
-		filename := os.TempDir() + "/secrets/key.json"
+		filename := path.Join(config.Storage.Path, "secrets", "key.json")
 
 		fi, err := os.Stat(filename)
 
