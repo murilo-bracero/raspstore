@@ -24,10 +24,15 @@
     on:submit|preventDefault={handleSubmit}
   >
     <label class="mb-1 p-1 font-bold" for="username">Username:</label>
-    <input class="rounded-lg border-2 border-black p-1" type="text" id="username" name="username" />
+    <input
+      class="w-full rounded-lg border-2 border-black p-1"
+      type="text"
+      id="username"
+      name="username"
+    />
     <label class="mb-1 mt-3 p-1 font-bold" for="password">Password:</label>
     <input
-      class="mb-3 rounded-lg border-2 border-black p-1"
+      class="mb-3 w-full rounded-lg border-2 border-black p-1"
       type="password"
       id="password"
       name="password"
@@ -42,5 +47,7 @@
       type="button"
       on:click={handleOidcClick}>OIDC Sign In</button
     >
+
+    <a href="/register" class="self-center text-sky-600 underline">Want to create a new account?</a>
   </form>
 </main>

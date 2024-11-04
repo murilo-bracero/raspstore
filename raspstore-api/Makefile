@@ -30,6 +30,7 @@ generate:
 	mockgen -source=internal/infra/repository/repository.go -destination=internal/infra/repository/mocks/repository.go -package=mocks
 	mockgen -source=internal/application/facade/file.go -destination=internal/application/facade/mocks/file.go -package=mocks
 	mockgen -source=internal/application/facade/fs.go -destination=internal/application/facade/mocks/fs.go -package=mocks
+	mockgen -source=internal/application/facade/user.go -destination=internal/application/facade/mocks/user.go -package=mocks
 
 go-lint:
 	golangci-lint run --enable gosec  -v

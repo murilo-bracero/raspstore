@@ -26,9 +26,9 @@ func TestAuthenticate(t *testing.T) {
 		return req
 	}
 
-	t.Run("happy path", func(t *testing.T) {
-		ctr := handler.New(nil, nil, nil, nil)
+	ctr := handler.New(nil, nil, nil, nil, nil)
 
+	t.Run("happy path", func(t *testing.T) {
 		mockLoginFunc := func(_ *config.Config, username, password string) (string, error) {
 			assert.Equal(t, "username", username)
 			assert.Equal(t, "password", password)
@@ -62,8 +62,6 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("should return 401 Unauthenticated if usecase returns error", func(t *testing.T) {
-		ctr := handler.New(nil, nil, nil, nil)
-
 		mockLoginFunc := func(_ *config.Config, username, password string) (string, error) {
 			return "", errors.New("generic error")
 		}
@@ -83,8 +81,6 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("should return 401 Unauthenticated if credentials not present", func(t *testing.T) {
-		ctr := handler.New(nil, nil, nil, nil)
-
 		req := createReq()
 		rr := httptest.NewRecorder()
 

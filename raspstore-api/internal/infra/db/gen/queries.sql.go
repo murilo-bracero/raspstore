@@ -38,6 +38,30 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) error {
 	return err
 }
 
+const createUser = `-- name: CreateUser :exec
+INSERT INTO users (user_id, username, password_hash, name, refresh_token)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateUserParams struct {
+	UserID       string
+	Username     string
+	PasswordHash string
+	Name         sql.NullString
+	RefreshToken sql.NullString
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.ExecContext(ctx, createUser,
+		arg.UserID,
+		arg.Username,
+		arg.PasswordHash,
+		arg.Name,
+		arg.RefreshToken,
+	)
+	return err
+}
+
 const deleteFileByID = `-- name: DeleteFileByID :exec
 DELETE FROM files
 WHERE file_id IN (

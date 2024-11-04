@@ -15,6 +15,14 @@ const PUBLIC_PATHS = [
   {
     method: 'GET',
     path: '/login'
+  },
+  {
+    method: 'GET',
+    path: '/register'
+  },
+  {
+    method: 'POST',
+    path: '/register'
   }
 ];
 

@@ -16,6 +16,43 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockRepository is a mock of Repository interface.
+type MockRepository[T any] struct {
+	ctrl     *gomock.Controller
+	recorder *MockRepositoryMockRecorder[T]
+}
+
+// MockRepositoryMockRecorder is the mock recorder for MockRepository.
+type MockRepositoryMockRecorder[T any] struct {
+	mock *MockRepository[T]
+}
+
+// NewMockRepository creates a new mock instance.
+func NewMockRepository[T any](ctrl *gomock.Controller) *MockRepository[T] {
+	mock := &MockRepository[T]{ctrl: ctrl}
+	mock.recorder = &MockRepositoryMockRecorder[T]{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRepository[T]) EXPECT() *MockRepositoryMockRecorder[T] {
+	return m.recorder
+}
+
+// Save mocks base method.
+func (m *MockRepository[T]) Save(file *T) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Save indicates an expected call of Save.
+func (mr *MockRepositoryMockRecorder[T]) Save(file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockRepository[T])(nil).Save), file)
+}
+
 // MockFilesRepository is a mock of FilesRepository interface.
 type MockFilesRepository struct {
 	ctrl     *gomock.Controller

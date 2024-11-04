@@ -28,8 +28,9 @@ type ServerConfig struct {
 }
 
 type AuthConfig struct {
-	PAMEnabled   bool   `yaml:"enable-pam"`
-	PublicKeyURL string `yaml:"public-key-url"`
+	PAMEnabled         bool   `yaml:"enable-pam"`
+	PublicKeyURL       string `yaml:"public-key-url"`
+	EnableUserRegister bool   `yaml:"enable-user-register"`
 }
 
 func New() *Config {

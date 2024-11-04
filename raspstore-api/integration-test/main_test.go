@@ -75,7 +75,8 @@ func NewApiTest(ctx context.Context) (*ApiTest, error) {
 		},
 		ExposedPorts: []string{"9090/tcp"},
 		Env: map[string]string{
-			"PUBLIC_KEY_URL": "http://keycloak.rstore.com:8080/realms/master/protocol/openid-connect/certs",
+			"PUBLIC_KEY_URL":              "http://keycloak.rstore.com:8080/realms/master/protocol/openid-connect/certs",
+			"RS_ENABLE_USER_REGISTRATION": "true",
 		},
 		Networks:   []string{net.Name},
 		WaitingFor: wait.ForExposedPort(),
@@ -400,7 +401,6 @@ func TestService(t *testing.T) {
 	})
 
 	t.Run("DELETE /files - Delete file by ID should return NO CONTENT", func(t *testing.T) {
-
 		fc, err := uploadFile(apiTest, token, uuid.NewString())
 		assert.NoError(t, err, "pickOneFile")
 
@@ -425,6 +425,33 @@ func TestService(t *testing.T) {
 		assert.Error(t, err, "findFileById")
 
 		assert.Equal(t, "404 Not Found", err.Error())
+	})
+
+	t.Run("POST /register - Register should return CREATED", func(t *testing.T) {
+
+		var req model.CreateUserRequest
+		req.Username = uuid.NewString()
+		req.Password = uuid.NewString()
+
+		resource := fmt.Sprintf("%s/file-service/v1/register", apiTest.ApiUrl)
+
+		body, err := json.Marshal(req)
+
+		assert.NoError(t, err, "json.Marshal")
+
+		client := &http.Client{}
+		httpRequest, err := http.NewRequest(http.MethodPost, resource, bytes.NewBuffer(body))
+
+		assert.NoError(t, err, "NewRequest")
+
+		httpRequest.Header.Set("Accept", "application/json")
+		httpRequest.Header.Set("Content-Type", "application/json")
+
+		res, err := client.Do(httpRequest)
+
+		assert.NoError(t, err, "client.Do")
+
+		assert.Equal(t, http.StatusCreated, res.StatusCode)
 	})
 }
 

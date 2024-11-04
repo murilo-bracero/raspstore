@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/murilo-bracero/raspstore/file-service/internal/infra/bootstrap"
@@ -12,22 +13,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidate(t *testing.T) {
+func TestSecretsBootstrap(t *testing.T) {
 	config := &config.Config{
-		Storage: config.StorageConfig{Path: os.TempDir()},
-	}
-
-	err := os.Mkdir(os.TempDir()+"/secrets", os.ModePerm)
-
-	if err != nil && !os.IsExist(err) {
-		assert.Fail(t, "os.Makedir")
+		Storage: config.StorageConfig{Path: t.TempDir()},
 	}
 
 	ctx := context.Background()
 
-	t.Cleanup(func() {
-		os.RemoveAll(os.TempDir() + "/secrets")
-	})
+	err := (&bootstrap.FolderBootstraper{}).Bootstrap(ctx, config)
+
+	assert.NoError(t, err, "Bootstrap")
 
 	t.Run("should create new keys if directory is empty", func(t *testing.T) {
 		bt := &bootstrap.SecretsBootstraper{}
@@ -36,7 +31,7 @@ func TestValidate(t *testing.T) {
 
 		assert.NoError(t, err, "bt.Bootstrap")
 
-		filename := os.TempDir() + "/secrets/key.json"
+		filename := path.Join(config.Storage.Path, "secrets", "key.json")
 
 		fi, err := os.Stat(filename)
 
